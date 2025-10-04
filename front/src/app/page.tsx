@@ -2,9 +2,9 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { SendIcon, Sparkles, Command } from 'lucide-react';
+import { SendIcon, Sparkles, Command, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Navbar } from '@/components/layout/Navbar';
 import { Background } from '@/components/layout/Background';
@@ -85,18 +85,8 @@ Textarea.displayName = 'Textarea';
 const commandSuggestions = [
   {
     icon: <Sparkles className="w-4 h-4" />,
-    label: 'Generate',
-    prefix: '/generate',
-  },
-  {
-    icon: <Command className="w-4 h-4" />,
-    label: 'Analyze',
-    prefix: '/analyze',
-  },
-  {
-    icon: <Sparkles className="w-4 h-4" />,
-    label: 'Optimize',
-    prefix: '/optimize',
+    label: 'Randomize',
+    prefix: '/randomize',
   },
 ];
 
@@ -104,6 +94,7 @@ export default function Home() {
   const router = useRouter();
   const { setMessages } = useWorkflow();
   const [value, setValue] = useState('');
+  const [showMicTooltip, setShowMicTooltip] = useState(false);
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight: 60,
     maxHeight: 200,
@@ -214,7 +205,7 @@ export default function Home() {
               </div>
 
               <div className="p-4 border-t border-border flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
                   <motion.button
                     type="button"
                     whileTap={{ scale: 0.94 }}
@@ -222,6 +213,34 @@ export default function Home() {
                   >
                     <Command className="w-4 h-4" />
                   </motion.button>
+                  
+                  <div className="relative">
+                    <motion.button
+                      type="button"
+                      whileTap={{ scale: 0.94 }}
+                      onMouseEnter={() => setShowMicTooltip(true)}
+                      onMouseLeave={() => setShowMicTooltip(false)}
+                      className="p-2 text-muted-foreground hover:text-foreground rounded-lg transition-colors relative group"
+                    >
+                      <Mic className="w-4 h-4" />
+                    </motion.button>
+                    
+                    <AnimatePresence>
+                      {showMicTooltip && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black text-white text-xs rounded-lg whitespace-nowrap shadow-lg"
+                        >
+                          Keep ⌘ to dictate
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                            <div className="w-2 h-2 bg-black rotate-45"></div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
 
                 <motion.button

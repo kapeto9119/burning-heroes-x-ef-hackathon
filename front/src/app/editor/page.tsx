@@ -269,7 +269,7 @@ export default function EditorPage() {
                       <Sparkles className="w-8 h-8 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-foreground mb-2">Building your workflow...</h3>
+                      <h3 className="font-medium text-foreground mb-2">Cooking up your workflow...</h3>
                       <p className="text-sm text-muted-foreground">The AI is generating automation nodes based on your request</p>
                     </div>
                   </div>
