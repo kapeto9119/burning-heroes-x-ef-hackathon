@@ -253,6 +253,13 @@ export default function Home() {
             </div>
           </motion.div>
         </div>
+
+        {/* Footer */}
+        <div className="absolute bottom-6 left-0 right-0 text-center">
+          <p className="text-sm text-muted-foreground">
+            Made with love by the C4 Hackathon Team &lt;3
+          </p>
+        </div>
       </div>
     </div>
   );

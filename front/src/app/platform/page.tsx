@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Sparkles, Copy, Trash2, Play, Clock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Sparkles, Copy, Trash2, Play, Clock, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -10,8 +11,10 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Background } from '@/components/layout/Background';
 import { useWorkflow } from '@/contexts/WorkflowContext';
 import { ScheduleDialog } from '@/components/ScheduleDialog';
+import { NewWorkflowDialog } from '@/components/NewWorkflowDialog';
 
 export default function PlatformPage() {
+  const router = useRouter();
   const {
     workflows,
     selectedWorkflowId,
@@ -22,28 +25,40 @@ export default function PlatformPage() {
     duplicateWorkflow,
   } = useWorkflow();
 
-  const [editingWorkflowId, setEditingWorkflowId] = useState<string | null>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingName, setEditingName] = useState('');
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [schedulingWorkflowId, setSchedulingWorkflowId] = useState<string | null>(null);
+  const [showNewWorkflowDialog, setShowNewWorkflowDialog] = useState(false);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
-  const startEditing = (id: string, name: string) => {
-    setEditingWorkflowId(id);
-    setEditingName(name);
-  };
-
-  const saveEdit = () => {
-    if (editingWorkflowId && editingName.trim()) {
-      updateWorkflow(editingWorkflowId, { name: editingName.trim() });
-      setEditingWorkflowId(null);
-      setEditingName('');
+  const startEditingTitle = () => {
+    const workflow = workflows.find(w => w.id === selectedWorkflowId);
+    if (workflow) {
+      setEditingName(workflow.name);
+      setIsEditingTitle(true);
     }
   };
 
-  const cancelEdit = () => {
-    setEditingWorkflowId(null);
+  const saveTitle = () => {
+    if (editingName.trim() && selectedWorkflowId) {
+      updateWorkflow(selectedWorkflowId, { name: editingName.trim() });
+    }
+    setIsEditingTitle(false);
+  };
+
+  const cancelEditTitle = () => {
+    setIsEditingTitle(false);
     setEditingName('');
   };
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [isEditingTitle]);
 
   const handleScheduleClick = (workflowId: string) => {
     setSchedulingWorkflowId(workflowId);
@@ -56,6 +71,19 @@ export default function PlatformPage() {
       console.log('Scheduling workflow:', schedulingWorkflowId, schedule);
       // For now, just show a toast or update workflow metadata
     }
+  };
+
+  const handleCreateWorkflow = (title: string) => {
+    // Set initial message with workflow title
+    setMessages([{
+      id: Date.now().toString(),
+      text: `Create a workflow for: ${title}`,
+      isUser: true,
+      timestamp: new Date(),
+    }]);
+    
+    // Navigate to editor
+    router.push('/editor');
   };
 
   const selectedWorkflow = workflows.find(w => w.id === selectedWorkflowId);
@@ -100,39 +128,15 @@ export default function PlatformPage() {
                         onClick={() => setSelectedWorkflowId(workflow.id)}
                         className="flex-1 text-left p-3"
                       >
-                        {editingWorkflowId === workflow.id ? (
-                          <input
-                            type="text"
-                            value={editingName}
-                            onChange={(e) => setEditingName(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') saveEdit();
-                              if (e.key === 'Escape') cancelEdit();
-                            }}
-                            onBlur={saveEdit}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-full bg-background text-foreground px-2 py-1 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                            autoFocus
-                          />
-                        ) : (
-                          <div 
-                            onDoubleClick={(e) => {
-                              e.stopPropagation();
-                              startEditing(workflow.id, workflow.name);
-                            }}
-                            className="cursor-text"
-                          >
-                            <div className="font-medium text-sm mb-1">{workflow.name}</div>
-                            <div className={cn(
-                              'text-xs',
-                              selectedWorkflowId === workflow.id
-                                ? 'text-primary-foreground/80'
-                                : 'text-muted-foreground'
-                            )}>
-                              {workflow.createdAt.toLocaleDateString()}
-                            </div>
-                          </div>
-                        )}
+                        <div className="font-medium text-sm mb-1">{workflow.name}</div>
+                        <div className={cn(
+                          'text-xs',
+                          selectedWorkflowId === workflow.id
+                            ? 'text-primary-foreground/80'
+                            : 'text-muted-foreground'
+                        )}>
+                          {workflow.createdAt.toLocaleDateString()}
+                        </div>
                       </button>
                       <div className="flex items-center gap-1 pr-2">
                         <Button
@@ -162,16 +166,14 @@ export default function PlatformPage() {
                   ))}
                 </div>
                 <div className="p-3 border-t border-border">
-                  <Link href="/editor">
-                    <Button 
-                      size="sm" 
-                      className="w-full rounded-lg bg-black text-white hover:bg-gray-800"
-                      onClick={() => setMessages([])}
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      New Workflow
-                    </Button>
-                  </Link>
+                  <Button 
+                    size="sm" 
+                    className="w-full rounded-lg bg-black text-white hover:bg-gray-800"
+                    onClick={() => setShowNewWorkflowDialog(true)}
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    New Workflow
+                  </Button>
                 </div>
               </div>
 
@@ -179,11 +181,36 @@ export default function PlatformPage() {
               <div className="flex flex-col h-full backdrop-blur-xl bg-background/40 rounded-2xl border border-border shadow-2xl overflow-hidden">
                 <div className="p-4 border-b border-border">
                   <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h2 className="text-lg font-semibold">
-                        {selectedWorkflow?.name}
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 group">
+                        {isEditingTitle ? (
+                          <input
+                            ref={titleInputRef}
+                            type="text"
+                            value={editingName}
+                            onChange={(e) => setEditingName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') saveTitle();
+                              if (e.key === 'Escape') cancelEditTitle();
+                            }}
+                            onBlur={saveTitle}
+                            className="text-lg font-semibold bg-transparent border-none focus:outline-none focus:ring-0 p-0 w-full"
+                          />
+                        ) : (
+                          <>
+                            <h2 className="text-lg font-semibold">
+                              {selectedWorkflow?.name}
+                            </h2>
+                            <button
+                              onClick={startEditingTitle}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-accent rounded"
+                            >
+                              <Edit2 className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
                         {selectedWorkflow?.description}
                       </p>
                     </div>
@@ -276,6 +303,12 @@ export default function PlatformPage() {
         }}
         onSchedule={handleSchedule}
         workflowName={schedulingWorkflow?.name || ''}
+      />
+
+      <NewWorkflowDialog
+        isOpen={showNewWorkflowDialog}
+        onClose={() => setShowNewWorkflowDialog(false)}
+        onCreateWorkflow={handleCreateWorkflow}
       />
     </div>
   );
