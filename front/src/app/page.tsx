@@ -164,7 +164,7 @@ export default function Home() {
                 className="inline-block"
               >
                 <h1 className="text-4xl font-light tracking-tight text-foreground/90 pb-1">
-                  What's up nerd, what do you wanna automate today?
+                  What's up <strong>nerd</strong>, what do you wanna automate today?
                 </h1>
                 <motion.div
                   className="h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"
@@ -179,7 +179,7 @@ export default function Home() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                Type / for commands
+                Lovable for automations
               </motion.p>
             </div>
 

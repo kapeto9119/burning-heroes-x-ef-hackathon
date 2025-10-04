@@ -101,10 +101,6 @@ export function LoginDialog({ isOpen, onClose, onLogin }: LoginDialogProps) {
               </div>
 
               <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="rounded" />
-                  <span className="text-muted-foreground">Remember me</span>
-                </label>
                 <button
                   type="button"
                   className="text-primary hover:underline"
