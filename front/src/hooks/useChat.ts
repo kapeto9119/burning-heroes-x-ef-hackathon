@@ -11,7 +11,7 @@ export function useChat() {
     // Add user message
     setMessages(prev => [...prev, { role: 'user', content: message }]);
 
-    let result;
+    let result: any;
     startTransition(async () => {
       result = await sendChatMessage(message);
       
@@ -25,7 +25,7 @@ export function useChat() {
   };
 
   const generateWorkflowFromDescription = async (description: string) => {
-    let result;
+    let result: any;
     startTransition(async () => {
       result = await generateWorkflow(description);
     });
