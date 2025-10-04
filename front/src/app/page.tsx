@@ -1,13 +1,92 @@
+'use client';
+
 import Link from "next/link";
 import { Sparkles, Zap, Shield, ArrowRight, Workflow, MessageSquare, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    generateBackgroundVideo();
+  }, []);
+
+  const generateBackgroundVideo = async () => {
+    setIsGenerating(true);
+    try {
+      // Use the provided cyberpunk image
+      const imageUrl = 'https://thumbnews.nateimg.co.kr/view610///news.nateimg.co.kr/orgImg/ch/2025/07/17/ch_1752730630861_328230_0.jpg';
+      
+      // Step 1: Request video generation
+      const response = await fetch('/api/generate-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl })
+      });
+
+      const { jobId, error } = await response.json();
+      
+      if (error) {
+        console.error('Failed to start video generation:', error);
+        return;
+      }
+
+      // Step 2: Poll for results
+      const pollInterval = setInterval(async () => {
+        const checkResponse = await fetch(`/api/check-video?jobId=${jobId}`);
+        const result = await checkResponse.json();
+
+        if (result.status === 'completed' && result.result_url) {
+          setVideoUrl(result.result_url);
+          setIsGenerating(false);
+          clearInterval(pollInterval);
+        } else if (result.status === 'failed') {
+          console.error('Video generation failed:', result.error);
+          setIsGenerating(false);
+          clearInterval(pollInterval);
+        }
+      }, 3000); // Check every 3 seconds
+
+      // Timeout after 2 minutes
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        setIsGenerating(false);
+      }, 120000);
+    } catch (error) {
+      console.error('Error generating video:', error);
+      setIsGenerating(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      {/* Navigation */}
-      <nav className="border-b bg-white/50 backdrop-blur-sm sticky top-0 z-50">
+    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black relative overflow-hidden">
+      {/* Background Video */}
+      {videoUrl && (
+        <div className="absolute inset-0 z-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover opacity-40"
+            src={videoUrl}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
+        </div>
+      )}
+
+      {/* Fallback gradient while video loads */}
+      {!videoUrl && (
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-orange-600/20 via-red-600/20 to-yellow-600/20 animate-pulse" />
+      )}
+
+      {/* Content */}
+      <div className="relative z-10">
+        {/* Navigation */}
+        <nav className="border-b border-white/10 bg-black/30 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Workflow className="w-6 h-6 text-blue-600" />
@@ -204,6 +283,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 }
