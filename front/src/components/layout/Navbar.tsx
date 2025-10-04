@@ -75,27 +75,6 @@ export function Navbar() {
             </Link>
             
             <div className="flex items-center gap-3">
-              {isEditor && (
-                <div className="flex items-center gap-2">
-                  <Button 
-                    size="sm" 
-                    className="rounded-full bg-black text-white hover:bg-gray-800 shadow-md"
-                    onClick={handleSaveOrRun}
-                  >
-                    <Play className="w-4 h-4 mr-1" />
-                    Run
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="rounded-full border-black text-black hover:bg-gray-100"
-                    onClick={handleSaveOrRun}
-                  >
-                    Save
-                  </Button>
-                </div>
-              )}
-
               <div className="relative" ref={profileMenuRef}>
                 <button
                   onClick={() => setShowProfileMenu(!showProfileMenu)}

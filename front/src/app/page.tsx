@@ -94,16 +94,14 @@ export default function Home() {
   const router = useRouter();
   const { setMessages } = useWorkflow();
   const [value, setValue] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [showMicTooltip, setShowMicTooltip] = useState(false);
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight: 60,
     maxHeight: 200,
   });
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = () => {
     if (value.trim()) {
-      setIsGenerating(true);
-
       // Add the user's first message to context
       setMessages([
         {
@@ -114,7 +112,7 @@ export default function Home() {
         },
       ]);
 
-      // Navigate to editor (message is already in context)
+      // Navigate to editor
       router.push("/editor");
     }
   };

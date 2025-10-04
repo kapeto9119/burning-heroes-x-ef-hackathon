@@ -5,6 +5,17 @@ import { User, UserCredentials } from '../types';
 // In-memory user storage (replace with database in production)
 const users: Map<string, User & { password: string }> = new Map();
 
+// Create demo user for hackathon
+const demoUser: User & { password: string } = {
+  id: 'demo_user_123',
+  email: 'demo@example.com',
+  name: 'Demo User',
+  password: 'demo_password_hash',
+  createdAt: new Date(),
+  credentials: {}
+};
+users.set(demoUser.id, demoUser);
+
 export class AuthService {
   private jwtSecret: string;
 
