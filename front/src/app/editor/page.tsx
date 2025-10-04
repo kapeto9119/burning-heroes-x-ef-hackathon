@@ -548,7 +548,11 @@ export default function EditorPage() {
                 </div>
                 <div className="flex-1 relative overflow-hidden">
                   {workflow && workflow.nodes && workflow.nodes.length > 0 ? (
-                    <WorkflowCanvas workflow={workflow} isGenerating={false} />
+                    <WorkflowCanvas 
+                      key={workflow.id || workflow.name} 
+                      workflow={workflow} 
+                      isGenerating={false} 
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <div className="text-center space-y-4 relative z-10">

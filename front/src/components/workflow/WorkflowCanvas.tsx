@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -48,7 +48,9 @@ function CustomNode({ data }: any) {
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 !bg-primary border-2 border-background"
+        id="input"
+        className="w-4 h-4 !bg-primary border-2 border-background"
+        style={{ left: -8 }}
       />
       
       <div className={`
@@ -77,7 +79,9 @@ function CustomNode({ data }: any) {
       <Handle
         type="source"
         position={Position.Right}
-        className="w-3 h-3 !bg-primary border-2 border-background"
+        id="output"
+        className="w-4 h-4 !bg-primary border-2 border-background"
+        style={{ right: -8 }}
       />
       
       {/* Animated glow effect */}
@@ -119,10 +123,20 @@ export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) 
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [selectedNode, setSelectedNode] = useState<any>(null);
+  const hasInitialized = useRef(false);
+
+  // Reset initialization flag when workflow changes
+  useEffect(() => {
+    hasInitialized.current = false;
+  }, [workflow?.id]);
 
   // Convert n8n workflow to React Flow format
   useEffect(() => {
     if (!workflow || !workflow.nodes) return;
+    
+    // Prevent multiple initializations of same workflow
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
 
     const flowNodes: Node[] = workflow.nodes.map((node: any, index: number) => {
       const isFirst = index === 0;
@@ -155,6 +169,8 @@ export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) 
           id: `edge-${i}`,
           source: flowNodes[i].id,
           target: flowNodes[i + 1].id,
+          sourceHandle: 'output',
+          targetHandle: 'input',
           type: 'smoothstep',
           animated: true,
           style: {
@@ -173,15 +189,24 @@ export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) 
       console.log('[WorkflowCanvas] Available nodes:', workflow.nodes.map((n: any) => n.name));
       
       Object.entries(workflow.connections).forEach(([sourceNode, connections]: any) => {
+        console.log('[WorkflowCanvas] Processing source node:', sourceNode);
         const sourceNodeData = workflow.nodes.find((n: any) => n.name === sourceNode);
+        console.log('[WorkflowCanvas] Source node data:', sourceNodeData);
+        
         if (connections.main && connections.main[0]) {
+          console.log('[WorkflowCanvas] Main connections:', connections.main[0]);
           connections.main[0].forEach((connection: any) => {
+            console.log('[WorkflowCanvas] Processing connection:', connection);
             const targetNodeData = workflow.nodes.find((n: any) => n.name === connection.node);
+            console.log('[WorkflowCanvas] Target node data:', targetNodeData);
+            
             if (sourceNodeData && targetNodeData) {
-              flowEdges.push({
+              const edge = {
                 id: `${sourceNodeData.id}-${targetNodeData.id}`,
                 source: sourceNodeData.id,
                 target: targetNodeData.id,
+                sourceHandle: 'output',
+                targetHandle: 'input',
                 type: 'smoothstep',
                 animated: true,
                 style: {
@@ -192,8 +217,11 @@ export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) 
                   type: MarkerType.ArrowClosed,
                   color: 'hsl(var(--primary))',
                 },
-              });
+              };
+              console.log('[WorkflowCanvas] Creating edge:', edge);
+              flowEdges.push(edge);
               console.log('[WorkflowCanvas] ✓ Connected:', sourceNode, '→', connection.node);
+              console.log('[WorkflowCanvas] Total edges now:', flowEdges.length);
             } else {
               console.warn('[WorkflowCanvas] ✗ Could not find nodes for connection:', sourceNode, '→', connection.node);
               console.warn('  - Source node found:', !!sourceNodeData, sourceNode);
@@ -204,22 +232,22 @@ export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) 
       });
     }
 
-    // Animate nodes appearing one by one
-    flowNodes.forEach((node, index) => {
-      setTimeout(() => {
-        setNodes((nds) => [...nds.filter(n => n.id !== node.id), node]);
-      }, index * 200);
-    });
-
+    // Set all nodes at once (no animation delay)
+    setNodes(flowNodes);
+    
+    // Set edges immediately after nodes
     setEdges(flowEdges);
+    
+    console.log('[WorkflowCanvas] Set nodes:', flowNodes.length);
+    console.log('[WorkflowCanvas] Set edges:', flowEdges.length);
 
     // Fit view after all nodes are added
     setTimeout(() => {
       if (reactFlowInstance) {
         reactFlowInstance.fitView({ padding: 0.3, duration: 800 });
       }
-    }, flowNodes.length * 200 + 100);
-  }, [workflow, setNodes, setEdges, reactFlowInstance]);
+    }, 100);
+  }, [workflow, reactFlowInstance]);
 
   return (
     <div className="w-full h-full relative">
