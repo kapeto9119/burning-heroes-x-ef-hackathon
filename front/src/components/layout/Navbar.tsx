@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Play, User, Settings, CreditCard, LogOut, ChevronDown } from 'lucide-react';
+import { Play, User, Settings, CreditCard, LogOut, ChevronDown, Workflow, Home } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { LoginDialog } from '@/components/LoginDialog';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,13 +16,13 @@ export function Navbar() {
   const isEditor = pathname === '/editor';
   const isPlatform = pathname === '/platform';
   const [showLoginDialog, setShowLoginDialog] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true); // Auto-authenticated for demo
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   const handleSaveOrRun = () => {
     if (isAuthenticated) {
-      router.push('/platform');
+      router.push('/workflows');
     } else {
       setShowLoginDialog(true);
     }
@@ -30,7 +30,7 @@ export function Navbar() {
 
   const handleLogin = () => {
     setIsAuthenticated(true);
-    router.push('/platform');
+    router.push('/workflows');
   };
 
   const handleLogout = () => {
@@ -120,22 +120,32 @@ export function Navbar() {
                         <button
                           onClick={() => {
                             setShowProfileMenu(false);
-                            // Navigate to account page
+                            router.push('/');
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
                         >
-                          <Settings className="w-4 h-4 text-gray-600" />
-                          <span className="text-sm font-medium text-gray-900">Account</span>
+                          <Home className="w-4 h-4 text-gray-600" />
+                          <span className="text-sm font-medium text-gray-900">Home</span>
                         </button>
                         <button
                           onClick={() => {
                             setShowProfileMenu(false);
-                            // Navigate to billing page
+                            router.push('/workflows');
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
                         >
-                          <CreditCard className="w-4 h-4 text-gray-600" />
-                          <span className="text-sm font-medium text-gray-900">Billing</span>
+                          <Workflow className="w-4 h-4 text-gray-600" />
+                          <span className="text-sm font-medium text-gray-900">Workflows</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            router.push('/settings');
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
+                        >
+                          <Settings className="w-4 h-4 text-gray-600" />
+                          <span className="text-sm font-medium text-gray-900">Settings</span>
                         </button>
                         <div className="my-1 border-t border-gray-200" />
                         <button

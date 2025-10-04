@@ -25,9 +25,9 @@ const fragmentShader = `
 
   #define PI 3.1415926538
 
-  const int u_line_count = 40;
+  const int u_line_count = 20;
   const float u_line_width = 7.0;
-  const float u_line_blur = 10.0;
+  const float u_line_blur = 8.0;
 
   float Perlin2D(vec2 P) {
       vec2 Pi = floor(P);
@@ -131,8 +131,8 @@ export function Background() {
 
     const renderer = new Renderer({
       alpha: true,
-      antialias: true,
-      dpr: Math.min(window.devicePixelRatio, 2),
+      antialias: false,
+      dpr: 1,
     });
     rendererRef.current = renderer;
     const gl = renderer.gl;
@@ -194,8 +194,16 @@ export function Background() {
     container.addEventListener('mousemove', handleMouseMove);
     container.addEventListener('mouseleave', handleMouseLeave);
 
+    let lastTime = 0;
+    const targetFPS = 30;
+    const frameInterval = 1000 / targetFPS;
+
     function update(t: number) {
       animationFrameId.current = requestAnimationFrame(update);
+
+      const elapsed = t - lastTime;
+      if (elapsed < frameInterval) return;
+      lastTime = t - (elapsed % frameInterval);
 
       const smoothing = 0.05;
       currentMouse[0] += smoothing * (targetMouse[0] - currentMouse[0]);

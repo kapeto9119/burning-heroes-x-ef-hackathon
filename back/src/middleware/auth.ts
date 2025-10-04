@@ -32,7 +32,16 @@ export function createAuthMiddleware(authService: AuthService) {
 
       const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
-      // Verify token
+      // For demo: Accept demo tokens
+      if (token.startsWith('demo_token_for_hackathon_')) {
+        req.user = {
+          userId: 'demo_user_123',
+          email: 'demo@example.com'
+        };
+        return next();
+      }
+
+      // Verify real JWT token
       const decoded = authService.verifyToken(token);
       
       // Attach user to request

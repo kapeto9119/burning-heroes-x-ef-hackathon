@@ -16,6 +16,38 @@ interface DeploymentRecord {
 
 const deployments: Map<string, DeploymentRecord> = new Map();
 
+// Sample deployed workflows for demo
+const sampleDeployments: DeploymentRecord[] = [
+  {
+    workflowId: 'deploy_sample_1',
+    n8nWorkflowId: '1',
+    userId: 'demo_user_123',
+    webhookUrl: 'http://localhost:5678/webhook/standup-reminder',
+    status: 'active',
+    deployedAt: new Date('2025-01-15T09:00:00Z')
+  },
+  {
+    workflowId: 'deploy_sample_2',
+    n8nWorkflowId: '2',
+    userId: 'demo_user_123',
+    webhookUrl: 'http://localhost:5678/webhook/email-alerts',
+    status: 'active',
+    deployedAt: new Date('2025-01-20T14:30:00Z')
+  },
+  {
+    workflowId: 'deploy_sample_3',
+    n8nWorkflowId: '3',
+    userId: 'demo_user_123',
+    status: 'inactive',
+    deployedAt: new Date('2025-01-22T11:15:00Z')
+  }
+];
+
+// Initialize with sample data
+sampleDeployments.forEach(deployment => {
+  deployments.set(deployment.workflowId, deployment);
+});
+
 export function createDeployRouter(
   n8nClient: N8nApiClient,
   authService: AuthService

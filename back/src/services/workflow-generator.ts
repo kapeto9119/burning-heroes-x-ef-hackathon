@@ -85,7 +85,7 @@ export class WorkflowGenerator {
       }
     }
 
-    return {
+    const workflow = {
       name: plan.workflowName || this.generateWorkflowName(description),
       nodes,
       connections,
@@ -94,6 +94,13 @@ export class WorkflowGenerator {
         executionOrder: 'v1'
       }
     };
+
+    // Debug logging
+    console.log('[Workflow Generator] Created workflow with:');
+    console.log('  - Nodes:', nodes.map(n => `${n.name} (${n.id})`).join(', '));
+    console.log('  - Connections:', JSON.stringify(connections, null, 2));
+
+    return workflow;
   }
 
   /**

@@ -8,6 +8,135 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
   // In-memory storage for hackathon (replace with database in production)
   const workflows: Map<string, N8nWorkflow> = new Map();
 
+  // Sample data for demo
+  const sampleWorkflows: N8nWorkflow[] = [
+    {
+      id: 'sample_1',
+      name: 'Daily Slack Standup Reminder',
+      nodes: [
+        {
+          id: 'schedule_1',
+          name: 'Every Weekday at 9am',
+          type: 'n8n-nodes-base.scheduleTrigger',
+          position: [250, 300],
+          parameters: {
+            rule: {
+              interval: [{
+                field: 'cronExpression',
+                expression: '0 9 * * 1-5'
+              }]
+            }
+          },
+          credentials: {}
+        },
+        {
+          id: 'slack_1',
+          name: 'Send Standup Message',
+          type: 'n8n-nodes-base.slack',
+          position: [600, 300],
+          parameters: {
+            resource: 'message',
+            operation: 'post',
+            select: 'channel',
+            channelId: '#team',
+            text: '🌅 Good morning team! Time for daily standup!'
+          },
+          credentials: { slackApi: 'slack_credentials' }
+        }
+      ],
+      connections: {
+        'Every Weekday at 9am': {
+          main: [[{ node: 'Send Standup Message', type: 'main', index: 0 }]]
+        }
+      },
+      active: true,
+      settings: { executionOrder: 'v1' }
+    },
+    {
+      id: 'sample_2',
+      name: 'Email Notification System',
+      nodes: [
+        {
+          id: 'webhook_1',
+          name: 'Webhook Trigger',
+          type: 'n8n-nodes-base.webhook',
+          position: [250, 300],
+          parameters: {
+            httpMethod: 'POST',
+            path: '/notify'
+          },
+          credentials: {}
+        },
+        {
+          id: 'email_1',
+          name: 'Send Email Alert',
+          type: 'n8n-nodes-base.emailSend',
+          position: [600, 300],
+          parameters: {
+            fromEmail: 'alerts@example.com',
+            toEmail: 'team@example.com',
+            subject: 'New Alert Received',
+            text: 'A new notification has been triggered!'
+          },
+          credentials: { smtp: 'email_credentials' }
+        }
+      ],
+      connections: {
+        'Webhook Trigger': {
+          main: [[{ node: 'Send Email Alert', type: 'main', index: 0 }]]
+        }
+      },
+      active: true,
+      settings: { executionOrder: 'v1' }
+    },
+    {
+      id: 'sample_3',
+      name: 'Google Sheets Data Logger',
+      nodes: [
+        {
+          id: 'schedule_2',
+          name: 'Every Hour',
+          type: 'n8n-nodes-base.scheduleTrigger',
+          position: [250, 300],
+          parameters: {
+            rule: {
+              interval: [{
+                field: 'cronExpression',
+                expression: '0 * * * *'
+              }]
+            }
+          },
+          credentials: {}
+        },
+        {
+          id: 'sheets_1',
+          name: 'Append to Sheet',
+          type: 'n8n-nodes-base.googleSheets',
+          position: [600, 300],
+          parameters: {
+            operation: 'append',
+            sheetId: 'your-sheet-id',
+            range: 'Sheet1!A:C',
+            values: [['{{$now}}', 'Automated Entry', 'Success']]
+          },
+          credentials: { googleSheetsOAuth2Api: 'sheets_credentials' }
+        }
+      ],
+      connections: {
+        'Every Hour': {
+          main: [[{ node: 'Append to Sheet', type: 'main', index: 0 }]]
+        }
+      },
+      active: false,
+      settings: { executionOrder: 'v1' }
+    }
+  ];
+
+  // Initialize with sample data
+  sampleWorkflows.forEach(workflow => {
+    workflows.set(workflow.id!, workflow);
+  });
+
   /**
    * GET /api/workflows
    * List all workflows

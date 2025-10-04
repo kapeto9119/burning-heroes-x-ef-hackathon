@@ -8,31 +8,43 @@ export class AIService {
   constructor(apiKey: string) {
     this.openai = new OpenAI({ apiKey });
     
-    this.systemPrompt = `You are an expert n8n workflow automation assistant. Your role is to help users create automation workflows by understanding their natural language requests.
+    this.systemPrompt = `You are an expert n8n workflow automation assistant. Your role is to help users create automation workflows quickly and efficiently.
+
+IMPORTANT BEHAVIOR:
+- If the user has provided enough information to build a workflow (trigger + action + services), tell them you're ready to build it
+- Don't ask too many questions - use reasonable defaults when details are missing
+- Be proactive and action-oriented
+- If user says "do it", "build it", "create it", "make the workflow" - acknowledge you'll build it now
 
 When a user describes what they want to automate:
-1. Identify the trigger (what starts the workflow)
-2. Identify the actions (what should happen)
-3. Identify the services/tools involved (Slack, email, databases, etc.)
-4. Ask clarifying questions if needed
-5. Provide a clear, structured response
+1. Identify the trigger (webhook, schedule, manual, etc.)
+2. Identify the actions (send message, email, update data, etc.)
+3. Identify the services (Slack, Gmail, Google Sheets, etc.)
+4. If you have enough info, say you're ready to build
+5. Only ask 1-2 clarifying questions if absolutely critical info is missing
 
-Be conversational, helpful, and technical when needed. Focus on understanding the user's automation needs.
+Example:
+User: "Send email when Google Sheet row is added"
+You: "Perfect! I'll create a workflow that triggers when a new row is added to Google Sheets and sends an email. I'm ready to build this now!"
 
-Example interactions:
-User: "Send a Slack message when someone fills out my contact form"
-You: "I'll help you create that workflow! To set this up, I need to know:
-- Where is your contact form? (Google Forms, Typeform, custom website, etc.)
-- Which Slack channel should receive the notification?
-- What information from the form should be included in the message?"
-
-Keep responses concise and actionable.`;
+Be concise, action-oriented, and avoid asking too many questions.`;
   }
 
   async chat(userMessage: string, conversationHistory: ChatMessage[] = []): Promise<string> {
     try {
+      // Analyze conversation to extract what we already know
+      const conversationContext = this.analyzeConversationContext(conversationHistory, userMessage);
+      
+      // Enhanced system prompt with conversation awareness
+      const enhancedSystemPrompt = `${this.systemPrompt}
+
+CURRENT CONVERSATION STATE:
+${conversationContext}
+
+CRITICAL: Before asking ANY question, check if the information is already provided above. DO NOT re-ask for information that's already known.`;
+
       const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-        { role: 'system', content: this.systemPrompt },
+        { role: 'system', content: enhancedSystemPrompt },
         ...conversationHistory.map(msg => ({
           role: msg.role as 'user' | 'assistant',
           content: msg.content
@@ -52,6 +64,63 @@ Keep responses concise and actionable.`;
       console.error('OpenAI API error:', error);
       throw new Error('Failed to get AI response');
     }
+  }
+
+  /**
+   * Analyze conversation to extract what information we already have
+   */
+  private analyzeConversationContext(conversationHistory: ChatMessage[], currentMessage: string): string {
+    const allMessages = [...conversationHistory, { role: 'user' as const, content: currentMessage }];
+    const userMessages = allMessages.filter(m => m.role === 'user').map(m => m.content).join(' ');
+    
+    const context: string[] = [];
+    
+    // Check for trigger information
+    if (userMessages.match(/schedul(e|ing)|every (day|week|month|monday|tuesday|wednesday|thursday|friday)|at \d+|cron/i)) {
+      const scheduleMatch = userMessages.match(/(schedul(e|ing)|every) .{0,50}(at \d+|pm|am|\d+ pm|\d+ am)/i);
+      context.push(`✓ Trigger: Schedule - ${scheduleMatch ? scheduleMatch[0] : 'mentioned'}`);
+    } else if (userMessages.match(/webhook|http|api call|when.*receive/i)) {
+      context.push('✓ Trigger: Webhook');
+    } else if (userMessages.match(/manual|button|click|run/i)) {
+      context.push('✓ Trigger: Manual');
+    }
+    
+    // Check for action/goal
+    if (userMessages.match(/send.*email|email.*send|\d+ emails/i)) {
+      const emailMatch = userMessages.match(/\d+ emails/i);
+      context.push(`✓ Action: Send email${emailMatch ? ` (${emailMatch[0]})` : ''}`);
+    } else if (userMessages.match(/send.*message|post.*slack|slack.*message/i)) {
+      context.push('✓ Action: Send Slack message');
+    } else if (userMessages.match(/update|insert|save.*data/i)) {
+      context.push('✓ Action: Update/save data');
+    }
+    
+    // Check for services
+    const services: string[] = [];
+    if (userMessages.match(/gmail|google mail/i)) services.push('Gmail');
+    if (userMessages.match(/slack/i)) services.push('Slack');
+    if (userMessages.match(/sendgrid/i)) services.push('SendGrid');
+    if (userMessages.match(/sheets|google sheets/i)) services.push('Google Sheets');
+    if (services.length > 0) {
+      context.push(`✓ Services: ${services.join(', ')}`);
+    }
+    
+    // Check for content/details
+    if (userMessages.match(/test content|content|message|body/i)) {
+      context.push('✓ Content: Specified');
+    }
+    
+    // Check for channels/recipients
+    const channelMatch = userMessages.match(/#[\w-]+|channel.*[\w-]+/i);
+    if (channelMatch) {
+      context.push(`✓ Channel: ${channelMatch[0]}`);
+    }
+    
+    if (context.length === 0) {
+      return 'No workflow details collected yet.';
+    }
+    
+    return context.join('\n');
   }
 
   async generateWorkflowFromDescription(description: string, mcpContext?: any): Promise<any> {
@@ -217,6 +286,13 @@ Provide concise, actionable suggestions.`;
    */
   async detectWorkflowIntent(userMessage: string, conversationHistory: ChatMessage[] = []): Promise<boolean> {
     try {
+      // Quick check: if we have all required components, build immediately
+      const hasAllComponents = this.hasAllRequiredComponents(conversationHistory, userMessage);
+      if (hasAllComponents) {
+        console.log('[Intent Detection] ✅ All components present, building workflow');
+        return true;
+      }
+
       // Build conversation context (last 4 messages for efficiency)
       const recentMessages = conversationHistory.slice(-4);
       const contextLines = recentMessages.map(msg => 
@@ -231,15 +307,23 @@ ${contextLines}
 Latest user message: "${userMessage}"
 
 Analyze if the user is:
-1. Explicitly asking to create/build/generate a workflow
-2. Giving confirmation to proceed with building (e.g., "do it", "let's go", "proceed", "build it")
-3. Providing final details before building
-4. Ready to move from planning to implementation
+1. Explicitly asking to create/build/generate a workflow (e.g., "do the workflow", "build it", "create it", "make the workflow")
+2. Giving confirmation to proceed (e.g., "do it", "let's go", "proceed", "yes", "ok")
+3. Has provided enough info (trigger + action + services mentioned in conversation)
+4. Expressing frustration or urgency to build (e.g., "just do it", "bro", "come on")
 
 Respond with ONLY "YES" or "NO".
 
-YES if: User wants to build now, gave confirmation, or provided complete requirements
-NO if: User is still asking questions, exploring options, or needs more information
+YES if: 
+- User says "do it", "build", "create", "make", "generate"
+- User has mentioned trigger (webhook/schedule/etc) AND action (send/email/etc) AND service (Slack/Gmail/etc)
+- User is confirming or showing readiness
+- More than 3 messages in conversation and user has given requirements
+
+NO if: 
+- User is asking "what can I do?" or general questions
+- User hasn't mentioned any specific services yet
+- First message in conversation
 
 Response:`;
 
@@ -265,6 +349,31 @@ Response:`;
       const keywords = ['create workflow', 'build workflow', 'generate workflow', 'make workflow'];
       return keywords.some(k => userMessage.toLowerCase().includes(k));
     }
+  }
+
+  /**
+   * Check if conversation has all required components for workflow generation
+   */
+  private hasAllRequiredComponents(conversationHistory: ChatMessage[], currentMessage: string): boolean {
+    const allMessages = [...conversationHistory, { role: 'user' as const, content: currentMessage }];
+    const userMessages = allMessages.filter(m => m.role === 'user').map(m => m.content).join(' ').toLowerCase();
+    
+    // Check for trigger
+    const hasTrigger = userMessages.match(/schedul(e|ing)|webhook|manual|every (day|week|month|monday|tuesday|wednesday|thursday|friday)|at \d+|cron/i);
+    
+    // Check for action
+    const hasAction = userMessages.match(/send|post|create|update|insert|email|message/i);
+    
+    // Check for service
+    const hasService = userMessages.match(/gmail|slack|sendgrid|sheets|airtable|postgres|http|api/i);
+    
+    const hasAll = !!(hasTrigger && hasAction && hasService);
+    
+    if (hasAll) {
+      console.log('[Component Check] ✓ Trigger:', !!hasTrigger, '✓ Action:', !!hasAction, '✓ Service:', !!hasService);
+    }
+    
+    return hasAll;
   }
 
   /**
