@@ -10,6 +10,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Background } from '@/components/layout/Background';
 import { useWorkflow } from '@/contexts/WorkflowContext';
 import * as React from 'react';
+import Image from 'next/image';
 
 interface UseAutoResizeTextareaProps {
   minHeight: number;
@@ -173,14 +174,21 @@ export default function Home() {
                   transition={{ delay: 0.5, duration: 0.8 }}
                 />
               </motion.div>
-              <motion.p
-                className="text-sm text-muted-foreground"
+              <motion.div
+                className="flex items-center justify-center gap-2 text-sm text-muted-foreground"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                Lovable for automations
-              </motion.p>
+                <Image 
+                  src="/lovable.svg" 
+                  alt="Lovable" 
+                  width={80} 
+                  height={20}
+                  className="inline-block"
+                />
+                <span>for automations</span>
+              </motion.div>
             </div>
 
             <motion.div
