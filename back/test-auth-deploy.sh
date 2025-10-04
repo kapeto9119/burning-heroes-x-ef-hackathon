@@ -60,18 +60,28 @@ echo ""
 echo "---"
 echo ""
 
-# Test 3: Update Slack Credentials
+# Test 3: Update Slack Credentials (Manual Token Entry)
 echo -e "${BLUE}Test 3: Update Slack Credentials${NC}"
+echo "Note: Use a real Slack token (xoxb-...) to test deployment with credentials"
+echo ""
 curl -s -X POST $API_URL/api/auth/credentials/slack \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "token": "xoxb-test-slack-token",
-    "teamId": "T12345",
-    "teamName": "Test Team"
+    "token": "xoxb-test-slack-token-replace-with-real-token"
   }' | jq '.'
 echo ""
 echo -e "${GREEN}✓ Slack credentials updated${NC}"
+echo ""
+echo "---"
+echo ""
+
+# Test 3.5: Check if Slack is connected
+echo -e "${BLUE}Test 3.5: Check Slack Connection${NC}"
+curl -s $API_URL/api/auth/credentials/slack \
+  -H "Authorization: Bearer $TOKEN" | jq '.'
+echo ""
+echo -e "${GREEN}✓ Connection status retrieved${NC}"
 echo ""
 echo "---"
 echo ""

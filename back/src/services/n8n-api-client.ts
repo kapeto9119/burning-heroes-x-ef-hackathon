@@ -62,30 +62,28 @@ export class N8nApiClient {
     try {
       console.log('[n8n API] Activating workflow:', workflowId);
 
-      // Use PUT instead of PATCH for n8n API
-      await this.axiosInstance.put(`/workflows/${workflowId}`, {
-        active: true
-      });
+      // Use the dedicated activate endpoint (POST /workflows/{id}/activate)
+      await this.axiosInstance.post(`/workflows/${workflowId}/activate`);
 
       console.log('[n8n API] ✅ Workflow activated');
     } catch (error: any) {
       console.error('[n8n API] ❌ Failed to activate workflow:', error.response?.data || error.message);
-      // Don't throw error - workflow is created, activation is optional
-      console.warn('[n8n API] Workflow created but not activated - activate manually in n8n UI');
+      throw new Error(`Failed to activate workflow: ${error.response?.data?.message || error.message}`);
     }
   }
-
   /**
    * Deactivate a workflow
    */
   async deactivateWorkflow(workflowId: string): Promise<void> {
     try {
-      await this.axiosInstance.patch(`/workflows/${workflowId}`, {
-        active: false
-      });
-      console.log('[n8n API] Workflow deactivated');
+      console.log('[n8n API] Deactivating workflow:', workflowId);
+
+      // Use the dedicated deactivate endpoint (POST /workflows/{id}/deactivate)
+      await this.axiosInstance.post(`/workflows/${workflowId}/deactivate`);
+
+      console.log('[n8n API] ✅ Workflow deactivated');
     } catch (error: any) {
-      console.error('[n8n API] Failed to deactivate workflow:', error.response?.data || error.message);
+      console.error('[n8n API] ❌ Failed to deactivate workflow:', error.response?.data || error.message);
       throw new Error(`Failed to deactivate workflow: ${error.response?.data?.message || error.message}`);
     }
   }
@@ -170,15 +168,81 @@ export class N8nApiClient {
 
   /**
    * Create or update n8n credentials for a user
+   * Maps service credentials to n8n credential format
    */
-  async createCredentials(type: string, name: string, data: any): Promise<string> {
+  async createCredentials(service: string, userId: string, userCredentials: any): Promise<string> {
     try {
-      console.log('[n8n API] Creating credentials:', name);
+      // Map service types to n8n credential types and format data correctly
+      const credentialMapping: Record<string, { type: string; dataMapper: (creds: any) => any }> = {
+        slack: {
+          type: 'slackApi',
+          dataMapper: (creds) => ({
+            accessToken: creds.token,
+            notice: '' // Required by n8n Slack credential schema
+          })
+        },
+        gmail: {
+          type: 'gmailOAuth2',
+          dataMapper: (creds) => ({
+            clientId: creds.clientId,
+            clientSecret: creds.clientSecret,
+            accessToken: creds.accessToken,
+            refreshToken: creds.refreshToken
+          })
+        },
+        email: {
+          type: 'smtp',
+          dataMapper: (creds) => ({
+            user: creds.user,
+            password: creds.password,
+            host: creds.host || 'smtp.gmail.com',
+            port: creds.port || 587,
+            secure: creds.secure || false
+          })
+        },
+        http: {
+          type: 'httpBasicAuth',
+          dataMapper: (creds) => ({
+            user: creds.username,
+            password: creds.password
+          })
+        },
+        postgres: {
+          type: 'postgres',
+          dataMapper: (creds) => ({
+            host: creds.host,
+            port: creds.port || 5432,
+            database: creds.database,
+            user: creds.user,
+            password: creds.password,
+            ssl: creds.ssl || false
+          })
+        },
+        googleSheets: {
+          type: 'googleSheetsOAuth2',
+          dataMapper: (creds) => ({
+            clientId: creds.clientId,
+            clientSecret: creds.clientSecret,
+            accessToken: creds.accessToken,
+            refreshToken: creds.refreshToken
+          })
+        }
+      };
+
+      const mapping = credentialMapping[service];
+      if (!mapping) {
+        throw new Error(`Unsupported service: ${service}`);
+      }
+
+      const credentialName = `${userId.substring(0, 8)}_${service}`;
+      const credentialData = mapping.dataMapper(userCredentials);
+
+      console.log('[n8n API] Creating credentials:', credentialName, 'Type:', mapping.type);
 
       const response = await this.axiosInstance.post('/credentials', {
-        name,
-        type,
-        data
+        name: credentialName,
+        type: mapping.type,
+        data: credentialData
       });
 
       console.log('[n8n API] ✅ Credentials created with ID:', response.data.id);

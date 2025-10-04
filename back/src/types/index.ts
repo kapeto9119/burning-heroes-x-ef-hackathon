@@ -81,18 +81,26 @@ export interface UserCredentials {
     token: string;
     teamId?: string;
     teamName?: string;
+    n8nCredentialId?: string; // Store n8n credential ID for reuse
   };
   twitter?: {
     apiKey: string;
     apiSecret: string;
     accessToken: string;
     accessSecret: string;
+    n8nCredentialId?: string;
   };
   email?: {
     host: string;
     port: number;
     user: string;
     password: string;
+    n8nCredentialId?: string;
+  };
+  gmail?: {
+    accessToken: string;
+    refreshToken: string;
+    n8nCredentialId?: string;
   };
   // Add more services as needed
 }

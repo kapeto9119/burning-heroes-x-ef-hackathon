@@ -53,11 +53,11 @@ export function createDeployRouter(
         n8nClient
       );
 
+      // Log the workflow being deployed for debugging
+      console.log('[Deploy] Workflow with credentials:', JSON.stringify(workflowWithCredentials, null, 2));
+
       // Deploy to n8n
       const n8nWorkflowId = await n8nClient.createWorkflow(workflowWithCredentials, userId);
-
-      // Activate the workflow
-      await n8nClient.activateWorkflow(n8nWorkflowId);
 
       // Get webhook URL if workflow has webhook trigger
       const webhookNode = workflow.nodes.find(node => 
@@ -74,7 +74,7 @@ export function createDeployRouter(
         n8nWorkflowId,
         userId,
         webhookUrl,
-        status: 'active',
+        status: 'inactive', // Starts inactive, user activates manually
         deployedAt: new Date()
       };
 
@@ -83,14 +83,17 @@ export function createDeployRouter(
       const response: DeploymentResponse = {
         n8nWorkflowId,
         webhookUrl,
-        status: 'active',
+        status: 'inactive',
         deployedAt: deploymentRecord.deployedAt
       };
 
       res.json({
         success: true,
-        data: response,
-        message: 'Workflow deployed successfully'
+        data: {
+          ...response,
+          workflowId: deploymentRecord.workflowId // Include for activation
+        },
+        message: 'Workflow deployed successfully. Activate it to start running.'
       } as ApiResponse<DeploymentResponse>);
 
     } catch (error: any) {
@@ -264,12 +267,120 @@ export function createDeployRouter(
     }
   });
 
+  /**
+   * POST /api/deploy/:workflowId/activate
+   * Manually activate a deployed workflow
+   */
+  router.post('/:workflowId/activate', authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const { workflowId } = req.params;
+      const userId = req.user!.userId;
+
+      const deployment = deployments.get(workflowId);
+
+      if (!deployment) {
+        return res.status(404).json({
+          success: false,
+          error: 'Workflow not deployed'
+        } as ApiResponse);
+      }
+
+      // Verify ownership
+      if (deployment.userId !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Unauthorized'
+        } as ApiResponse);
+      }
+
+      console.log(`[Activate] User ${userId} activating workflow ${workflowId}`);
+
+      // Activate in n8n
+      await n8nClient.activateWorkflow(deployment.n8nWorkflowId);
+
+      // Update deployment status
+      deployment.status = 'active';
+      deployments.set(workflowId, deployment);
+
+      res.json({
+        success: true,
+        message: 'Workflow activated successfully',
+        data: {
+          workflowId,
+          n8nWorkflowId: deployment.n8nWorkflowId,
+          status: 'active'
+        }
+      } as ApiResponse);
+
+    } catch (error: any) {
+      console.error('[Activate] Error:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to activate workflow'
+      } as ApiResponse);
+    }
+  });
+
+  /**
+   * POST /api/deploy/:workflowId/deactivate
+   * Deactivate a deployed workflow
+   */
+  router.post('/:workflowId/deactivate', authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const { workflowId } = req.params;
+      const userId = req.user!.userId;
+
+      const deployment = deployments.get(workflowId);
+
+      if (!deployment) {
+        return res.status(404).json({
+          success: false,
+          error: 'Workflow not deployed'
+        } as ApiResponse);
+      }
+
+      // Verify ownership
+      if (deployment.userId !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Unauthorized'
+        } as ApiResponse);
+      }
+
+      console.log(`[Deactivate] User ${userId} deactivating workflow ${workflowId}`);
+
+      // Deactivate in n8n
+      await n8nClient.deactivateWorkflow(deployment.n8nWorkflowId);
+
+      // Update deployment status
+      deployment.status = 'inactive';
+      deployments.set(workflowId, deployment);
+
+      res.json({
+        success: true,
+        message: 'Workflow deactivated successfully',
+        data: {
+          workflowId,
+          n8nWorkflowId: deployment.n8nWorkflowId,
+          status: 'inactive'
+        }
+      } as ApiResponse);
+
+    } catch (error: any) {
+      console.error('[Deactivate] Error:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to deactivate workflow'
+      } as ApiResponse);
+    }
+  });
+
   return router;
 }
 
 /**
  * Helper: Map user credentials to workflow nodes
- * For hackathon: Skip credential creation, workflows will use manual credential setup in n8n
+ * Creates n8n credentials from user's stored tokens and attaches to nodes
  */
 async function mapUserCredentialsToWorkflow(
   workflow: N8nWorkflow,
@@ -277,20 +388,78 @@ async function mapUserCredentialsToWorkflow(
   userCredentials: any,
   n8nClient: N8nApiClient
 ): Promise<N8nWorkflow> {
-  // For hackathon demo: Return workflow without credentials
-  // Users will need to manually configure credentials in n8n UI
-  // In production: Implement OAuth flows for each service
   
-  console.log('[Deploy] Skipping credential creation - credentials must be configured in n8n UI');
-  
-  // Remove credentials from nodes to avoid validation errors
-  const nodesWithoutCredentials = workflow.nodes.map(node => {
-    const { credentials, ...nodeWithoutCreds } = node;
-    return nodeWithoutCreds;
-  });
+  if (!userCredentials || Object.keys(userCredentials).length === 0) {
+    console.log('[Deploy] No user credentials found - workflow will need manual credential setup in n8n');
+    return workflow;
+  }
+
+  // Map node types to services
+  const nodeServiceMapping: Record<string, string> = {
+    'n8n-nodes-base.slack': 'slack',
+    'n8n-nodes-base.gmail': 'gmail',
+    'n8n-nodes-base.emailSend': 'email',
+    'n8n-nodes-base.httpRequest': 'http',
+    'n8n-nodes-base.postgres': 'postgres',
+    'n8n-nodes-base.googleSheets': 'googleSheets'
+  };
+
+  const updatedNodes = await Promise.all(
+    workflow.nodes.map(async (node) => {
+      const service = nodeServiceMapping[node.type];
+      
+      if (!service || !userCredentials[service]) {
+        // No credentials needed or not available for this node
+        return node;
+      }
+
+      try {
+        // Check if we already created credentials for this service
+        let credentialId = userCredentials[service].n8nCredentialId;
+
+        if (!credentialId) {
+          // Create new credential in n8n
+          credentialId = await n8nClient.createCredentials(
+            service,
+            userId,
+            userCredentials[service]
+          );
+          
+          // TODO: Store credentialId back to user's credentials for reuse
+          console.log(`[Deploy] Created n8n credential for ${service}: ${credentialId}`);
+        } else {
+          console.log(`[Deploy] Reusing existing n8n credential for ${service}: ${credentialId}`);
+        }
+
+        // Attach credential to node
+        const credentialType = {
+          slack: 'slackApi',
+          gmail: 'gmailOAuth2',
+          email: 'smtp',
+          http: 'httpBasicAuth',
+          postgres: 'postgres',
+          googleSheets: 'googleSheetsOAuth2'
+        }[service];
+
+        return {
+          ...node,
+          credentials: {
+            [credentialType!]: {
+              id: credentialId,
+              name: `${userId.substring(0, 8)}_${service}`
+            }
+          }
+        };
+      } catch (error) {
+        console.error(`[Deploy] Failed to create credential for ${service}:`, error);
+        // Return node without credentials - user can add manually
+        return node;
+      }
+    })
+  );
 
   return {
     ...workflow,
-    nodes: nodesWithoutCredentials
+    nodes: updatedNodes
   };
 }

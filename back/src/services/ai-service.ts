@@ -60,14 +60,103 @@ Keep responses concise and actionable.`;
 
 "${description}"
 
+IMPORTANT: If the user mentions a specific Slack channel (e.g., "#alerts", "team-updates", "all-fluida"), use that EXACT channel name in the workflow. Add "#" prefix if not present. If no channel is mentioned, use "#general" as a reasonable default.
+
+Examples:
+- "send to all-fluida" → use "#all-fluida"
+- "post to #alerts" → use "#alerts"  
+- "message team-updates channel" → use "#team-updates"
+
 ${mcpContext ? `Available n8n nodes and templates:\n${JSON.stringify(mcpContext, null, 2)}` : ''}
+
+IMPORTANT: Use correct n8n node parameter formats:
+
+TRIGGERS:
+1. Webhook (n8n-nodes-base.webhook):
+{
+  "httpMethod": "POST",
+  "path": "/webhook-${Date.now()}"
+}
+
+2. Schedule (n8n-nodes-base.scheduleTrigger):
+{
+  "rule": {
+    "interval": [{"field": "cronExpression", "expression": "0 9 * * *"}]
+  }
+}
+Example cron: "0 9 * * *" = daily at 9am, "*/5 * * * *" = every 5 minutes
+
+3. Manual (n8n-nodes-base.manualTrigger):
+{} (no parameters needed)
+
+ACTIONS:
+1. Slack (n8n-nodes-base.slack):
+{
+  "resource": "message",
+  "operation": "post",
+  "select": "channel",
+  "channelId": "#channel-name",
+  "text": "message content"
+}
+
+2. Email (n8n-nodes-base.emailSend):
+{
+  "fromEmail": "sender@example.com",
+  "toEmail": "recipient@example.com",
+  "subject": "Email subject",
+  "text": "Email body"
+}
+
+3. Gmail (n8n-nodes-base.gmail):
+{
+  "resource": "message",
+  "operation": "send",
+  "to": "recipient@example.com",
+  "subject": "Email subject",
+  "message": "Email body"
+}
+
+4. HTTP Request (n8n-nodes-base.httpRequest):
+{
+  "method": "POST",
+  "url": "https://api.example.com/endpoint",
+  "authentication": "none",
+  "sendBody": true,
+  "bodyParameters": {
+    "parameters": []
+  }
+}
+
+5. Postgres (n8n-nodes-base.postgres):
+{
+  "operation": "executeQuery",
+  "query": "INSERT INTO table_name (column1, column2) VALUES ($1, $2)",
+  "additionalFields": {}
+}
+
+6. Google Sheets (n8n-nodes-base.googleSheets):
+{
+  "resource": "sheet",
+  "operation": "append",
+  "sheetId": "spreadsheet-id",
+  "range": "Sheet1!A:Z",
+  "options": {}
+}
+
+7. Airtable (n8n-nodes-base.airtable):
+{
+  "operation": "append",
+  "application": "app-id",
+  "table": "table-name",
+  "fields": {}
+}
 
 Respond with a JSON object containing:
 {
   "workflowName": "descriptive name",
   "trigger": { "type": "webhook|schedule|manual", "config": {} },
   "steps": [
-    { "action": "send_slack_message", "service": "Slack", "config": {} }
+    { "action": "send_slack_message", "service": "Slack", "config": { "resource": "message", "operation": "post", "select": "channel", "channelId": "#general", "text": "message" } }
   ],
   "requiredCredentials": ["slack", "email"],
   "estimatedComplexity": "simple|medium|complex"
