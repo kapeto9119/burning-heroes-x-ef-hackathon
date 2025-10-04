@@ -1,288 +1,258 @@
 'use client';
 
-import Link from "next/link";
-import { Sparkles, Zap, Shield, ArrowRight, Workflow, MessageSquare, Code2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { useEffect, useState } from "react";
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { SendIcon, Sparkles, Command } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { Navbar } from '@/components/layout/Navbar';
+import { Background } from '@/components/layout/Background';
+import { useWorkflow } from '@/contexts/WorkflowContext';
+import * as React from 'react';
 
-export default function Home() {
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
+interface UseAutoResizeTextareaProps {
+  minHeight: number;
+  maxHeight?: number;
+}
 
-  useEffect(() => {
-    generateBackgroundVideo();
-  }, []);
+function useAutoResizeTextarea({
+  minHeight,
+  maxHeight,
+}: UseAutoResizeTextareaProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const generateBackgroundVideo = async () => {
-    setIsGenerating(true);
-    try {
-      // Use the provided cyberpunk image
-      const imageUrl = 'https://thumbnews.nateimg.co.kr/view610///news.nateimg.co.kr/orgImg/ch/2025/07/17/ch_1752730630861_328230_0.jpg';
-      
-      // Step 1: Request video generation
-      const response = await fetch('/api/generate-video', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl })
-      });
+  const adjustHeight = useCallback(
+    (reset?: boolean) => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
 
-      const { jobId, error } = await response.json();
-      
-      if (error) {
-        console.error('Failed to start video generation:', error);
+      if (reset) {
+        textarea.style.height = `${minHeight}px`;
         return;
       }
 
-      // Step 2: Poll for results
-      const pollInterval = setInterval(async () => {
-        const checkResponse = await fetch(`/api/check-video?jobId=${jobId}`);
-        const result = await checkResponse.json();
+      requestAnimationFrame(() => {
+        textarea.style.height = 'auto';
+        const newHeight = Math.max(
+          minHeight,
+          Math.min(textarea.scrollHeight, maxHeight ?? Number.POSITIVE_INFINITY)
+        );
+        textarea.style.height = `${newHeight}px`;
+      });
+    },
+    [minHeight, maxHeight]
+  );
 
-        if (result.status === 'completed' && result.result_url) {
-          setVideoUrl(result.result_url);
-          setIsGenerating(false);
-          clearInterval(pollInterval);
-        } else if (result.status === 'failed') {
-          console.error('Video generation failed:', result.error);
-          setIsGenerating(false);
-          clearInterval(pollInterval);
-        }
-      }, 3000); // Check every 3 seconds
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = `${minHeight}px`;
+    }
+  }, [minHeight]);
 
-      // Timeout after 2 minutes
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        setIsGenerating(false);
-      }, 120000);
-    } catch (error) {
-      console.error('Error generating video:', error);
-      setIsGenerating(false);
+  return { textareaRef, adjustHeight };
+}
+
+interface TextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  containerClassName?: string;
+}
+
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, containerClassName, ...props }, ref) => {
+    return (
+      <div className={cn('relative', containerClassName)}>
+        <textarea
+          className={cn(
+            'flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm',
+            'transition-all duration-200 ease-in-out',
+            'placeholder:text-muted-foreground',
+            'disabled:cursor-not-allowed disabled:opacity-50',
+            'focus-visible:outline-none',
+            className
+          )}
+          ref={ref}
+          {...props}
+        />
+      </div>
+    );
+  }
+);
+Textarea.displayName = 'Textarea';
+
+const commandSuggestions = [
+  {
+    icon: <Sparkles className="w-4 h-4" />,
+    label: 'Generate',
+    prefix: '/generate',
+  },
+  {
+    icon: <Command className="w-4 h-4" />,
+    label: 'Analyze',
+    prefix: '/analyze',
+  },
+  {
+    icon: <Sparkles className="w-4 h-4" />,
+    label: 'Optimize',
+    prefix: '/optimize',
+  },
+];
+
+export default function Home() {
+  const router = useRouter();
+  const { setMessages } = useWorkflow();
+  const [value, setValue] = useState('');
+  const { textareaRef, adjustHeight } = useAutoResizeTextarea({
+    minHeight: 60,
+    maxHeight: 200,
+  });
+
+  const handleSendMessage = () => {
+    if (value.trim()) {
+      // Add the user's first message to context
+      setMessages([{
+        id: Date.now().toString(),
+        text: value,
+        isUser: true,
+        timestamp: new Date(),
+      }]);
+      
+      // Navigate to editor
+      router.push('/editor');
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black relative overflow-hidden">
-      {/* Background Video */}
-      {videoUrl && (
-        <div className="absolute inset-0 z-0">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover opacity-40"
-            src={videoUrl}
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
-        </div>
-      )}
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (value.trim()) {
+        handleSendMessage();
+      }
+    }
+  };
 
-      {/* Fallback gradient while video loads */}
-      {!videoUrl && (
-        <div className="absolute inset-0 z-0 bg-gradient-to-br from-orange-600/20 via-red-600/20 to-yellow-600/20 animate-pulse" />
-      )}
+  const handleSuggestionClick = (prefix: string) => {
+    setValue(prefix + ' ');
+    textareaRef.current?.focus();
+  };
+
+  return (
+    <div className="min-h-screen relative overflow-hidden bg-background text-foreground">
+      {/* Background */}
+      <div className="absolute inset-0 w-full h-full">
+        <Background />
+      </div>
 
       {/* Content */}
       <div className="relative z-10">
-        {/* Navigation */}
-        <nav className="border-b border-white/10 bg-black/30 backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Workflow className="w-6 h-6 text-blue-600" />
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              WorkflowAI
-            </span>
-          </div>
-          <Link href="/chat">
-            <Button variant="outline" size="sm">
-              Try It Now
-            </Button>
-          </Link>
-        </div>
-      </nav>
+        <Navbar />
 
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 md:py-32 text-center">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-sm font-medium mb-4">
-            <Sparkles className="w-4 h-4" />
-            AI-Powered Automation
-          </div>
-          
-          <h1 className="text-5xl md:text-7xl font-bold leading-tight">
-            Build Workflows with{" "}
-            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              AI in Seconds
-            </span>
-          </h1>
-          
-          <p className="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Just describe what you want. Our AI creates the complete automation workflow for you. 
-            No coding required.
-          </p>
-          
-          <div className="flex gap-4 items-center justify-center flex-col sm:flex-row pt-4">
-            <Link href="/chat">
-              <Button size="lg" className="text-lg px-8 py-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all">
-                Get Started
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
-            <Link href="/templates">
-              <Button size="lg" variant="outline" className="text-lg px-8 py-6">
-                View Examples
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Automation Made Simple
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Powerful features that make workflow creation effortless
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {/* Feature 1 */}
-          <Card className="p-6 hover:shadow-lg transition-shadow border-2 hover:border-blue-200">
-            <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center mb-4">
-              <MessageSquare className="w-6 h-6 text-blue-600" />
+        {/* Main Landing Content */}
+        <div className="w-full max-w-2xl mx-auto flex-1 flex items-center justify-center px-6 py-12 min-h-[calc(100vh-100px)]">
+          <motion.div
+            className="relative space-y-12 w-full"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+          >
+            <div className="text-center space-y-3">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+                className="inline-block"
+              >
+                <h1 className="text-4xl font-light tracking-tight text-foreground/90 pb-1">
+                  What's up nerd, what do you wanna automate today?
+                </h1>
+                <motion.div
+                  className="h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: '100%', opacity: 1 }}
+                  transition={{ delay: 0.5, duration: 0.8 }}
+                />
+              </motion.div>
+              <motion.p
+                className="text-sm text-muted-foreground"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                Type / for commands
+              </motion.p>
             </div>
-            <h3 className="text-xl font-semibold mb-2">Natural Language</h3>
-            <p className="text-gray-600">
-              Describe your workflow in plain English. No technical jargon needed.
-            </p>
-          </Card>
 
-          {/* Feature 2 */}
-          <Card className="p-6 hover:shadow-lg transition-shadow border-2 hover:border-purple-200">
-            <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center mb-4">
-              <Zap className="w-6 h-6 text-purple-600" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Instant Generation</h3>
-            <p className="text-gray-600">
-              AI generates complete workflows in seconds, ready to deploy.
-            </p>
-          </Card>
-
-          {/* Feature 3 */}
-          <Card className="p-6 hover:shadow-lg transition-shadow border-2 hover:border-green-200">
-            <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center mb-4">
-              <Workflow className="w-6 h-6 text-green-600" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Visual Editor</h3>
-            <p className="text-gray-600">
-              See your workflow visualized as a graph. Edit and customize easily.
-            </p>
-          </Card>
-
-          {/* Feature 4 */}
-          <Card className="p-6 hover:shadow-lg transition-shadow border-2 hover:border-orange-200">
-            <div className="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center mb-4">
-              <Shield className="w-6 h-6 text-orange-600" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Secure & Reliable</h3>
-            <p className="text-gray-600">
-              Enterprise-grade security with reliable execution every time.
-            </p>
-          </Card>
-
-          {/* Feature 5 */}
-          <Card className="p-6 hover:shadow-lg transition-shadow border-2 hover:border-pink-200">
-            <div className="w-12 h-12 rounded-lg bg-pink-100 flex items-center justify-center mb-4">
-              <Code2 className="w-6 h-6 text-pink-600" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Powered by n8n</h3>
-            <p className="text-gray-600">
-              Built on n8n's powerful automation platform with 400+ integrations.
-            </p>
-          </Card>
-
-          {/* Feature 6 */}
-          <Card className="p-6 hover:shadow-lg transition-shadow border-2 hover:border-teal-200">
-            <div className="w-12 h-12 rounded-lg bg-teal-100 flex items-center justify-center mb-4">
-              <Sparkles className="w-6 h-6 text-teal-600" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Smart Templates</h3>
-            <p className="text-gray-600">
-              Start from pre-built templates or create custom workflows from scratch.
-            </p>
-          </Card>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-12 text-center text-white shadow-2xl">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Ready to Automate Your Workflows?
-          </h2>
-          <p className="text-lg mb-8 opacity-90">
-            Join thousands of users who are building smarter, faster with AI
-          </p>
-          <Link href="/chat">
-            <Button size="lg" variant="secondary" className="text-lg px-8 py-6">
-              Start Building Now
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </Link>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t bg-white">
-        <div className="container mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Workflow className="w-6 h-6 text-blue-600" />
-                <span className="text-lg font-bold">WorkflowAI</span>
+            <motion.div
+              className="relative backdrop-blur-xl bg-background/40 rounded-2xl border border-border shadow-2xl"
+              initial={{ scale: 0.98 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <div className="p-4">
+                <Textarea
+                  ref={textareaRef}
+                  value={value}
+                  onChange={(e) => {
+                    setValue(e.target.value);
+                    adjustHeight();
+                  }}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask me anything..."
+                  containerClassName="w-full"
+                  className="w-full px-4 py-3 resize-none bg-transparent border-none text-foreground text-sm focus:outline-none placeholder:text-muted-foreground min-h-[60px]"
+                  style={{ overflow: 'hidden' }}
+                />
               </div>
-              <p className="text-sm text-gray-600">
-                AI-powered workflow automation for everyone
-              </p>
+
+              <div className="p-4 border-t border-border flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <motion.button
+                    type="button"
+                    whileTap={{ scale: 0.94 }}
+                    className="p-2 text-muted-foreground hover:text-foreground rounded-lg transition-colors relative group"
+                  >
+                    <Command className="w-4 h-4" />
+                  </motion.button>
+                </div>
+
+                <motion.button
+                  type="button"
+                  onClick={handleSendMessage}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  disabled={!value.trim()}
+                  className={cn(
+                    'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                    'flex items-center gap-2',
+                    value.trim()
+                      ? 'bg-primary text-primary-foreground shadow-lg'
+                      : 'bg-accent text-muted-foreground'
+                  )}
+                >
+                  <SendIcon className="w-4 h-4" />
+                  <span>Send</span>
+                </motion.button>
+              </div>
+            </motion.div>
+
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {commandSuggestions.map((suggestion, index) => (
+                <motion.button
+                  key={suggestion.prefix}
+                  onClick={() => handleSuggestionClick(suggestion.prefix)}
+                  className="flex items-center gap-2 px-3 py-2 bg-accent/50 hover:bg-accent rounded-lg text-sm text-muted-foreground hover:text-foreground transition-all relative group border border-border/50"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  {suggestion.icon}
+                  <span>{suggestion.label}</span>
+                </motion.button>
+              ))}
             </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link href="/chat" className="hover:text-blue-600 transition">Get Started</Link></li>
-                <li><Link href="#" className="hover:text-blue-600 transition">Templates</Link></li>
-                <li><Link href="#" className="hover:text-blue-600 transition">Pricing</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Resources</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link href="#" className="hover:text-blue-600 transition">Documentation</Link></li>
-                <li><Link href="#" className="hover:text-blue-600 transition">API Reference</Link></li>
-                <li><Link href="#" className="hover:text-blue-600 transition">Support</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link href="#" className="hover:text-blue-600 transition">About</Link></li>
-                <li><Link href="#" className="hover:text-blue-600 transition">Blog</Link></li>
-                <li><Link href="#" className="hover:text-blue-600 transition">GitHub</Link></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t mt-8 pt-8 text-center text-sm text-gray-600">
-            <p>Built with n8n-MCP • © 2025 WorkflowAI. All rights reserved.</p>
-          </div>
+          </motion.div>
         </div>
-      </footer>
       </div>
     </div>
   );

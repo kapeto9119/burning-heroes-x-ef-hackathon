@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { WorkflowProvider } from "@/contexts/WorkflowContext";
+import { ToastContainer } from "@/components/ToastContainer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "WorkflowAI - Build Workflows with AI in Seconds",
-  description: "AI-powered workflow automation tool. Just describe what you want and our AI creates the complete automation for you. No coding required.",
+  title: "Mozart | Lovable for automations",
+  description: "Build powerful automation workflows with AI. Just describe what you want and Mozart creates it for you.",
 };
 
 export default function RootLayout({
@@ -27,7 +29,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <WorkflowProvider>
+          {children}
+          <ToastContainer />
+        </WorkflowProvider>
       </body>
     </html>
   );
