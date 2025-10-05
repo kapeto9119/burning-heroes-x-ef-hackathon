@@ -17,6 +17,7 @@ interface DeploymentRecord {
 const deployments: Map<string, DeploymentRecord> = new Map();
 
 // Sample deployed workflows for demo
+const now = new Date();
 const sampleDeployments: DeploymentRecord[] = [
   {
     workflowId: 'deploy_sample_1',
@@ -24,7 +25,7 @@ const sampleDeployments: DeploymentRecord[] = [
     userId: 'demo_user_123',
     webhookUrl: 'http://localhost:5678/webhook/standup-reminder',
     status: 'active',
-    deployedAt: new Date('2025-01-15T09:00:00Z')
+    deployedAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000) // 5 days ago
   },
   {
     workflowId: 'deploy_sample_2',
@@ -32,14 +33,14 @@ const sampleDeployments: DeploymentRecord[] = [
     userId: 'demo_user_123',
     webhookUrl: 'http://localhost:5678/webhook/email-alerts',
     status: 'active',
-    deployedAt: new Date('2025-01-20T14:30:00Z')
+    deployedAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000) // 2 days ago
   },
   {
     workflowId: 'deploy_sample_3',
     n8nWorkflowId: '3',
     userId: 'demo_user_123',
     status: 'inactive',
-    deployedAt: new Date('2025-01-22T11:15:00Z')
+    deployedAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000) // 1 day ago
   }
 ];
 

@@ -113,7 +113,9 @@ export default function WorkflowsPage() {
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Clock className="w-4 h-4" />
-                            {new Date(workflow.deployedAt).toLocaleDateString()}
+                            {workflow.deployedAt 
+                              ? new Date(workflow.deployedAt).toLocaleDateString() 
+                              : 'Recently'}
                           </span>
                           {workflow.webhookUrl && (
                             <span className="font-mono text-xs bg-accent px-2 py-1 rounded">
