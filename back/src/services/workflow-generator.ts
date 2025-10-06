@@ -1,28 +1,41 @@
 import { N8nWorkflow, N8nNode, N8nConnection } from '../types';
 import { N8nMCPClient } from './n8n-mcp-client';
 import { AIService } from './ai-service';
+import { CredentialDetector, CredentialRequirement } from './credential-detector';
+
+export interface WorkflowGenerationResult {
+  workflow: N8nWorkflow;
+  credentialRequirements: CredentialRequirement[];
+}
 
 export class WorkflowGenerator {
   private mcpClient: N8nMCPClient;
   private aiService: AIService;
+  private credentialDetector: CredentialDetector;
 
   constructor(mcpClient: N8nMCPClient, aiService: AIService) {
     this.mcpClient = mcpClient;
     this.aiService = aiService;
+    this.credentialDetector = new CredentialDetector(mcpClient);
   }
 
   /**
    * Generate a complete n8n workflow from a natural language description
+   * Returns workflow + credential requirements
    */
-  async generateFromDescription(description: string): Promise<N8nWorkflow> {
+  async generateFromDescription(description: string): Promise<WorkflowGenerationResult> {
     try {
-      // Step 1: Search for relevant templates
-      const templates = await this.mcpClient.searchTemplates(description);
+      console.log('[Workflow Generator] Starting generation for:', description);
       
-      // Step 2: Search for relevant nodes
-      const nodes = await this.mcpClient.searchNodes(description);
+      // Step 1: Search for relevant templates (with real examples from 2,500+ templates)
+      const templates = await this.mcpClient.searchTemplates(description, 5);
+      console.log(`[Workflow Generator] Found ${templates.length} relevant templates`);
       
-      // Step 3: Use AI to generate workflow structure
+      // Step 2: Search for relevant nodes (with real-world configuration examples)
+      const nodes = await this.mcpClient.searchNodes(description, true);
+      console.log(`[Workflow Generator] Found ${nodes.length} relevant nodes`);
+      
+      // Step 3: Use AI to generate workflow structure using template examples
       const workflowPlan = await this.aiService.generateWorkflowFromDescription(
         description,
         { templates: templates.slice(0, 3), nodes: nodes.slice(0, 5) }
@@ -31,21 +44,40 @@ export class WorkflowGenerator {
       // Step 4: Convert AI plan to n8n workflow format
       const workflow = await this.convertPlanToWorkflow(workflowPlan, description);
 
-      // Step 5: Validate the workflow
+      // Step 5: Detect credential requirements
+      const credentialRequirements = await this.credentialDetector.detectRequiredCredentials(workflow);
+      console.log(`[Workflow Generator] Detected ${credentialRequirements.length} credential requirements`);
+
+      // Step 6: Validate the workflow
       const validation = await this.mcpClient.validateWorkflow(workflow);
       if (!validation.valid) {
-        console.warn('Workflow validation warnings:', validation.errors);
+        console.warn('[Workflow Generator] Validation warnings:', validation.errors);
       }
 
-      return workflow;
+      return {
+        workflow,
+        credentialRequirements
+      };
     } catch (error) {
-      console.error('Workflow generation error:', error);
+      console.error('[Workflow Generator] Generation error:', error);
       throw new Error('Failed to generate workflow');
     }
   }
 
   /**
+   * Check which credentials user is missing for a workflow
+   */
+  async checkMissingCredentials(
+    userId: string,
+    requirements: CredentialRequirement[],
+    userCredentials: any
+  ): Promise<CredentialRequirement[]> {
+    return this.credentialDetector.checkMissingCredentials(userId, requirements, userCredentials);
+  }
+
+  /**
    * Convert AI-generated plan to n8n workflow format
+   * Now dynamically resolves node types via MCP
    */
   private async convertPlanToWorkflow(plan: any, description: string): Promise<N8nWorkflow> {
     const nodes: N8nNode[] = [];
@@ -62,11 +94,11 @@ export class WorkflowGenerator {
       xPosition += xSpacing;
     }
 
-    // Create action nodes
+    // Create action nodes (now async to query MCP)
     if (plan.steps && Array.isArray(plan.steps)) {
       for (let i = 0; i < plan.steps.length; i++) {
         const step = plan.steps[i];
-        const actionNode = this.createActionNode(step, i, xPosition, yPosition);
+        const actionNode = await this.createActionNode(step, i, xPosition, yPosition);
         nodes.push(actionNode);
         xPosition += xSpacing;
 
@@ -127,21 +159,26 @@ export class WorkflowGenerator {
 
   /**
    * Create an action node based on step definition
+   * Now uses MCP to dynamically find the correct node type
    */
-  private createActionNode(step: any, index: number, x: number, y: number): N8nNode {
-    // Map common services to n8n node types
-    const serviceNodeTypes: Record<string, string> = {
-      slack: 'n8n-nodes-base.slack',
-      email: 'n8n-nodes-base.emailSend',
-      gmail: 'n8n-nodes-base.gmail',
-      http: 'n8n-nodes-base.httpRequest',
-      database: 'n8n-nodes-base.postgres',
-      sheets: 'n8n-nodes-base.googleSheets',
-      airtable: 'n8n-nodes-base.airtable'
-    };
-
-    const service = step.service?.toLowerCase() || 'http';
-    const nodeType = serviceNodeTypes[service] || 'n8n-nodes-base.httpRequest';
+  private async createActionNode(step: any, index: number, x: number, y: number): Promise<N8nNode> {
+    let nodeType = 'n8n-nodes-base.httpRequest'; // Default fallback
+    
+    // Try to find the correct node type using MCP search
+    if (step.service) {
+      try {
+        const searchResults = await this.mcpClient.searchNodes(step.service, false);
+        if (searchResults.length > 0) {
+          // Use the first (most relevant) result
+          nodeType = searchResults[0].nodeType;
+          console.log(`[Workflow Generator] Found node type for "${step.service}": ${nodeType}`);
+        } else {
+          console.warn(`[Workflow Generator] No node found for "${step.service}", using HTTP Request`);
+        }
+      } catch (error) {
+        console.error(`[Workflow Generator] Error searching for node type:`, error);
+      }
+    }
 
     return {
       id: this.generateNodeId(),

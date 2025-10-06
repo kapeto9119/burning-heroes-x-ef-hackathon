@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { N8nWorkflow, ExecutionResult } from '../types';
+import { N8nWorkflow, ExecutionResult, NodeExecutionStatus } from '../types';
 
 /**
  * Real n8n API Client for deployment and execution
@@ -145,14 +145,38 @@ export class N8nApiClient {
         }
       });
 
-      return response.data.data.map((execution: any) => ({
-        id: execution.id,
-        status: execution.finished ? (execution.data?.resultData?.error ? 'error' : 'success') : 'running',
-        startedAt: new Date(execution.startedAt),
-        finishedAt: execution.stoppedAt ? new Date(execution.stoppedAt) : undefined,
-        data: execution.data,
-        error: execution.data?.resultData?.error?.message
-      }));
+      return response.data.data.map((execution: any) => {
+        // Parse node-level execution data
+        const nodeExecutions: NodeExecutionStatus[] = [];
+        
+        if (execution.data?.resultData?.runData) {
+          const runData = execution.data.resultData.runData;
+          
+          // Parse each node's execution status
+          Object.entries(runData).forEach(([nodeName, nodeData]: [string, any]) => {
+            if (Array.isArray(nodeData) && nodeData.length > 0) {
+              const lastRun = nodeData[nodeData.length - 1];
+              
+              nodeExecutions.push({
+                nodeName,
+                status: lastRun.error ? 'error' : 'success',
+                executionTime: lastRun.executionTime,
+                error: lastRun.error?.message
+              });
+            }
+          });
+        }
+
+        return {
+          id: execution.id,
+          status: execution.finished ? (execution.data?.resultData?.error ? 'error' : 'success') : 'running',
+          startedAt: new Date(execution.startedAt),
+          finishedAt: execution.stoppedAt ? new Date(execution.stoppedAt) : undefined,
+          data: execution.data,
+          error: execution.data?.resultData?.error?.message,
+          nodeExecutions
+        };
+      });
     } catch (error: any) {
       console.error('[n8n API] Failed to get executions:', error.response?.data || error.message);
       throw new Error(`Failed to get executions: ${error.response?.data?.message || error.message}`);

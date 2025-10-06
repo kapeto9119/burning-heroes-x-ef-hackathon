@@ -77,6 +77,19 @@ export function createDeployRouter(
       // Get user credentials
       const userCredentials = authService.getUserById(userId)?.credentials;
 
+      // Check if user has all required credentials
+      const credentialCheck = checkRequiredCredentials(workflow, userCredentials);
+      if (!credentialCheck.valid) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required credentials',
+          data: {
+            missingCredentials: credentialCheck.missing,
+            message: credentialCheck.message
+          }
+        } as ApiResponse);
+      }
+
       // Map user credentials to n8n credential IDs
       // For demo: We'll create credentials in n8n on-the-fly
       const workflowWithCredentials = await mapUserCredentialsToWorkflow(
@@ -409,6 +422,66 @@ export function createDeployRouter(
   });
 
   return router;
+}
+
+/**
+ * Helper: Check if user has all required credentials for workflow nodes
+ */
+function checkRequiredCredentials(
+  workflow: N8nWorkflow,
+  userCredentials: any
+): { valid: boolean; missing: Array<{ nodeName: string; service: string; nodeType: string }>; message: string } {
+  const nodeServiceMapping: Record<string, string> = {
+    'n8n-nodes-base.slack': 'slack',
+    'n8n-nodes-base.gmail': 'gmail',
+    'n8n-nodes-base.emailSend': 'email',
+    'n8n-nodes-base.httpRequest': 'http',
+    'n8n-nodes-base.postgres': 'postgres',
+    'n8n-nodes-base.googleSheets': 'googleSheets'
+  };
+
+  const serviceDisplayNames: Record<string, string> = {
+    slack: 'Slack',
+    gmail: 'Gmail',
+    email: 'Email/SMTP',
+    http: 'HTTP Authentication',
+    postgres: 'PostgreSQL',
+    googleSheets: 'Google Sheets'
+  };
+
+  const missing: Array<{ nodeName: string; service: string; nodeType: string }> = [];
+
+  workflow.nodes.forEach(node => {
+    const service = nodeServiceMapping[node.type];
+    
+    // If this node type requires credentials
+    if (service) {
+      // Check if user has credentials for this service
+      if (!userCredentials || !userCredentials[service]) {
+        missing.push({
+          nodeName: node.name,
+          service: serviceDisplayNames[service] || service,
+          nodeType: node.type
+        });
+      }
+    }
+  });
+
+  if (missing.length === 0) {
+    return { valid: true, missing: [], message: '' };
+  }
+
+  // Create a user-friendly message
+  const serviceList = [...new Set(missing.map(m => m.service))].join(', ');
+  const nodeList = missing.map(m => `• ${m.nodeName} (requires ${m.service})`).join('\n');
+  
+  const message = `Please add credentials for the following services before deploying:\n\n${nodeList}\n\nGo to Settings > Credentials to add ${serviceList} credentials.`;
+
+  return {
+    valid: false,
+    missing,
+    message
+  };
 }
 
 /**

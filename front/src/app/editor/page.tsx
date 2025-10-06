@@ -19,6 +19,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Background } from "@/components/layout/Background";
 import { useWorkflow } from "@/contexts/WorkflowContext";
 import { LoginDialog } from "@/components/LoginDialog";
+import { CredentialSetupModal, CredentialRequirement } from "@/components/CredentialSetupModal";
 import { generateWorkflow, sendChatMessage } from "@/app/actions/chat";
 import {
   deployWorkflow,
@@ -135,6 +136,8 @@ export default function EditorPage() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [credentialRequirements, setCredentialRequirements] = useState<CredentialRequirement[]>([]);
+  const [showCredentialModal, setShowCredentialModal] = useState(false);
   const hasRespondedRef = useRef(false);
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight: 60,
@@ -169,6 +172,12 @@ export default function EditorPage() {
             if (result.data.workflow) {
               setWorkflow(result.data.workflow);
               setDeploymentStatus("idle");
+              
+              // Check for credential requirements
+              if (result.data.credentialRequirements && result.data.credentialRequirements.length > 0) {
+                setCredentialRequirements(result.data.credentialRequirements);
+                // Don't show modal yet - wait for user to deploy
+              }
             }
           }
         } catch (error) {
@@ -190,10 +199,20 @@ export default function EditorPage() {
       const result = await generateWorkflow(description);
 
       if (result.success && result.data) {
-        setWorkflow(result.data);
+        // Handle both old format (just workflow) and new format (workflow + credentials)
+        const workflowData = result.data.workflow || result.data;
+        const credentials = result.data.credentialRequirements || [];
+        
+        setWorkflow(workflowData);
+        setCredentialRequirements(credentials);
+        
+        const credentialInfo = credentials.length > 0 
+          ? `\n\n⚠️ This workflow requires credentials for: ${credentials.map((c: any) => c.service).join(', ')}`
+          : '';
+        
         const aiMessage = {
           id: Date.now().toString(),
-          text: `I've generated a workflow: "${result.data.name}"\n\nNodes: ${result.data.nodes.length}\n\nReady to deploy?`,
+          text: `I've generated a workflow: "${workflowData.name}"\n\nNodes: ${workflowData.nodes.length}${credentialInfo}\n\nReady to deploy?`,
           isUser: false,
           timestamp: new Date(),
         };
@@ -221,15 +240,37 @@ export default function EditorPage() {
       setShowLoginDialog(true);
       return;
     }
+    
+    // Check if credentials are needed
+    if (credentialRequirements.length > 0) {
+      setShowCredentialModal(true);
+    } else {
+      handleDeploy();
+    }
+  };
+  
+  const handleCredentialsComplete = () => {
+    setShowCredentialModal(false);
+    setCredentialRequirements([]);
+    handleDeploy();
+  };
+  
+  const handleCredentialsSkip = () => {
+    setShowCredentialModal(false);
+    // Deploy anyway (credentials can be added later)
     handleDeploy();
   };
 
   const handleLogin = () => {
     setIsAuthenticated(true);
     setShowLoginDialog(false);
-    // Auto-deploy after login if workflow exists
+    // Check credentials after login
     if (workflow) {
-      handleDeploy();
+      if (credentialRequirements.length > 0) {
+        setShowCredentialModal(true);
+      } else {
+        handleDeploy();
+      }
     }
   };
 
@@ -280,7 +321,22 @@ export default function EditorPage() {
           setTimeout(() => setShowCelebration(false), 3000);
         }
       } else {
-        throw new Error(deployResult.error || "Deployment failed");
+        // Check if it's a credentials error
+        if (deployResult.error === 'Missing required credentials' && deployResult.data) {
+          const missingCreds = deployResult.data.missingCredentials || [];
+          const credsList = missingCreds.map((c: any) => `  • **${c.nodeName}** requires ${c.service}`).join('\n');
+          
+          const errorMessage = {
+            id: Date.now().toString(),
+            text: `❌ **Missing Credentials**\n\nYour workflow needs the following credentials:\n\n${credsList}\n\n📝 **Action Required:** Go to Settings > Credentials to add these credentials, then try deploying again.`,
+            isUser: false,
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, errorMessage]);
+          setDeploymentStatus("error");
+        } else {
+          throw new Error(deployResult.error || "Deployment failed");
+        }
       }
     } catch (error: any) {
       const errorMessage = {
@@ -623,6 +679,15 @@ export default function EditorPage() {
         onClose={() => setShowLoginDialog(false)}
         onLogin={handleLogin}
       />
+
+      {/* Credential Setup Modal */}
+      {showCredentialModal && credentialRequirements.length > 0 && (
+        <CredentialSetupModal
+          requirements={credentialRequirements}
+          onComplete={handleCredentialsComplete}
+          onSkip={handleCredentialsSkip}
+        />
+      )}
     </div>
   );
 }

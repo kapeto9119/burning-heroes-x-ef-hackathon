@@ -119,3 +119,24 @@ export async function getWorkflowExecutions(workflowId: string, limit: number = 
     return { success: false, error: error.message };
   }
 }
+
+export async function executeWorkflow(workflowId: string, data: any = {}) {
+  try {
+    // Auto-authenticate for demo
+    const token = await ensureAuth();
+
+    const response = await fetch(`${API_URL}/api/deploy/${workflowId}/execute`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ data }),
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

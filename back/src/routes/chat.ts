@@ -45,6 +45,7 @@ export function createChatRouter(
       const shouldBuildWorkflow = await aiService.detectWorkflowIntent(message, conversationHistory);
 
       let workflow = undefined;
+      let credentialRequirements = undefined;
       let workflowDescription = message;
 
       if (shouldBuildWorkflow) {
@@ -58,9 +59,12 @@ export function createChatRouter(
             console.log('[Workflow Generation] Using extracted requirements:', workflowDescription.substring(0, 100) + '...');
           }
 
-          // Generate the workflow
-          workflow = await workflowGenerator.generateFromDescription(workflowDescription);
+          // Generate the workflow with credential detection
+          const result = await workflowGenerator.generateFromDescription(workflowDescription);
+          workflow = result.workflow;
+          credentialRequirements = result.credentialRequirements;
           console.log('[Workflow Generation] ✅ Successfully generated workflow:', workflow.name);
+          console.log('[Workflow Generation] Credential requirements:', credentialRequirements.length);
         } catch (error) {
           console.error('[Workflow Generation] ❌ Failed:', error);
           // Continue without workflow - AI will explain what's needed
@@ -70,9 +74,10 @@ export function createChatRouter(
       // Get AI response (after workflow generation so AI can reference it)
       const aiResponse = await aiService.chat(message, conversationHistory);
 
-      const response: ChatResponse = {
+      const response: any = {
         message: aiResponse,
         workflow,
+        credentialRequirements,
         suggestions: generateSuggestions(message)
       };
 
@@ -105,11 +110,11 @@ export function createChatRouter(
         } as ApiResponse);
       }
 
-      const workflow = await workflowGenerator.generateFromDescription(description);
+      const result = await workflowGenerator.generateFromDescription(description);
 
       res.json({
         success: true,
-        data: workflow,
+        data: result,
         message: 'Workflow generated successfully'
       } as ApiResponse);
 

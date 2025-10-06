@@ -17,51 +17,72 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Webhook, Calendar, Play, Zap } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Clock, Save, Edit3 } from 'lucide-react';
+import { getNodeVisual } from '@/lib/nodeVisuals';
 
 // Custom node component with animations
+// Now uses dynamic visual system to support all N8N nodes
 function CustomNode({ data }: any) {
-  const getIcon = (type: string) => {
-    if (type.includes('webhook')) return <Webhook className="w-4 h-4" />;
-    if (type.includes('schedule')) return <Calendar className="w-4 h-4" />;
-    if (type.includes('manual')) return <Play className="w-4 h-4" />;
-    if (type.includes('slack')) return <Zap className="w-4 h-4" />;
-    return <Sparkles className="w-4 h-4" />;
-  };
-
-  const getNodeColor = (type: string) => {
-    if (type.includes('webhook')) return 'from-blue-500/20 to-blue-600/20 border-blue-500/50';
-    if (type.includes('schedule')) return 'from-purple-500/20 to-purple-600/20 border-purple-500/50';
-    if (type.includes('slack')) return 'from-green-500/20 to-green-600/20 border-green-500/50';
-    if (type.includes('email')) return 'from-orange-500/20 to-orange-600/20 border-orange-500/50';
-    return 'from-gray-500/20 to-gray-600/20 border-gray-500/50';
-  };
+  const nodeStatus = data.executionStatus;
+  
+  // Get dynamic icon and color based on node type
+  const visual = getNodeVisual(data.type, data.label);
+  const Icon = visual.icon;
 
   return (
     <motion.div
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.3, type: 'spring' }}
-      className="relative"
+      className="relative nodrag"
     >
-      {/* Input handle (left side) */}
+      {/* Input handle (left side) - positioned at left center */}
       <Handle
         type="target"
         position={Position.Left}
         id="input"
-        className="w-4 h-4 !bg-primary border-2 border-background"
-        style={{ left: -8 }}
+        className="w-3 h-3 !bg-purple-500 border-2 border-white"
+        style={{ 
+          left: 0,
+          top: '50%',
+        }}
+        isConnectable={false}
       />
       
       <div className={`
         px-4 py-3 rounded-xl border-2 backdrop-blur-xl
-        bg-gradient-to-br ${getNodeColor(data.type)}
+        bg-gradient-to-br ${visual.color}
         shadow-lg hover:shadow-xl transition-all duration-200
-        min-w-[200px]
+        w-[220px] relative
       `}>
+        {/* Status Badge */}
+        {nodeStatus && (
+          <div className="absolute -top-2 -right-2 z-10">
+            {nodeStatus === 'success' && (
+              <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                <CheckCircle className="w-4 h-4 text-white" />
+              </div>
+            )}
+            {nodeStatus === 'error' && (
+              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
+                <XCircle className="w-4 h-4 text-white" />
+              </div>
+            )}
+            {nodeStatus === 'running' && (
+              <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                <Loader2 className="w-4 h-4 text-white animate-spin" />
+              </div>
+            )}
+            {nodeStatus === 'waiting' && (
+              <div className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center shadow-lg">
+                <Clock className="w-4 h-4 text-white" />
+              </div>
+            )}
+          </div>
+        )}
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-background/80 flex items-center justify-center">
-            {getIcon(data.type)}
+            <Icon className="w-4 h-4" />
           </div>
           <div className="flex-1">
             <div className="font-medium text-sm text-foreground">{data.label}</div>
@@ -75,13 +96,17 @@ function CustomNode({ data }: any) {
         )}
       </div>
       
-      {/* Output handle (right side) */}
+      {/* Output handle (right side) - positioned at right center */}
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="w-4 h-4 !bg-primary border-2 border-background"
-        style={{ right: -8 }}
+        className="w-3 h-3 !bg-purple-500 border-2 border-white"
+        style={{ 
+          right: 0,
+          top: '50%',
+        }}
+        isConnectable={false}
       />
       
       {/* Animated glow effect */}
@@ -112,9 +137,11 @@ function CustomNode({ data }: any) {
 interface WorkflowCanvasProps {
   workflow: any;
   isGenerating?: boolean;
+  latestExecution?: any;
+  isPreview?: boolean;
 }
 
-export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) {
+export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPreview = false }: WorkflowCanvasProps) {
   // Memoize nodeTypes to prevent React Flow warning
   const nodeTypes = useMemo(() => ({
     custom: CustomNode,
@@ -123,12 +150,20 @@ export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) 
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [selectedNode, setSelectedNode] = useState<any>(null);
+  const [isEditingNode, setIsEditingNode] = useState(false);
+  const [editedParameters, setEditedParameters] = useState<any>({});
   const hasInitialized = useRef(false);
 
-  // Reset initialization flag when workflow changes
+  // Reset initialization flag when workflow or execution changes
   useEffect(() => {
     hasInitialized.current = false;
-  }, [workflow?.id]);
+  }, [workflow?.id, latestExecution?.id]);
+
+  // Reset edit mode when node changes
+  useEffect(() => {
+    setIsEditingNode(false);
+    setEditedParameters({});
+  }, [selectedNode?.id]);
 
   // Convert n8n workflow to React Flow format
   useEffect(() => {
@@ -137,6 +172,14 @@ export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) 
     // Prevent multiple initializations of same workflow
     if (hasInitialized.current) return;
     hasInitialized.current = true;
+
+    // Create a map of node execution statuses
+    const nodeStatusMap = new Map<string, string>();
+    if (latestExecution?.nodeExecutions) {
+      latestExecution.nodeExecutions.forEach((nodeExec: any) => {
+        nodeStatusMap.set(nodeExec.nodeName, nodeExec.status);
+      });
+    }
 
     const flowNodes: Node[] = workflow.nodes.map((node: any, index: number) => {
       const isFirst = index === 0;
@@ -154,6 +197,7 @@ export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) 
           description: node.parameters?.text || node.parameters?.channelId || '',
           parameters: node.parameters,
           rawNode: node,
+          executionStatus: nodeStatusMap.get(node.name),
         },
       };
     });
@@ -174,12 +218,12 @@ export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) 
           type: 'smoothstep',
           animated: true,
           style: {
-            stroke: 'hsl(var(--primary))',
-            strokeWidth: 3,
+            stroke: '#8b5cf6',
+            strokeWidth: 2,
           },
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: 'hsl(var(--primary))',
+            color: '#8b5cf6',
           },
         });
       }
@@ -210,12 +254,12 @@ export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) 
                 type: 'smoothstep',
                 animated: true,
                 style: {
-                  stroke: 'hsl(var(--primary))',
-                  strokeWidth: 3,
+                  stroke: '#8b5cf6',
+                  strokeWidth: 2,
                 },
                 markerEnd: {
                   type: MarkerType.ArrowClosed,
-                  color: 'hsl(var(--primary))',
+                  color: '#8b5cf6',
                 },
               };
               console.log('[WorkflowCanvas] Creating edge:', edge);
@@ -235,22 +279,29 @@ export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) 
     // Set all nodes at once (no animation delay)
     setNodes(flowNodes);
     
-    // Set edges immediately after nodes
-    setEdges(flowEdges);
+    // IMPORTANT: Delay edge rendering to allow nodes to be measured first
+    // This ensures handles are positioned correctly before edges connect
+    setTimeout(() => {
+      setEdges(flowEdges);
+      console.log('[WorkflowCanvas] Set edges:', flowEdges.length);
+      
+      // Fit view after edges are added and force update
+      setTimeout(() => {
+        if (reactFlowInstance) {
+          reactFlowInstance.fitView({ padding: 0.3, duration: isPreview ? 0 : 800 });
+          // Force ReactFlow to recalculate edge paths
+          if (isPreview) {
+            reactFlowInstance.fitView({ padding: 0.3, duration: 0 });
+          }
+        }
+      }, isPreview ? 100 : 50);
+    }, isPreview ? 200 : 50);
     
     console.log('[WorkflowCanvas] Set nodes:', flowNodes.length);
-    console.log('[WorkflowCanvas] Set edges:', flowEdges.length);
-
-    // Fit view after all nodes are added
-    setTimeout(() => {
-      if (reactFlowInstance) {
-        reactFlowInstance.fitView({ padding: 0.3, duration: 800 });
-      }
-    }, 100);
-  }, [workflow, reactFlowInstance]);
+  }, [workflow, reactFlowInstance, latestExecution, isPreview]);
 
   return (
-    <div className="w-full h-full relative">
+    <div className="w-full h-full relative" key={`canvas-${workflow?.id || workflow?.name}`}>
       {isGenerating && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -261,8 +312,9 @@ export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) 
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+              className="w-12 h-12 text-primary mx-auto flex items-center justify-center"
             >
-              <Sparkles className="w-12 h-12 text-primary mx-auto" />
+              <Loader2 className="w-12 h-12" />
             </motion.div>
             <p className="text-sm text-muted-foreground">Generating workflow nodes...</p>
           </div>
@@ -274,16 +326,26 @@ export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) 
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onInit={setReactFlowInstance}
-        onNodeClick={(_, node) => setSelectedNode(node)}
+        onInit={(instance) => {
+          setReactFlowInstance(instance);
+          // Force immediate fit view for previews
+          setTimeout(() => {
+            instance.fitView({ padding: 0.3, duration: 0 });
+          }, 50);
+        }}
+        onNodeClick={(_, node) => !isPreview && setSelectedNode(node)}
         nodeTypes={nodeTypes}
         connectionMode={ConnectionMode.Loose}
+        nodesDraggable={!isPreview}
+        nodesConnectable={false}
+        nodesFocusable={!isPreview}
+        elementsSelectable={!isPreview}
         fitView
-        fitViewOptions={{ padding: 0.3 }}
+        fitViewOptions={{ padding: 0.3, duration: isPreview ? 0 : 800 }}
         minZoom={0.5}
         maxZoom={1.5}
         defaultEdgeOptions={{
-          animated: true,
+          animated: !isPreview,
           style: { strokeWidth: 2 },
         }}
         className="bg-transparent"
@@ -294,20 +356,28 @@ export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) 
           color="hsl(var(--border))"
           className="opacity-30"
         />
-        <Controls
-          className="bg-background/80 backdrop-blur-xl border border-border rounded-lg"
-        />
-        <MiniMap
-          className="bg-background/80 backdrop-blur-xl border border-border rounded-lg"
-          nodeColor={(node) => {
-            if (node.data.type.includes('webhook')) return '#3b82f6';
-            if (node.data.type.includes('schedule')) return '#a855f7';
-            if (node.data.type.includes('slack')) return '#22c55e';
-            return '#6b7280';
-          }}
-        />
+        {!isPreview && (
+          <>
+            <Controls
+              className="bg-background/80 backdrop-blur-xl border border-border rounded-lg"
+            />
+            <MiniMap
+              className="bg-background/80 backdrop-blur-xl border border-border rounded-lg"
+              nodeColor={(node) => {
+                const visual = getNodeVisual(node.data.type, node.data.label);
+                // Extract hex color from category
+                if (visual.category.includes('webhook') || visual.category.includes('trigger')) return '#3b82f6';
+                if (visual.category.includes('schedule')) return '#a855f7';
+                if (visual.category.includes('slack')) return '#22c55e';
+                if (visual.category.includes('email')) return '#f97316';
+                if (visual.category.includes('database')) return '#3b82f6';
+                return '#6b7280';
+              }}
+            />
+          </>
+        )}
         
-        {workflow && (
+        {workflow && !isPreview && (
           <Panel position="top-left" className="bg-background/80 backdrop-blur-xl border border-border rounded-lg p-3">
             <div className="text-sm">
               <div className="font-medium text-foreground">{workflow.name}</div>
@@ -331,10 +401,11 @@ export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) 
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  {selectedNode.data.type.includes('webhook') ? <Webhook className="w-4 h-4 text-primary" /> :
-                   selectedNode.data.type.includes('schedule') ? <Calendar className="w-4 h-4 text-primary" /> :
-                   selectedNode.data.type.includes('slack') ? <Zap className="w-4 h-4 text-primary" /> :
-                   <Sparkles className="w-4 h-4 text-primary" />}
+                  {(() => {
+                    const visual = getNodeVisual(selectedNode.data.type, selectedNode.data.label);
+                    const Icon = visual.icon;
+                    return <Icon className="w-4 h-4 text-primary" />;
+                  })()}
                 </div>
                 <div>
                   <h3 className="font-semibold text-sm">{selectedNode.data.label}</h3>
@@ -357,7 +428,77 @@ export function WorkflowCanvas({ workflow, isGenerating }: WorkflowCanvasProps) 
                 </p>
               </div>
 
-              {selectedNode.data.parameters && Object.keys(selectedNode.data.parameters).length > 0 && (
+              {/* Schedule Editing for schedule nodes */}
+              {selectedNode.data.type.includes('schedule') && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-medium text-muted-foreground">Schedule Configuration</label>
+                    {!isEditingNode ? (
+                      <button
+                        onClick={() => {
+                          setIsEditingNode(true);
+                          setEditedParameters(selectedNode.data.parameters || {});
+                        }}
+                        className="text-xs text-primary hover:underline flex items-center gap-1"
+                      >
+                        <Edit3 className="w-3 h-3" />
+                        Edit
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          // Save changes
+                          console.log('Saving schedule changes:', editedParameters);
+                          alert('Schedule updated! (Note: In production, this would update via API)');
+                          setIsEditingNode(false);
+                        }}
+                        className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded flex items-center gap-1 hover:bg-primary/90"
+                      >
+                        <Save className="w-3 h-3" />
+                        Save
+                      </button>
+                    )}
+                  </div>
+                  
+                  {isEditingNode ? (
+                    <div className="space-y-2">
+                      <div>
+                        <label className="text-xs text-muted-foreground">Cron Expression</label>
+                        <input
+                          type="text"
+                          value={editedParameters?.rule?.interval?.[0]?.expression || ''}
+                          onChange={(e) => {
+                            setEditedParameters({
+                              ...editedParameters,
+                              rule: {
+                                interval: [{ field: 'cronExpression', expression: e.target.value }]
+                              }
+                            });
+                          }}
+                          className="w-full mt-1 px-2 py-1 text-xs font-mono bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                          placeholder="0 9 * * 1-5"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Examples:</p>
+                        <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
+                          <div>• <code className="bg-accent/50 px-1 rounded">0 9 * * 1-5</code> - Weekdays at 9am</div>
+                          <div>• <code className="bg-accent/50 px-1 rounded">0 * * * *</code> - Every hour</div>
+                          <div>• <code className="bg-accent/50 px-1 rounded">*/15 * * * *</code> - Every 15 min</div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-accent/30 px-2 py-1.5 rounded">
+                      <div className="text-xs font-medium text-foreground">Cron Expression</div>
+                      <div className="text-xs text-muted-foreground mt-0.5 font-mono">
+                        {selectedNode.data.parameters?.rule?.interval?.[0]?.expression || 'Not set'}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Regular parameters for non-schedule nodes or when not editing */}
+              {!selectedNode.data.type.includes('schedule') && selectedNode.data.parameters && Object.keys(selectedNode.data.parameters).length > 0 && (
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">Parameters</label>
                   <div className="mt-2 space-y-2 max-h-48 overflow-y-auto">

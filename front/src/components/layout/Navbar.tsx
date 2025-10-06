@@ -1,20 +1,29 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Play, User, Settings, CreditCard, LogOut, ChevronDown, Workflow, Home } from 'lucide-react';
-import { usePathname } from 'next/navigation';
-import { LoginDialog } from '@/components/LoginDialog';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Play,
+  User,
+  Settings,
+  CreditCard,
+  LogOut,
+  ChevronDown,
+  Workflow,
+  Home,
+} from "lucide-react";
+import { usePathname } from "next/navigation";
+import { LoginDialog } from "@/components/LoginDialog";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const isEditor = pathname === '/editor';
-  const isPlatform = pathname === '/platform';
+  const isEditor = pathname === "/editor";
+  const isPlatform = pathname === "/platform";
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(true); // Auto-authenticated for demo
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -22,7 +31,7 @@ export function Navbar() {
 
   const handleSaveOrRun = () => {
     if (isAuthenticated) {
-      router.push('/workflows');
+      router.push("/workflows");
     } else {
       setShowLoginDialog(true);
     }
@@ -30,26 +39,30 @@ export function Navbar() {
 
   const handleLogin = () => {
     setIsAuthenticated(true);
-    router.push('/workflows');
+    router.push("/workflows");
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     setShowProfileMenu(false);
-    router.push('/');
+    router.push("/");
   };
 
   // Close profile menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target as Node)
+      ) {
         setShowProfileMenu(false);
       }
     }
 
     if (showProfileMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showProfileMenu]);
 
@@ -57,23 +70,23 @@ export function Navbar() {
     <>
       <nav className="sticky top-4 z-50 px-4 w-full">
         <div className="container mx-auto max-w-3xl">
-          <div className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-full shadow-lg px-6 py-3 flex items-center justify-between">
-            <Link 
+          <div className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-full shadow-lg px-6 flex items-center justify-between">
+            <Link
               href="/"
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
-              <Image 
-                src="/logo.jpg" 
-                alt="Mozart Logo" 
-                width={32} 
-                height={32} 
+              <Image
+                src="/logo.jpg"
+                alt="Mozart Logo"
+                width={32}
+                height={32}
                 className="rounded-full"
               />
               <span className="text-lg font-light tracking-tight text-black">
                 Mozart
               </span>
             </Link>
-            
+
             <div className="flex items-center gap-3">
               <div className="relative" ref={profileMenuRef}>
                 <button
@@ -83,7 +96,11 @@ export function Navbar() {
                   <div className="w-8 h-8 rounded-full bg-white border-2 border-black flex items-center justify-center">
                     <User className="w-4 h-4 text-black" />
                   </div>
-                  <ChevronDown className={`w-4 h-4 text-black transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`w-4 h-4 text-black transition-transform ${
+                      showProfileMenu ? "rotate-180" : ""
+                    }`}
+                  />
                 </button>
 
                 <AnimatePresence>
@@ -99,32 +116,38 @@ export function Navbar() {
                         <button
                           onClick={() => {
                             setShowProfileMenu(false);
-                            router.push('/');
+                            router.push("/");
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
                         >
                           <Home className="w-4 h-4 text-gray-600" />
-                          <span className="text-sm font-medium text-gray-900">Home</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            Home
+                          </span>
                         </button>
                         <button
                           onClick={() => {
                             setShowProfileMenu(false);
-                            router.push('/workflows');
+                            router.push("/workflows");
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
                         >
                           <Workflow className="w-4 h-4 text-gray-600" />
-                          <span className="text-sm font-medium text-gray-900">Workflows</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            Workflows
+                          </span>
                         </button>
                         <button
                           onClick={() => {
                             setShowProfileMenu(false);
-                            router.push('/settings');
+                            router.push("/settings");
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
                         >
                           <Settings className="w-4 h-4 text-gray-600" />
-                          <span className="text-sm font-medium text-gray-900">Settings</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            Settings
+                          </span>
                         </button>
                         <div className="my-1 border-t border-gray-200" />
                         <button
@@ -132,7 +155,9 @@ export function Navbar() {
                           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-50 transition-colors text-left"
                         >
                           <LogOut className="w-4 h-4 text-red-600" />
-                          <span className="text-sm font-medium text-red-600">Logout</span>
+                          <span className="text-sm font-medium text-red-600">
+                            Logout
+                          </span>
                         </button>
                       </div>
                     </motion.div>

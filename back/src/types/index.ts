@@ -57,6 +57,7 @@ export interface MCPNodeDetails {
   properties: Record<string, any>;
   operations?: string[];
   credentials?: string[];
+  examples?: any[]; // Real-world configuration examples from templates
 }
 
 // API Response types
@@ -129,6 +130,13 @@ export interface DeploymentResponse {
   deployedAt: Date;
 }
 
+export interface NodeExecutionStatus {
+  nodeName: string;
+  status: 'success' | 'error' | 'running' | 'waiting';
+  executionTime?: number;
+  error?: string;
+}
+
 export interface ExecutionResult {
   id: string;
   status: 'success' | 'error' | 'running';
@@ -136,4 +144,5 @@ export interface ExecutionResult {
   finishedAt?: Date;
   data?: any;
   error?: string;
+  nodeExecutions?: NodeExecutionStatus[];
 }

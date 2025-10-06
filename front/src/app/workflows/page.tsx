@@ -5,8 +5,8 @@ import { motion } from 'framer-motion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Background } from '@/components/layout/Background';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, Trash2, Clock, CheckCircle, XCircle, Loader2, Maximize2 } from 'lucide-react';
-import { getWorkflows, activateWorkflow, getWorkflowExecutions } from '@/app/actions/workflows';
+import { Play, Pause, Trash2, Clock, CheckCircle, XCircle, Loader2, Maximize2, Eye, RotateCcw, Webhook, Copy, Radio } from 'lucide-react';
+import { getWorkflows, activateWorkflow, getWorkflowExecutions, executeWorkflow } from '@/app/actions/workflows';
 import { useRouter } from 'next/navigation';
 import { WorkflowCanvas } from '@/components/workflow/WorkflowCanvas';
 
@@ -16,36 +16,68 @@ export default function WorkflowsPage() {
   const [selectedWorkflow, setSelectedWorkflow] = useState<any>(null);
   const [previewWorkflow, setPreviewWorkflow] = useState<any>(null);
   const [executions, setExecutions] = useState<any[]>([]);
+  const [previewExecutions, setPreviewExecutions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingPreviewExecutions, setIsLoadingPreviewExecutions] = useState(false);
 
   useEffect(() => {
     loadWorkflows();
   }, []);
 
+  // Auto-load executions when preview workflow opens
+  useEffect(() => {
+    if (previewWorkflow?.workflowId) {
+      const loadPreviewExecutions = async () => {
+        setIsLoadingPreviewExecutions(true);
+        const result = await getWorkflowExecutions(previewWorkflow.workflowId, 5);
+        if (result.success) {
+          setPreviewExecutions(result.data || []);
+        }
+        setIsLoadingPreviewExecutions(false);
+      };
+      loadPreviewExecutions();
+    }
+  }, [previewWorkflow?.workflowId]);
+
   const loadWorkflows = async () => {
     setIsLoading(true);
     const result = await getWorkflows();
-    if (result.success && result.data) {
-      setWorkflows(result.data);
+    if (result.success) {
+      setWorkflows(result.data || []);
     }
     setIsLoading(false);
   };
 
-  const loadExecutions = async (workflowId: string) => {
-    const result = await getWorkflowExecutions(workflowId, 10);
-    if (result.success && result.data) {
-      setExecutions(result.data);
+  const handleViewExecutions = async (workflow: any) => {
+    setSelectedWorkflow(workflow);
+    const result = await getWorkflowExecutions(workflow.workflowId, 10);
+    if (result.success) {
+      setExecutions(result.data || []);
     }
   };
 
-  const handleActivate = async (workflowId: string) => {
-    await activateWorkflow(workflowId);
-    loadWorkflows();
-  };
-
-  const handleViewExecutions = async (workflow: any) => {
-    setSelectedWorkflow(workflow);
-    await loadExecutions(workflow.workflowId);
+  const handleExecuteWorkflow = async (workflow: any) => {
+    try {
+      const result = await executeWorkflow(workflow.workflowId, {});
+      if (result.success) {
+        alert('✅ Workflow executed successfully!');
+        // Refresh executions if modal is open
+        if (selectedWorkflow?.workflowId === workflow.workflowId) {
+          handleViewExecutions(workflow);
+        }
+        // Refresh preview executions if preview modal is open
+        if (previewWorkflow?.workflowId === workflow.workflowId) {
+          const execResult = await getWorkflowExecutions(workflow.workflowId, 5);
+          if (execResult.success) {
+            setPreviewExecutions(execResult.data || []);
+          }
+        }
+      } else {
+        alert('❌ Execution failed: ' + result.error);
+      }
+    } catch (error) {
+      alert('❌ Execution error');
+    }
   };
 
   return (
@@ -96,8 +128,13 @@ export default function WorkflowsPage() {
                     {/* Workflow Preview */}
                     <div className="h-48 bg-accent/20 border-b border-border relative">
                       {workflow.nodes && workflow.nodes.length > 0 ? (
-                        <div className="w-full h-full">
-                          <WorkflowCanvas workflow={workflow} isGenerating={false} />
+                        <div className="w-full h-full" key={`preview-${workflow.id || workflow.workflowId}`}>
+                          <WorkflowCanvas 
+                            key={`canvas-${workflow.id || workflow.workflowId}`}
+                            workflow={workflow} 
+                            isGenerating={false}
+                            isPreview={true}
+                          />
                         </div>
                       ) : (
                         <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -125,6 +162,17 @@ export default function WorkflowsPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleExecuteWorkflow(workflow);
+                          }}
+                        >
+                          <Play className="w-4 h-4 mr-1" />
+                          Run Now
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"
@@ -169,24 +217,215 @@ export default function WorkflowsPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-background border border-border rounded-2xl p-6 max-w-6xl w-full shadow-2xl h-[80vh] flex flex-col"
+            className="bg-background border border-border rounded-2xl overflow-hidden max-w-7xl w-full shadow-2xl h-[85vh] flex flex-col"
           >
-            <div className="flex items-center justify-between mb-6">
-              <div>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <div className="flex-1">
                 <h2 className="text-2xl font-bold">{previewWorkflow.name}</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {previewWorkflow.nodes?.length || 0} nodes
+                  Visual flow editor and execution logs
                 </p>
+                {/* Trigger-specific info */}
+                {(() => {
+                  const triggerNode = previewWorkflow.nodes?.find((n: any) => 
+                    n.type.includes('webhook') || n.type.includes('schedule') || n.type.includes('manual')
+                  );
+                  
+                  if (!triggerNode) return null;
+                  
+                  // Webhook trigger
+                  if (triggerNode.type.includes('webhook') && previewWorkflow.webhookUrl) {
+                    return (
+                      <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Webhook className="w-4 h-4 text-blue-500" />
+                          <span className="text-sm font-medium text-blue-500">Webhook Trigger</span>
+                          <Radio className="w-3 h-3 text-green-500 animate-pulse" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <code className="text-xs font-mono bg-background/50 px-2 py-1 rounded flex-1 truncate">
+                            {previewWorkflow.webhookUrl}
+                          </code>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2"
+                            onClick={() => {
+                              navigator.clipboard.writeText(previewWorkflow.webhookUrl);
+                              alert('Webhook URL copied!');
+                            }}
+                          >
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          This workflow is listening for HTTP requests at the URL above.
+                        </p>
+                      </div>
+                    );
+                  }
+                  
+                  // Schedule trigger
+                  if (triggerNode.type.includes('schedule')) {
+                    const cron = triggerNode.parameters?.rule?.interval?.[0]?.expression || 'Not set';
+                    
+                    // Parse cron to human readable
+                    const getCronDescription = (expr: string) => {
+                      if (expr === 'Not set') return 'No schedule configured';
+                      if (expr === '0 9 * * 1-5') return 'Every weekday at 9:00 AM';
+                      if (expr === '0 * * * *') return 'Every hour';
+                      if (expr === '*/15 * * * *') return 'Every 15 minutes';
+                      if (expr === '0 0 * * *') return 'Daily at midnight';
+                      return expr; // Return cron if no match
+                    };
+                    
+                    return (
+                      <div className="mt-3 flex items-center gap-3 p-2.5 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                        <Clock className="w-4 h-4 text-purple-500 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-medium text-purple-500">Scheduled Trigger</span>
+                            <span className="text-xs text-muted-foreground">•</span>
+                            <span className="text-xs font-medium text-foreground">{getCronDescription(cron)}</span>
+                          </div>
+                          <code className="text-[10px] font-mono text-muted-foreground">
+                            {cron}
+                          </code>
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+                  // Manual trigger
+                  if (triggerNode.type.includes('manual')) {
+                    return (
+                      <div className="mt-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Play className="w-4 h-4 text-green-500" />
+                          <span className="text-sm font-medium text-green-500">Manual Trigger</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Use the "Run" button to execute this workflow manually.
+                        </p>
+                      </div>
+                    );
+                  }
+                  
+                  return null;
+                })()}
               </div>
-              <button
-                onClick={() => setPreviewWorkflow(null)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={async () => {
+                    setIsLoadingPreviewExecutions(true);
+                    const result = await getWorkflowExecutions(previewWorkflow.workflowId, 10);
+                    if (result.success) {
+                      setPreviewExecutions(result.data || []);
+                    }
+                    setIsLoadingPreviewExecutions(false);
+                  }}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  View Logs
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    // Reset action - could reload workflow
+                    loadWorkflows();
+                  }}
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Reset
+                </Button>
+                {/* Only show Run button for manual or webhook triggers */}
+                {(() => {
+                  const hasManualOrWebhook = previewWorkflow.nodes?.some((n: any) => 
+                    n.type.includes('manual') || n.type.includes('webhook')
+                  );
+                  if (hasManualOrWebhook) {
+                    return (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleExecuteWorkflow(previewWorkflow)}
+                      >
+                        <Play className="w-4 h-4 mr-2" />
+                        Run Now
+                      </Button>
+                    );
+                  }
+                  return null;
+                })()}
+                <button
+                  onClick={() => {
+                    setPreviewWorkflow(null);
+                    setPreviewExecutions([]);
+                  }}
+                  className="text-muted-foreground hover:text-foreground ml-2"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
-            <div className="flex-1 border border-border rounded-xl overflow-hidden">
-              <WorkflowCanvas workflow={previewWorkflow} isGenerating={false} />
+            
+            {/* Canvas */}
+            <div className="flex-1 overflow-hidden">
+              <WorkflowCanvas 
+                workflow={previewWorkflow} 
+                isGenerating={false}
+                latestExecution={previewExecutions.length > 0 ? previewExecutions[0] : undefined}
+              />
+            </div>
+            
+            {/* Execution Log Panel */}
+            <div className="border-t border-border bg-accent/20">
+              <div className="px-6 py-3">
+                <h3 className="text-sm font-semibold mb-3">Execution Log</h3>
+                {isLoadingPreviewExecutions ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  </div>
+                ) : previewExecutions.length === 0 ? (
+                  <div className="text-sm text-muted-foreground py-2">
+                    No executions yet. Click "View Logs" to load recent executions.
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {previewExecutions.slice(0, 5).map((execution: any) => (
+                      <div key={execution.id} className="flex items-start gap-3 text-sm py-1">
+                        <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1" style={{
+                          backgroundColor: execution.status === 'success' ? '#22c55e' :
+                                         execution.status === 'error' ? '#ef4444' : '#3b82f6'
+                        }} />
+                        <span className="text-xs text-muted-foreground min-w-[60px]">
+                          {new Date(execution.startedAt).toLocaleTimeString()}
+                        </span>
+                        <div className="flex-1">
+                          <div className="font-medium capitalize">{execution.status}</div>
+                          {execution.nodeExecutions && execution.nodeExecutions.length > 0 && (
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {execution.nodeExecutions.map((node: any, idx: number) => (
+                                <span key={idx}>
+                                  {node.nodeName}: {node.status}
+                                  {idx < execution.nodeExecutions.length - 1 && ' • '}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {execution.error && (
+                            <div className="text-xs text-red-500 mt-0.5">{execution.error}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
         </div>
