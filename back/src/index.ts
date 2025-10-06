@@ -5,6 +5,7 @@ dotenv.config();
 import express, { Express, Request, Response, NextFunction } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { createServer } from "http";
 import { AIService } from "./services/ai-service";
 import { N8nMCPClient } from "./services/n8n-mcp-client";
 import { N8nApiClient } from "./services/n8n-api-client";
@@ -14,6 +15,7 @@ import { OAuthService } from "./services/oauth-service";
 import { CredentialValidator } from "./services/credential-validator";
 import { CredentialRepository } from "./repositories/credential-repository";
 import { TokenRefreshService } from "./services/token-refresh-service";
+import { WebSocketService } from "./services/websocket-service";
 import { createChatRouter } from "./routes/chat";
 import { createWorkflowsRouter } from "./routes/workflows";
 import { createAuthRouter } from "./routes/auth";
@@ -21,6 +23,7 @@ import { createDeployRouter } from "./routes/deploy";
 import { createVoiceRouter } from "./routes/voice";
 import { createOAuthRouter } from "./routes/oauth";
 import { createCredentialsRouter } from "./routes/credentials";
+import { createN8nWebhookRouter } from "./routes/n8n-webhooks";
 import { VapiService } from "./services/vapi-service";
 import billingRouter from "./routes/billing";
 import { createManagedAIRouter } from "./routes/managed-ai";
@@ -183,6 +186,7 @@ app.use(
 );
 app.use("/api/billing", billingRouter);
 app.use("/api/managed-ai", createManagedAIRouter(pool));
+app.use("/api/n8n-webhooks", createN8nWebhookRouter(pool));
 
 // Deploy routes (only if n8n is configured)
 if (n8nApiClient) {
@@ -217,14 +221,22 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
+// Create HTTP server and WebSocket service
+const httpServer = createServer(app);
+const wsService = new WebSocketService(httpServer, authService);
+
+// Make wsService available globally for routes
+(app as any).wsService = wsService;
+
 // Start server
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log("");
   console.log("🔥 ================================================");
   console.log("🔥  AI Workflow Builder Backend");
   console.log("🔥 ================================================");
   console.log("");
   console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`✅ WebSocket server ready on ws://localhost:${PORT}`);
   console.log(`✅ Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(
     `✅ Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:3000"}`

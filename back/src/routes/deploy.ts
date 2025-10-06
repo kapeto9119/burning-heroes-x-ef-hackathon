@@ -149,10 +149,21 @@ export function createDeployRouter(
 
       console.log(`[Execute] User ${userId} executing workflow ${workflowId}`);
 
+      // Emit execution started event via WebSocket
+      const wsService = (req.app as any).wsService;
+      if (wsService) {
+        wsService.emitExecutionStarted(userId, workflowId, 'pending');
+      }
+
       const result = await n8nClient.executeWorkflow(deployment.n8nWorkflowId, data);
       
       // Update execution stats
       await deploymentRepo.updateExecutionStats(workflowId, true, false);
+
+      // Emit execution completed event
+      if (wsService) {
+        wsService.emitExecutionCompleted(userId, workflowId, result.id || 'unknown', 'success', result);
+      }
 
       res.json({
         success: true,
@@ -317,6 +328,12 @@ export function createDeployRouter(
 
       // Update deployment status
       await deploymentRepo.updateStatus(workflowId, 'active');
+
+      // Emit WebSocket event
+      const wsService = (req.app as any).wsService;
+      if (wsService) {
+        wsService.emitWorkflowStatusChanged(userId, workflowId, 'active');
+      }
 
       res.json({
         success: true,

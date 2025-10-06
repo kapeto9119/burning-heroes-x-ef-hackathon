@@ -5,11 +5,13 @@ import { motion } from 'framer-motion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Background } from '@/components/layout/Background';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, Trash2, Clock, CheckCircle, XCircle, Loader2, Maximize2, Eye, RotateCcw, Webhook, Copy, Radio, BarChart3, List } from 'lucide-react';
+import { Play, Pause, Trash2, Clock, CheckCircle, XCircle, Loader2, Maximize2, Eye, RotateCcw, Webhook, Copy, Radio, BarChart3, List, Download, Timer } from 'lucide-react';
 import { getWorkflows, activateWorkflow, getWorkflowExecutions, executeWorkflow } from '@/app/actions/workflows';
 import { useRouter } from 'next/navigation';
 import { WorkflowCanvas } from '@/components/workflow/WorkflowCanvas';
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
+import { getTimeUntilNextRun, cronToHuman } from '@/lib/schedule-utils';
+import { useWebSocket } from '@/hooks/useWebSocket';
 
 export default function WorkflowsPage() {
   const router = useRouter();
@@ -21,10 +23,57 @@ export default function WorkflowsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingPreviewExecutions, setIsLoadingPreviewExecutions] = useState(false);
   const [activeTab, setActiveTab] = useState<'workflows' | 'analytics'>('workflows');
+  const [executionFilter, setExecutionFilter] = useState<'all' | 'success' | 'error'>('all');
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  
+  // WebSocket for real-time updates
+  const { isConnected, addEventListener, subscribeToWorkflow, unsubscribeFromWorkflow } = useWebSocket();
 
   useEffect(() => {
     loadWorkflows();
   }, []);
+
+  // Listen to WebSocket events for real-time execution updates
+  useEffect(() => {
+    const unsubscribeCompleted = addEventListener('execution:completed', async (event: any) => {
+      console.log('[Workflows] Execution completed event:', event);
+      
+      // Refresh executions if this workflow is being viewed
+      if (selectedWorkflow?.workflowId === event.workflowId) {
+        const result = await getWorkflowExecutions(event.workflowId, 10);
+        if (result.success) {
+          setExecutions(result.data || []);
+        }
+      }
+      
+      // Show toast notification
+      const status = event.status === 'success' ? '✅' : '❌';
+      console.log(`${status} Workflow execution ${event.status}`);
+    });
+
+    const unsubscribeStarted = addEventListener('execution:started', (event: any) => {
+      console.log('[Workflows] Execution started event:', event);
+    });
+
+    return () => {
+      unsubscribeCompleted();
+      unsubscribeStarted();
+    };
+  }, [selectedWorkflow, addEventListener]);
+
+  // Auto-refresh executions when enabled
+  useEffect(() => {
+    if (!autoRefresh || !selectedWorkflow) return;
+
+    const interval = setInterval(async () => {
+      const result = await getWorkflowExecutions(selectedWorkflow.workflowId, 10);
+      if (result.success) {
+        setExecutions(result.data || []);
+      }
+    }, 5000); // Refresh every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, selectedWorkflow]);
 
   // Auto-load executions when preview workflow opens
   useEffect(() => {
@@ -82,6 +131,39 @@ export default function WorkflowsPage() {
     }
   };
 
+  const handleExportExecutions = () => {
+    if (executions.length === 0) return;
+
+    // Create CSV content
+    const headers = ['Execution ID', 'Status', 'Started At', 'Finished At', 'Duration (ms)', 'Error Message'];
+    const rows = executions.map(exec => [
+      exec.id || 'N/A',
+      exec.status || 'N/A',
+      exec.startedAt ? new Date(exec.startedAt).toLocaleString() : 'N/A',
+      exec.finishedAt ? new Date(exec.finishedAt).toLocaleString() : 'N/A',
+      exec.finishedAt && exec.startedAt 
+        ? (new Date(exec.finishedAt).getTime() - new Date(exec.startedAt).getTime()).toString()
+        : 'N/A',
+      exec.error || ''
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${selectedWorkflow?.name || 'workflow'}-executions-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-background text-foreground">
       <div className="fixed inset-0 w-full h-full">
@@ -99,7 +181,15 @@ export default function WorkflowsPage() {
           >
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-4xl font-bold mb-2">Workflows</h1>
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-4xl font-bold">Workflows</h1>
+                  {isConnected && (
+                    <div className="flex items-center gap-2 px-3 py-1 bg-green-500/20 border border-green-500/30 rounded-full">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span className="text-xs font-medium text-green-500">Live</span>
+                    </div>
+                  )}
+                </div>
                 <p className="text-muted-foreground">Manage your deployed workflows and analytics</p>
               </div>
               <Button onClick={() => router.push('/editor')}>
@@ -316,27 +406,24 @@ export default function WorkflowsPage() {
                   // Schedule trigger
                   if (triggerNode.type.includes('schedule')) {
                     const cron = triggerNode.parameters?.rule?.interval?.[0]?.expression || 'Not set';
-                    
-                    // Parse cron to human readable
-                    const getCronDescription = (expr: string) => {
-                      if (expr === 'Not set') return 'No schedule configured';
-                      if (expr === '0 9 * * 1-5') return 'Every weekday at 9:00 AM';
-                      if (expr === '0 * * * *') return 'Every hour';
-                      if (expr === '*/15 * * * *') return 'Every 15 minutes';
-                      if (expr === '0 0 * * *') return 'Daily at midnight';
-                      return expr; // Return cron if no match
-                    };
+                    const nextRun = cron !== 'Not set' ? getTimeUntilNextRun(cron) : null;
+                    const humanReadable = cronToHuman(cron);
                     
                     return (
-                      <div className="mt-3 flex items-center gap-3 p-2.5 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-                        <Clock className="w-4 h-4 text-purple-500 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium text-purple-500">Scheduled Trigger</span>
-                            <span className="text-xs text-muted-foreground">•</span>
-                            <span className="text-xs font-medium text-foreground">{getCronDescription(cron)}</span>
-                          </div>
-                          <code className="text-[10px] font-mono text-muted-foreground">
+                      <div className="mt-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Clock className="w-4 h-4 text-purple-500" />
+                          <span className="text-sm font-medium text-purple-500">Scheduled Trigger</span>
+                          {nextRun && (
+                            <div className="ml-auto flex items-center gap-1 bg-purple-500/20 px-2 py-0.5 rounded">
+                              <Timer className="w-3 h-3 text-purple-400" />
+                              <span className="text-xs font-medium text-purple-400">Next: {nextRun}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-sm font-medium">{humanReadable}</div>
+                          <code className="text-xs font-mono text-muted-foreground block">
                             {cron}
                           </code>
                         </div>
@@ -487,11 +574,17 @@ export default function WorkflowsPage() {
             className="bg-background border border-border rounded-2xl p-6 max-w-2xl w-full shadow-2xl max-h-[80vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">Execution History</h2>
+              <div>
+                <h2 className="text-2xl font-bold">Execution History</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {selectedWorkflow.name}
+                </p>
+              </div>
               <button
                 onClick={() => {
                   setSelectedWorkflow(null);
                   setExecutions([]);
+                  setExecutionFilter('all');
                 }}
                 className="text-muted-foreground hover:text-foreground"
               >
@@ -499,11 +592,76 @@ export default function WorkflowsPage() {
               </button>
             </div>
 
+            {/* Filter Bar */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Filter:</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setExecutionFilter('all')}
+                    className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                      executionFilter === 'all'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-accent hover:bg-accent/80'
+                    }`}
+                  >
+                    All ({executions.length})
+                  </button>
+                  <button
+                    onClick={() => setExecutionFilter('success')}
+                    className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                      executionFilter === 'success'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-accent hover:bg-accent/80'
+                    }`}
+                  >
+                    ✅ Success ({executions.filter(e => e.status === 'success').length})
+                  </button>
+                  <button
+                    onClick={() => setExecutionFilter('error')}
+                    className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                      executionFilter === 'error'
+                        ? 'bg-red-500 text-white'
+                        : 'bg-accent hover:bg-accent/80'
+                    }`}
+                  >
+                    ❌ Errors ({executions.filter(e => e.status === 'error').length})
+                  </button>
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setAutoRefresh(!autoRefresh)}
+                  className={`px-3 py-1 text-sm rounded-lg transition-colors flex items-center gap-2 ${
+                    autoRefresh
+                      ? 'bg-green-500 text-white'
+                      : 'bg-accent hover:bg-accent/80'
+                  }`}
+                >
+                  <Radio className={`w-3 h-3 ${autoRefresh ? 'animate-pulse' : ''}`} />
+                  {autoRefresh ? 'Live' : 'Auto-refresh'}
+                </button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleExportExecutions}
+                  disabled={executions.length === 0}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export CSV
+                </Button>
+              </div>
+            </div>
+
             {executions.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">No executions yet</p>
             ) : (
               <div className="space-y-4">
-                {executions.map((execution: any) => (
+                {executions
+                  .filter(e => executionFilter === 'all' || e.status === executionFilter)
+                  .map((execution: any) => (
                   <div
                     key={execution.id}
                     className="p-4 bg-accent/30 rounded-lg"

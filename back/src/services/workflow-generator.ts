@@ -47,7 +47,10 @@ export class WorkflowGenerator {
       // Step 4: Convert AI plan to n8n workflow format
       let workflow = await this.convertPlanToWorkflow(workflowPlan, description);
 
-      // Step 5: Lint and fix common issues
+      // Step 5: Add callback webhook for real-time updates
+      workflow = this.addCallbackWebhook(workflow);
+
+      // Step 6: Lint and fix common issues
       const lintResult = lintWorkflow(workflow);
       workflow = lintResult.workflow;
       if (lintResult.fixes.length > 0) {
@@ -541,6 +544,81 @@ export class WorkflowGenerator {
    */
   private generateNodeId(): string {
     return `node_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+  }
+
+  /**
+   * Add callback webhook node to notify our backend when execution completes
+   * This enables real-time updates for scheduled and webhook-triggered workflows
+   */
+  private addCallbackWebhook(workflow: N8nWorkflow): N8nWorkflow {
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+    const callbackUrl = `${backendUrl}/api/n8n-webhooks/execution-complete`;
+
+    // Find the last action node (not the trigger)
+    const actionNodes = workflow.nodes.filter(n => 
+      !n.type.includes('trigger') && 
+      !n.type.includes('Trigger') &&
+      !n.name.includes('Execution Callback')
+    );
+
+    if (actionNodes.length === 0) {
+      console.log('[Workflow Generator] No action nodes found, skipping callback webhook');
+      return workflow;
+    }
+
+    const lastNode = actionNodes[actionNodes.length - 1];
+    const callbackNodeId = this.generateNodeId();
+    const callbackNodeName = 'Execution Callback';
+
+    // Calculate position (to the right of last node)
+    const lastNodeX = lastNode.position[0];
+    const lastNodeY = lastNode.position[1];
+    const callbackX = lastNodeX + 300;
+    const callbackY = lastNodeY;
+
+    // Create callback webhook node
+    const callbackNode: N8nNode = {
+      id: callbackNodeId,
+      name: callbackNodeName,
+      type: 'n8n-nodes-base.httpRequest',
+      position: [callbackX, callbackY],
+      parameters: {
+        method: 'POST',
+        url: callbackUrl,
+        options: {},
+        bodyParametersJson: JSON.stringify({
+          workflowId: '={{ $workflow.id }}',
+          n8nWorkflowId: '={{ $workflow.id }}',
+          n8nExecutionId: '={{ $execution.id }}',
+          status: 'success',
+          startedAt: '={{ $execution.startedAt }}',
+          finishedAt: '={{ new Date().toISOString() }}',
+          data: '={{ $json }}'
+        })
+      },
+      credentials: {}
+    };
+
+    // Add callback node to workflow
+    workflow.nodes.push(callbackNode);
+
+    // Connect last node to callback node
+    if (!workflow.connections[lastNode.name]) {
+      workflow.connections[lastNode.name] = { main: [[]] };
+    }
+    
+    if (!workflow.connections[lastNode.name].main[0]) {
+      workflow.connections[lastNode.name].main[0] = [];
+    }
+
+    workflow.connections[lastNode.name].main[0].push({
+      node: callbackNodeName,
+      type: 'main',
+      index: 0
+    });
+
+    console.log('[Workflow Generator] ✅ Added execution callback webhook');
+    return workflow;
   }
 
   /**
