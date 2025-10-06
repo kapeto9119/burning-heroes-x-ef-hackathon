@@ -21,7 +21,10 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Background } from "@/components/layout/Background";
 import { useWorkflow } from "@/contexts/WorkflowContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { CredentialSetupModal, CredentialRequirement } from "@/components/CredentialSetupModal";
+import {
+  CredentialSetupModal,
+  CredentialRequirement,
+} from "@/components/CredentialSetupModal";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { generateWorkflow, sendChatMessage } from "@/app/actions/chat";
 import {
@@ -141,7 +144,9 @@ export default function EditorPage() {
   >("idle");
   const [deploymentData, setDeploymentData] = useState<any>(null);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [credentialRequirements, setCredentialRequirements] = useState<CredentialRequirement[]>([]);
+  const [credentialRequirements, setCredentialRequirements] = useState<
+    CredentialRequirement[]
+  >([]);
   const [showCredentialModal, setShowCredentialModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
@@ -155,7 +160,7 @@ export default function EditorPage() {
   // Check URL params for voice mode
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('voice') === 'true' && !voiceAutoStartRef.current) {
+    if (params.get("voice") === "true" && !voiceAutoStartRef.current) {
       setVoiceMode(true);
       voiceAutoStartRef.current = true;
       // Auto-start voice call after a brief delay
@@ -181,30 +186,32 @@ export default function EditorPage() {
     clearTranscripts,
     isConnected,
   } = useVapi({
-    publicKey: process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || '',
-    assistantId: process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID || '',
+    publicKey: process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || "",
+    assistantId: process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID || "",
     userId: user?.id, // Pass authenticated user ID to Vapi
     onWorkflowGenerated: (workflow) => {
-      console.log('[Editor] 🎉 Workflow generated via voice!', workflow);
-      console.log('[Editor] Workflow has', workflow?.nodes?.length, 'nodes');
+      console.log("[Editor] 🎉 Workflow generated via voice!", workflow);
+      console.log("[Editor] Workflow has", workflow?.nodes?.length, "nodes");
       setWorkflow(workflow);
-      setDeploymentStatus('idle');
-      
+      setDeploymentStatus("idle");
+
       // Add a message to show workflow was created
       const workflowMessage = {
         id: `workflow_${Date.now()}`,
-        text: `✅ Workflow created! It has ${workflow?.nodes?.length || 0} nodes. Ready to deploy?`,
+        text: `✅ Workflow created! It has ${
+          workflow?.nodes?.length || 0
+        } nodes. Ready to deploy?`,
         isUser: false,
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, workflowMessage]);
+      setMessages((prev) => [...prev, workflowMessage]);
     },
     onWorkflowUpdated: (workflow) => {
-      console.log('[Editor] Workflow updated via voice:', workflow);
+      console.log("[Editor] Workflow updated via voice:", workflow);
       setWorkflow(workflow);
     },
     onDeployReady: (workflow) => {
-      console.log('[Editor] Ready to deploy via voice:', workflow);
+      console.log("[Editor] Ready to deploy via voice:", workflow);
       handleDeploy();
     },
   });
@@ -213,21 +220,22 @@ export default function EditorPage() {
   useEffect(() => {
     if (transcripts.length > 0) {
       const lastTranscript = transcripts[transcripts.length - 1];
-      
+
       // Check if this transcript is already in messages
-      const alreadyExists = messages.some(msg => 
-        msg.text === lastTranscript.text && 
-        msg.timestamp.getTime() === lastTranscript.timestamp.getTime()
+      const alreadyExists = messages.some(
+        (msg) =>
+          msg.text === lastTranscript.text &&
+          msg.timestamp.getTime() === lastTranscript.timestamp.getTime()
       );
 
       if (!alreadyExists) {
         const newMessage = {
           id: `voice_${Date.now()}`,
           text: lastTranscript.text,
-          isUser: lastTranscript.role === 'user',
+          isUser: lastTranscript.role === "user",
           timestamp: lastTranscript.timestamp,
         };
-        setMessages(prev => [...prev, newMessage]);
+        setMessages((prev) => [...prev, newMessage]);
       }
     }
   }, [transcripts]);
@@ -260,9 +268,12 @@ export default function EditorPage() {
             if (result.data.workflow) {
               setWorkflow(result.data.workflow);
               setDeploymentStatus("idle");
-              
+
               // Check for credential requirements
-              if (result.data.credentialRequirements && result.data.credentialRequirements.length > 0) {
+              if (
+                result.data.credentialRequirements &&
+                result.data.credentialRequirements.length > 0
+              ) {
                 setCredentialRequirements(result.data.credentialRequirements);
                 // Don't show modal yet - wait for user to deploy
               }
@@ -290,14 +301,17 @@ export default function EditorPage() {
         // Handle both old format (just workflow) and new format (workflow + credentials)
         const workflowData = result.data.workflow || result.data;
         const credentials = result.data.credentialRequirements || [];
-        
+
         setWorkflow(workflowData);
         setCredentialRequirements(credentials);
-        
-        const credentialInfo = credentials.length > 0 
-          ? `\n\n⚠️ This workflow requires credentials for: ${credentials.map((c: any) => c.service).join(', ')}`
-          : '';
-        
+
+        const credentialInfo =
+          credentials.length > 0
+            ? `\n\n⚠️ This workflow requires credentials for: ${credentials
+                .map((c: any) => c.service)
+                .join(", ")}`
+            : "";
+
         const aiMessage = {
           id: Date.now().toString(),
           text: `I've generated a workflow: "${workflowData.name}"\n\nNodes: ${workflowData.nodes.length}${credentialInfo}\n\nReady to deploy?`,
@@ -337,13 +351,13 @@ export default function EditorPage() {
       handleDeploy();
     }
   };
-  
+
   const handleCredentialsComplete = () => {
     setShowCredentialModal(false);
     setCredentialRequirements([]);
     handleDeploy();
   };
-  
+
   const handleCredentialsSkip = () => {
     setShowCredentialModal(false);
     // Deploy anyway (credentials can be added later)
@@ -352,7 +366,7 @@ export default function EditorPage() {
 
   const handleDeploy = async () => {
     if (!workflow) return;
-    
+
     // Double-check authentication
     if (!user) {
       setShowAuthModal(true);
@@ -360,7 +374,7 @@ export default function EditorPage() {
     }
 
     // Check if token exists
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (!token) {
       const errorMessage = {
         id: Date.now().toString(),
@@ -418,10 +432,15 @@ export default function EditorPage() {
         }
       } else {
         // Check if it's a credentials error
-        if (deployResult.error === 'Missing required credentials' && deployResult.data) {
+        if (
+          deployResult.error === "Missing required credentials" &&
+          deployResult.data
+        ) {
           const missingCreds = deployResult.data.missingCredentials || [];
-          const credsList = missingCreds.map((c: any) => `  • **${c.nodeName}** requires ${c.service}`).join('\n');
-          
+          const credsList = missingCreds
+            .map((c: any) => `  • **${c.nodeName}** requires ${c.service}`)
+            .join("\n");
+
           const errorMessage = {
             id: Date.now().toString(),
             text: `❌ **Missing Credentials**\n\nYour workflow needs the following credentials:\n\n${credsList}\n\n📝 **Action Required:** Go to Settings > Credentials to add these credentials, then try deploying again.`,
@@ -556,12 +575,19 @@ export default function EditorPage() {
                       <h2 className="text-lg font-semibold">
                         {voiceMode ? "Voice Assistant" : "Chat"}
                       </h2>
-                      {voiceMode && <VoiceVisualizer isListening={isListening} isSpeaking={isSpeaking} />}
+                      {voiceMode && (
+                        <VoiceVisualizer
+                          isListening={isListening}
+                          isSpeaking={isSpeaking}
+                        />
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {voiceMode 
-                        ? "Speak naturally to create workflows" 
-                        : `${messages.length} ${messages.length === 1 ? 'message' : 'messages'}`}
+                      {voiceMode
+                        ? "Speak naturally to create workflows"
+                        : `${messages.length} ${
+                            messages.length === 1 ? "message" : "messages"
+                          }`}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -594,76 +620,78 @@ export default function EditorPage() {
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                   {/* Unified messages - show same conversation in both modes */}
                   {messages.map((message) => (
-                        <motion.div
-                          key={message.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className={cn(
-                            "flex",
-                            message.isUser ? "justify-end" : "justify-start"
-                          )}
-                        >
-                          <div
-                            className={cn(
-                              "max-w-[80%] rounded-2xl px-4 py-3 text-sm",
-                              message.isUser
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-accent text-foreground"
-                            )}
-                          >
-                            {message.isUser ? (
-                              message.text
-                            ) : (
-                              <div className="prose prose-sm dark:prose-invert max-w-none">
-                                <ReactMarkdown
-                                  remarkPlugins={[remarkGfm]}
-                                  components={{
-                                    p: ({ children }) => (
-                                      <p className="mb-2 last:mb-0">{children}</p>
-                                    ),
-                                    ul: ({ children }) => (
-                                      <ul className="list-disc list-inside mb-2">
-                                        {children}
-                                      </ul>
-                                    ),
-                                    ol: ({ children }) => (
-                                      <ol className="list-decimal list-inside mb-2">
-                                        {children}
-                                      </ol>
-                                    ),
-                                    li: ({ children }) => (
-                                      <li className="mb-1">{children}</li>
-                                    ),
-                                    code: ({ children }) => (
-                                      <code className="bg-background/50 px-1 py-0.5 rounded text-xs">
-                                        {children}
-                                      </code>
-                                    ),
-                                    pre: ({ children }) => (
-                                      <pre className="bg-background/50 p-2 rounded overflow-x-auto">
-                                        {children}
-                                      </pre>
-                                    ),
-                                  }}
-                                >
-                                  {message.text}
-                                </ReactMarkdown>
-                              </div>
-                            )}
-                          </div>
-                        </motion.div>
-                      ))}
-                      {isTyping && (
-                        <div className="flex justify-start">
-                          <div className="bg-accent rounded-2xl px-4 py-3">
-                            <TypingDots />
-                          </div>
-                        </div>
+                    <motion.div
+                      key={message.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={cn(
+                        "flex",
+                        message.isUser ? "justify-end" : "justify-start"
                       )}
+                    >
+                      <div
+                        className={cn(
+                          "max-w-[80%] rounded-2xl px-4 py-3 text-sm",
+                          message.isUser
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-accent text-foreground"
+                        )}
+                      >
+                        {message.isUser ? (
+                          <div className="whitespace-pre-wrap">
+                            {message.text}
+                          </div>
+                        ) : (
+                          <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                p: ({ children }) => (
+                                  <p className="mb-2 last:mb-0">{children}</p>
+                                ),
+                                ul: ({ children }) => (
+                                  <ul className="list-disc list-inside mb-2">
+                                    {children}
+                                  </ul>
+                                ),
+                                ol: ({ children }) => (
+                                  <ol className="list-decimal list-inside mb-2">
+                                    {children}
+                                  </ol>
+                                ),
+                                li: ({ children }) => (
+                                  <li className="mb-1">{children}</li>
+                                ),
+                                code: ({ children }) => (
+                                  <code className="bg-background/50 px-1 py-0.5 rounded text-xs">
+                                    {children}
+                                  </code>
+                                ),
+                                pre: ({ children }) => (
+                                  <pre className="bg-background/50 p-2 rounded overflow-x-auto">
+                                    {children}
+                                  </pre>
+                                ),
+                              }}
+                            >
+                              {message.text}
+                            </ReactMarkdown>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                  {isTyping && (
+                    <div className="flex justify-start">
+                      <div className="bg-accent rounded-2xl px-4 py-3">
+                        <TypingDots />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Input Area */}
-                <div className="border-t border-border p-4">
+                <div className="border-t border-border p-4 bg-accent/30">
                   {voiceMode ? (
                     <div className="flex items-center justify-center gap-4">
                       <VoiceButton
@@ -671,28 +699,28 @@ export default function EditorPage() {
                         isListening={isListening}
                         isSpeaking={isSpeaking}
                         onToggle={handleVoiceToggle}
-                        disabled={callStatus.status === 'connecting'}
+                        disabled={callStatus.status === "connecting"}
                       />
                     </div>
                   ) : (
-                    <div className="flex items-end gap-2">
+                    <div className="flex items-end gap-3 bg-background rounded-xl border border-border p-3">
                       <Textarea
-                      ref={textareaRef}
-                      value={value}
-                      onChange={(e) => {
-                        setValue(e.target.value);
-                        adjustHeight();
-                      }}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Continue the conversation..."
-                      containerClassName="flex-1"
-                      className="resize-none bg-transparent border-none focus:outline-none min-h-[60px] max-h-[120px]"
-                    />
+                        ref={textareaRef}
+                        value={value}
+                        onChange={(e) => {
+                          setValue(e.target.value);
+                          adjustHeight();
+                        }}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Type your message..."
+                        containerClassName="flex-1"
+                        className="resize-none bg-transparent border-none focus:outline-none focus:ring-0 min-h-[60px] max-h-[200px] text-sm"
+                      />
                       <Button
                         onClick={handleSendMessage}
                         disabled={isTyping || !value.trim()}
                         size="sm"
-                        className="rounded-full bg-black text-white hover:bg-gray-800"
+                        className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 w-10 p-0 flex-shrink-0"
                       >
                         <SendIcon className="w-4 h-4" />
                       </Button>
@@ -726,7 +754,7 @@ export default function EditorPage() {
                       ) : (
                         <>
                           <Sparkles className="w-4 h-4 mr-2" />
-                          {user ? 'Deploy Workflow' : 'Login to Deploy'}
+                          {user ? "Deploy Workflow" : "Login to Deploy"}
                         </>
                       )}
                     </Button>
@@ -767,10 +795,10 @@ export default function EditorPage() {
                 </div>
                 <div className="flex-1 relative overflow-hidden">
                   {workflow && workflow.nodes && workflow.nodes.length > 0 ? (
-                    <WorkflowCanvas 
-                      key={workflow.id || workflow.name} 
-                      workflow={workflow} 
-                      isGenerating={false} 
+                    <WorkflowCanvas
+                      key={workflow.id || workflow.name}
+                      workflow={workflow}
+                      isGenerating={false}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">

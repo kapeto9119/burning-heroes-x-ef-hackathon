@@ -69,7 +69,7 @@ export function Navbar() {
     <>
       <nav className="sticky top-4 z-50 px-4 w-full">
         <div className="container mx-auto max-w-3xl">
-          <div className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-full shadow-lg px-6 flex items-center justify-between">
+          <div className="backdrop-blur-xl bg-background/80 border border-border rounded-full shadow-lg px-6 py-3 flex items-center justify-between">
             <Link
               href="/"
               className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
@@ -81,7 +81,7 @@ export function Navbar() {
                 height={32}
                 className="rounded-full"
               />
-              <span className="text-lg font-light tracking-tight text-black dark:text-white">
+              <span className="text-lg font-light tracking-tight text-foreground">
                 Mozart
               </span>
             </Link>
@@ -93,13 +93,13 @@ export function Navbar() {
                   onClick={toggleTheme}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-full hover:bg-accent transition-colors cursor-pointer"
                   aria-label="Toggle dark mode"
                 >
                   {theme === "dark" ? (
-                    <Sun className="w-5 h-5 text-gray-900 dark:text-gray-100" />
+                    <Sun className="w-3.5 h-3.5 text-foreground" />
                   ) : (
-                    <Moon className="w-5 h-5 text-gray-900 dark:text-gray-100" />
+                    <Moon className="w-3.5 h-3.5 text-foreground" />
                   )}
                 </motion.button>
               )}
@@ -108,23 +108,24 @@ export function Navbar() {
               {!isAuthenticated ? (
                 <motion.button
                   onClick={() => setShowAuthModal(true)}
-                  whileHover={{ scale: 1.05, backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
+                  whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-4 py-1.5 rounded-full bg-black/90 dark:bg-white/90 text-white dark:text-black text-sm font-medium transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-all shadow-sm cursor-pointer"
                 >
+                  <LogIn className="w-3.5 h-3.5" />
                   Login
                 </motion.button>
               ) : (
                 <div className="relative" ref={profileMenuRef}>
                   <button
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
-                    className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                    className="flex items-center gap-2 p-2 rounded-full hover:bg-accent transition-colors cursor-pointer"
                   >
-                    <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 border-2 border-black dark:border-gray-300 flex items-center justify-center">
-                      <User className="w-4 h-4 text-black dark:text-gray-100" />
+                    <div className="w-8 h-8 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center">
+                      <User className="w-4 h-4 text-primary" />
                     </div>
                     <ChevronDown
-                      className={`w-4 h-4 text-black dark:text-gray-100 transition-transform ${
+                      className={`w-4 h-4 text-foreground transition-transform ${
                         showProfileMenu ? "rotate-180" : ""
                       }`}
                     />
@@ -137,7 +138,7 @@ export function Navbar() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-56 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden"
+                      className="absolute right-0 mt-2 w-56 backdrop-blur-xl bg-background/95 border border-border rounded-2xl shadow-xl overflow-hidden"
                     >
                       <div className="p-2">
                         <button
@@ -145,10 +146,10 @@ export function Navbar() {
                             setShowProfileMenu(false);
                             router.push("/");
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left cursor-pointer"
                         >
-                          <Home className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <Home className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm font-medium text-foreground">
                             Home
                           </span>
                         </button>
@@ -157,10 +158,10 @@ export function Navbar() {
                             setShowProfileMenu(false);
                             router.push("/workflows");
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left cursor-pointer"
                         >
-                          <Workflow className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <Workflow className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm font-medium text-foreground">
                             Workflows
                           </span>
                         </button>
@@ -169,10 +170,10 @@ export function Navbar() {
                             setShowProfileMenu(false);
                             router.push("/integrations");
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left cursor-pointer"
                         >
-                          <Plug className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <Plug className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm font-medium text-foreground">
                             Integrations
                           </span>
                         </button>
@@ -181,10 +182,10 @@ export function Navbar() {
                             setShowProfileMenu(false);
                             router.push("/billing");
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left cursor-pointer"
                         >
-                          <CreditCard className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <CreditCard className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm font-medium text-foreground">
                             Billing & Usage
                           </span>
                         </button>
@@ -193,20 +194,20 @@ export function Navbar() {
                             setShowProfileMenu(false);
                             router.push("/settings");
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left cursor-pointer"
                         >
-                          <Settings className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <Settings className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm font-medium text-foreground">
                             Settings
                           </span>
                         </button>
-                        <div className="my-1 border-t border-gray-200 dark:border-gray-700" />
+                        <div className="my-1 border-t border-border" />
                         <button
                           onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-500/10 transition-colors text-left cursor-pointer"
                         >
-                          <LogOut className="w-4 h-4 text-red-600 dark:text-red-400" />
-                          <span className="text-sm font-medium text-red-600 dark:text-red-400">
+                          <LogOut className="w-4 h-4 text-red-500" />
+                          <span className="text-sm font-medium text-red-500">
                             Logout
                           </span>
                         </button>

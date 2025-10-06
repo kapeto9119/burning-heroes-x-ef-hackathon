@@ -53,24 +53,24 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
 
   return (
     <div className="w-full p-8">
-      <h2 className="text-3xl font-bold mb-2 dark:text-white text-gray-900 text-center">Create Account</h2>
-      <p className="dark:text-white/60 text-gray-600 text-center mb-8">Start building powerful workflows</p>
+      <h2 className="text-3xl font-bold mb-2 text-foreground text-center">Create Account</h2>
+      <p className="text-muted-foreground text-center mb-8">Start building powerful workflows</p>
       
       {error && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 dark:text-red-400 text-red-600 rounded-lg animate-shake">
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl animate-shake">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 dark:text-green-400 text-green-600 rounded-lg">
+        <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 text-green-400 rounded-xl">
           ✓ Account created! Redirecting...
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium mb-2 dark:text-white/90 text-gray-700">
+          <label htmlFor="name" className="block text-sm font-medium mb-2 text-foreground">
             Name
           </label>
           <input
@@ -79,13 +79,13 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            className="w-full px-4 py-3 dark:bg-white/5 bg-gray-100 border dark:border-white/10 border-gray-300 rounded-xl dark:text-white text-gray-900 dark:placeholder-white/40 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+            className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
             placeholder="John Doe"
           />
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium mb-2 dark:text-white/90 text-gray-700">
+          <label htmlFor="email" className="block text-sm font-medium mb-2 text-foreground">
             Email
           </label>
           <input
@@ -94,13 +94,13 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-4 py-3 dark:bg-white/5 bg-gray-100 border dark:border-white/10 border-gray-300 rounded-xl dark:text-white text-gray-900 dark:placeholder-white/40 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+            className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
             placeholder="you@example.com"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium mb-2 dark:text-white/90 text-gray-700">
+          <label htmlFor="password" className="block text-sm font-medium mb-2 text-foreground">
             Password
           </label>
           <input
@@ -109,13 +109,13 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-4 py-3 dark:bg-white/5 bg-gray-100 border dark:border-white/10 border-gray-300 rounded-xl dark:text-white text-gray-900 dark:placeholder-white/40 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+            className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
             placeholder="••••••••"
           />
         </div>
 
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2 dark:text-white/90 text-gray-700">
+          <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2 text-foreground">
             Confirm Password
           </label>
           <input
@@ -124,7 +124,7 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
-            className="w-full px-4 py-3 dark:bg-white/5 bg-gray-100 border dark:border-white/10 border-gray-300 rounded-xl dark:text-white text-gray-900 dark:placeholder-white/40 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+            className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
             placeholder="••••••••"
           />
         </div>
@@ -132,17 +132,17 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
         <button
           type="submit"
           disabled={isLoading || success}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground font-semibold py-3 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98]"
         >
           {success ? '✓ Account Created!' : isLoading ? 'Creating account...' : 'Create Account'}
         </button>
       </form>
 
       <div className="mt-6 text-center text-sm">
-        <span className="dark:text-white/60 text-gray-600">Already have an account? </span>
+        <span className="text-muted-foreground">Already have an account? </span>
         <button
           onClick={onSwitchToLogin}
-          className="dark:text-blue-400 text-blue-600 dark:hover:text-blue-300 hover:text-blue-700 font-semibold transition-colors"
+          className="text-primary hover:text-primary/80 font-semibold transition-colors"
         >
           Login
         </button>
