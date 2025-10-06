@@ -17,7 +17,9 @@ export function createVoiceRouter(vapiService: VapiService): Router {
       const webhookData: VapiWebhookRequest = req.body;
       const message = webhookData.message;
 
-      console.log('[Voice API] Received webhook:', message.type);
+      console.log('[Voice API] 📨 Received webhook!');
+      console.log('[Voice API] Message type:', message.type);
+      console.log('[Voice API] Full webhook data:', JSON.stringify(webhookData, null, 2));
 
       // Handle function calls
       if (message.type === 'function-call' && message.functionCall) {

@@ -32,6 +32,12 @@ export function useVapi({
 
   // Initialize Vapi client
   useEffect(() => {
+    // Only initialize if not already initialized
+    if (vapiClientRef.current) {
+      console.log('[Vapi] Client already initialized, skipping...');
+      return;
+    }
+
     const initVapi = async () => {
       try {
         // Dynamically import Vapi SDK
@@ -49,6 +55,7 @@ export function useVapi({
     return () => {
       if (vapiClientRef.current) {
         vapiClientRef.current.stop();
+        vapiClientRef.current = null;
       }
     };
   }, [publicKey]);
@@ -107,27 +114,36 @@ export function useVapi({
         }
       });
 
-      // Listen to message events for function calls and results
+      // Listen to ALL message events with detailed logging
       client.on('message', (message: any) => {
-        console.log('[Vapi] Message:', message);
+        console.log('[Vapi] 📨 RAW MESSAGE:', JSON.stringify(message, null, 2));
+        console.log('[Vapi] Message type:', message.type);
+        console.log('[Vapi] Message keys:', Object.keys(message));
 
         // Handle function call results (when backend responds)
         if (message.type === 'function-call-result') {
-          console.log('[Vapi] Function result:', message);
+          console.log('[Vapi] ✅ Function result received!', message);
           const result = message.result || message.functionCallResult;
           
           if (result?.workflow) {
-            console.log('[Vapi] Workflow received from function result:', result.workflow);
+            console.log('[Vapi] 🎉 Workflow received from function result:', result.workflow);
             if (onWorkflowGenerated) {
               onWorkflowGenerated(result.workflow);
             }
+          } else {
+            console.warn('[Vapi] ⚠️ Function result has no workflow:', result);
           }
         }
 
         // Handle function calls being initiated
         if (message.type === 'function-call' && message.functionCall) {
-          console.log('[Vapi] Function call initiated:', message.functionCall);
+          console.log('[Vapi] 🔧 Function call initiated:', message.functionCall);
           // The result will come in function-call-result event
+        }
+
+        // Log all other message types
+        if (message.type !== 'transcript' && message.type !== 'function-call' && message.type !== 'function-call-result') {
+          console.log('[Vapi] 📋 Other message type:', message.type, message);
         }
 
         // Fallback: If speech-update doesn't work, use message transcripts
