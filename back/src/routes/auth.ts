@@ -2,10 +2,12 @@ import { Router, Request, Response } from 'express';
 import { AuthService } from '../services/auth-service';
 import { AuthRequest, ApiResponse, AuthResponse } from '../types';
 import { createAuthMiddleware } from '../middleware/auth';
+import { NotificationClient } from '../services/notification-client';
 
 export function createAuthRouter(authService: AuthService): Router {
   const router = Router();
   const authMiddleware = createAuthMiddleware(authService);
+  const notificationClient = new NotificationClient();
 
   /**
    * POST /api/auth/register
@@ -40,6 +42,14 @@ export function createAuthRouter(authService: AuthService): Router {
       }
 
       const { user, token } = await authService.register(email, password, name);
+
+      // Send welcome email
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      notificationClient.sendWelcome(email, {
+        userName: name,
+        userEmail: email,
+        dashboardUrl: `${frontendUrl}/platform`
+      }).catch(err => console.error('[Auth] Failed to send welcome email:', err));
 
       res.status(201).json({
         success: true,

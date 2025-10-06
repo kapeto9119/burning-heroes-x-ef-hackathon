@@ -5,6 +5,7 @@ import { createAuthMiddleware } from '../middleware/auth';
 import { N8nWorkflow, ApiResponse, DeploymentResponse } from '../types';
 import { DeploymentRepository, ExecutionRepository } from '../repositories/deployment-repository';
 import { Pool } from 'pg';
+import { NotificationClient } from '../services/notification-client';
 
 export function createDeployRouter(
   n8nClient: N8nApiClient,
@@ -15,6 +16,7 @@ export function createDeployRouter(
   const authMiddleware = createAuthMiddleware(authService);
   const deploymentRepo = new DeploymentRepository(dbPool);
   const executionRepo = new ExecutionRepository(dbPool);
+  const notificationClient = new NotificationClient();
 
   /**
    * POST /api/deploy
@@ -101,6 +103,35 @@ export function createDeployRouter(
         status: 'inactive',
         deployedAt: new Date()
       };
+
+      // Send deployment success email
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const triggerNode = workflow.nodes.find(n => 
+        n.type.includes('trigger') || n.type.includes('Trigger')
+      );
+      
+      let triggerType: 'manual' | 'schedule' | 'webhook' = 'manual';
+      let scheduleInfo: string | undefined;
+      
+      if (triggerNode) {
+        if (triggerNode.type.includes('schedule')) {
+          triggerType = 'schedule';
+          const cronExpr = triggerNode.parameters?.rule?.interval?.[0]?.expression;
+          scheduleInfo = cronExpr || 'Scheduled';
+        } else if (triggerNode.type.includes('webhook')) {
+          triggerType = 'webhook';
+        }
+      }
+
+      notificationClient.sendWorkflowDeployed(userId, {
+        workflowName: workflow.name || 'Untitled Workflow',
+        workflowId,
+        triggerType,
+        scheduleInfo,
+        webhookUrl,
+        viewUrl: `${frontendUrl}/workflows`,
+        timestamp: new Date()
+      }).catch(err => console.error('[Deploy] Failed to send email:', err));
 
       res.json({
         success: true,

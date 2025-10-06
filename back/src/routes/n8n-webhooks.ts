@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { DeploymentRepository, ExecutionRepository } from '../repositories/deployment-repository';
 import { Pool } from 'pg';
+import { NotificationClient } from '../services/notification-client';
 
 /**
  * Webhook endpoint for n8n to notify us about execution completions
@@ -10,6 +11,7 @@ export function createN8nWebhookRouter(dbPool: Pool): Router {
   const router = Router();
   const deploymentRepo = new DeploymentRepository(dbPool);
   const executionRepo = new ExecutionRepository(dbPool);
+  const notificationClient = new NotificationClient();
 
   /**
    * POST /api/n8n-webhooks/execution-complete
@@ -83,6 +85,22 @@ export function createN8nWebhookRouter(dbPool: Pool): Router {
           data
         );
         console.log('[n8n Webhook] WebSocket event emitted');
+      }
+
+      // Send email notification if execution failed
+      if (status === 'error') {
+        // Get user email (you'll need to fetch this from your user table)
+        // For now, we'll use a placeholder - you should fetch from DB
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        
+        notificationClient.sendExecutionFailed(deployment.userId, {
+          workflowName: 'Workflow', // You should fetch the actual workflow name
+          workflowId,
+          executionId: n8nExecutionId,
+          errorMessage: error || 'Unknown error',
+          timestamp: new Date(finishedAt || Date.now()),
+          viewUrl: `${frontendUrl}/workflows?execution=${n8nExecutionId}`
+        }).catch(err => console.error('[n8n Webhook] Failed to send email:', err));
       }
 
       res.json({ 
