@@ -148,6 +148,7 @@ export function useVapi({
               
               // Call our backend directly to generate the workflow
               const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+              console.log('[Vapi] Using API URL:', apiUrl); // Debug log
               try {
                 const response = await fetch(`${apiUrl}/api/chat/generate-workflow`, {
                   method: 'POST',
