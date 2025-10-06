@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
-export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
+export function RegisterForm({ onSwitchToLogin, onClose }: { onSwitchToLogin: () => void; onClose?: () => void }) {
   const router = useRouter();
   const { register } = useAuth();
   const [name, setName] = useState('');
@@ -41,10 +41,15 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
       await register(email, password, name);
       setSuccess(true);
       
+      // Close modal immediately
+      if (onClose) {
+        onClose();
+      }
+      
       // Show success briefly then redirect
       setTimeout(() => {
         router.push('/editor');
-      }, 1000);
+      }, 100);
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
       setIsLoading(false);

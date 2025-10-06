@@ -374,7 +374,7 @@ export default function EditorPage() {
     }
 
     // Check if token exists
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("auth_token");
     if (!token) {
       const errorMessage = {
         id: Date.now().toString(),

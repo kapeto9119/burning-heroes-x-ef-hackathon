@@ -60,9 +60,9 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
                     transition={{ duration: 0.3 }}
                   >
                     {mode === 'login' ? (
-                      <LoginForm onSwitchToRegister={() => setMode('register')} />
+                      <LoginForm onSwitchToRegister={() => setMode('register')} onClose={onClose} />
                     ) : (
-                      <RegisterForm onSwitchToLogin={() => setMode('login')} />
+                      <RegisterForm onSwitchToLogin={() => setMode('login')} onClose={onClose} />
                     )}
                   </motion.div>
                 </AnimatePresence>

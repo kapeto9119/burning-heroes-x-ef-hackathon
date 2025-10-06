@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
-export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => void }) {
+export function LoginForm({ onSwitchToRegister, onClose }: { onSwitchToRegister: () => void; onClose?: () => void }) {
   const router = useRouter();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
@@ -22,6 +22,11 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
       await login(email, password);
       setSuccess(true);
       
+      // Close modal immediately
+      if (onClose) {
+        onClose();
+      }
+      
       // Show success briefly then redirect
       setTimeout(() => {
         // Check if there's a redirect URL in query params
@@ -33,7 +38,7 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
         } else {
           router.push('/editor');
         }
-      }, 500);
+      }, 100);
     } catch (err: any) {
       setError(err.message || 'Invalid email or password. Please try again.');
       setIsLoading(false);

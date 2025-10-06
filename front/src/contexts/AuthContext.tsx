@@ -72,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ email, password }),
+      credentials: 'include', // Important: include cookies in request
     });
 
     if (!response.ok) {
@@ -94,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ email, password, name }),
+      credentials: 'include', // Important: include cookies in request
     });
 
     if (!response.ok) {
@@ -109,7 +111,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('auth_token', authToken);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Call backend to clear cookie
+    try {
+      await fetch(`${API_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+    
+    // Clear client-side state
     setUser(null);
     setToken(null);
     localStorage.removeItem('auth_token');
