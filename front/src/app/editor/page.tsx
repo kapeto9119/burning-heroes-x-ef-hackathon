@@ -9,6 +9,8 @@ import {
   CheckCircle,
   AlertCircle,
   ArrowRight,
+  Mic,
+  MessageSquare,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -27,6 +29,10 @@ import {
   saveWorkflow,
 } from "@/app/actions/workflows";
 import { WorkflowCanvas } from "@/components/workflow/WorkflowCanvas";
+import { VoiceButton } from "@/components/voice/VoiceButton";
+import { VoiceVisualizer } from "@/components/voice/VoiceVisualizer";
+import { VoiceTranscript } from "@/components/voice/VoiceTranscript";
+import { useVapi } from "@/hooks/useVapi";
 import * as React from "react";
 
 interface UseAutoResizeTextareaProps {
@@ -138,10 +144,39 @@ export default function EditorPage() {
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [credentialRequirements, setCredentialRequirements] = useState<CredentialRequirement[]>([]);
   const [showCredentialModal, setShowCredentialModal] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(false);
   const hasRespondedRef = useRef(false);
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight: 60,
     maxHeight: 200,
+  });
+
+  // Vapi voice AI integration
+  const {
+    callStatus,
+    transcripts,
+    isListening,
+    isSpeaking,
+    startCall,
+    stopCall,
+    clearTranscripts,
+    isConnected,
+  } = useVapi({
+    publicKey: process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || '',
+    assistantId: process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID || '',
+    onWorkflowGenerated: (workflow) => {
+      console.log('[Voice] Workflow generated:', workflow);
+      setWorkflow(workflow);
+      setDeploymentStatus('idle');
+    },
+    onWorkflowUpdated: (workflow) => {
+      console.log('[Voice] Workflow updated:', workflow);
+      setWorkflow(workflow);
+    },
+    onDeployReady: (workflow) => {
+      console.log('[Voice] Ready to deploy:', workflow);
+      handleDeploy();
+    },
   });
 
   // Auto-send first message to chat API
@@ -423,6 +458,17 @@ export default function EditorPage() {
     }
   };
 
+  // Toggle voice mode
+  const handleVoiceToggle = async () => {
+    if (isConnected) {
+      stopCall();
+      setVoiceMode(false);
+    } else {
+      setVoiceMode(true);
+      await startCall();
+    }
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-background text-foreground">
       <div className="absolute inset-0 w-full h-full">
@@ -440,81 +486,134 @@ export default function EditorPage() {
         >
           <div className="container mx-auto h-full max-w-7xl">
             <div className="grid grid-cols-2 gap-6 h-full">
-              {/* Left Column - Chat */}
+              {/* Left Column - Chat/Voice */}
               <div className="flex flex-col h-full backdrop-blur-xl bg-background/40 rounded-2xl border border-border shadow-2xl overflow-hidden">
-                <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                  {messages.map((message) => (
-                    <motion.div
-                      key={message.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={cn(
-                        "flex",
-                        message.isUser ? "justify-end" : "justify-start"
-                      )}
+                {/* Mode Toggle Header */}
+                <div className="flex items-center justify-between p-4 border-b border-border">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold">
+                      {voiceMode ? "Voice Assistant" : "Chat"}
+                    </h3>
+                    {voiceMode && <VoiceVisualizer isListening={isListening} isSpeaking={isSpeaking} />}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (isConnected) {
+                          stopCall();
+                        }
+                        setVoiceMode(!voiceMode);
+                      }}
+                      className="gap-2"
                     >
-                      <div
-                        className={cn(
-                          "max-w-[80%] rounded-2xl px-4 py-3 text-sm",
-                          message.isUser
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-accent text-foreground"
-                        )}
-                      >
-                        {message.isUser ? (
-                          message.text
-                        ) : (
-                          <div className="prose prose-sm dark:prose-invert max-w-none">
-                            <ReactMarkdown
-                              remarkPlugins={[remarkGfm]}
-                              components={{
-                                p: ({ children }) => (
-                                  <p className="mb-2 last:mb-0">{children}</p>
-                                ),
-                                ul: ({ children }) => (
-                                  <ul className="list-disc list-inside mb-2">
-                                    {children}
-                                  </ul>
-                                ),
-                                ol: ({ children }) => (
-                                  <ol className="list-decimal list-inside mb-2">
-                                    {children}
-                                  </ol>
-                                ),
-                                li: ({ children }) => (
-                                  <li className="mb-1">{children}</li>
-                                ),
-                                code: ({ children }) => (
-                                  <code className="bg-background/50 px-1 py-0.5 rounded text-xs">
-                                    {children}
-                                  </code>
-                                ),
-                                pre: ({ children }) => (
-                                  <pre className="bg-background/50 p-2 rounded overflow-x-auto">
-                                    {children}
-                                  </pre>
-                                ),
-                              }}
-                            >
-                              {message.text}
-                            </ReactMarkdown>
+                      {voiceMode ? (
+                        <>
+                          <MessageSquare className="w-4 h-4" />
+                          Text
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="w-4 h-4" />
+                          Voice
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                  {voiceMode ? (
+                    <VoiceTranscript transcripts={transcripts} />
+                  ) : (
+                    <>
+                      {messages.map((message) => (
+                        <motion.div
+                          key={message.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={cn(
+                            "flex",
+                            message.isUser ? "justify-end" : "justify-start"
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "max-w-[80%] rounded-2xl px-4 py-3 text-sm",
+                              message.isUser
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-accent text-foreground"
+                            )}
+                          >
+                            {message.isUser ? (
+                              message.text
+                            ) : (
+                              <div className="prose prose-sm dark:prose-invert max-w-none">
+                                <ReactMarkdown
+                                  remarkPlugins={[remarkGfm]}
+                                  components={{
+                                    p: ({ children }) => (
+                                      <p className="mb-2 last:mb-0">{children}</p>
+                                    ),
+                                    ul: ({ children }) => (
+                                      <ul className="list-disc list-inside mb-2">
+                                        {children}
+                                      </ul>
+                                    ),
+                                    ol: ({ children }) => (
+                                      <ol className="list-decimal list-inside mb-2">
+                                        {children}
+                                      </ol>
+                                    ),
+                                    li: ({ children }) => (
+                                      <li className="mb-1">{children}</li>
+                                    ),
+                                    code: ({ children }) => (
+                                      <code className="bg-background/50 px-1 py-0.5 rounded text-xs">
+                                        {children}
+                                      </code>
+                                    ),
+                                    pre: ({ children }) => (
+                                      <pre className="bg-background/50 p-2 rounded overflow-x-auto">
+                                        {children}
+                                      </pre>
+                                    ),
+                                  }}
+                                >
+                                  {message.text}
+                                </ReactMarkdown>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
-                  {isTyping && (
-                    <div className="flex justify-start">
-                      <div className="bg-accent rounded-2xl px-4 py-3">
-                        <TypingDots />
-                      </div>
-                    </div>
+                        </motion.div>
+                      ))}
+                      {isTyping && (
+                        <div className="flex justify-start">
+                          <div className="bg-accent rounded-2xl px-4 py-3">
+                            <TypingDots />
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
+                {/* Input Area */}
                 <div className="border-t border-border p-4">
-                  <div className="flex items-end gap-2">
-                    <Textarea
+                  {voiceMode ? (
+                    <div className="flex items-center justify-center gap-4">
+                      <VoiceButton
+                        isConnected={isConnected}
+                        isListening={isListening}
+                        isSpeaking={isSpeaking}
+                        onToggle={handleVoiceToggle}
+                        disabled={callStatus.status === 'connecting'}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-end gap-2">
+                      <Textarea
                       ref={textareaRef}
                       value={value}
                       onChange={(e) => {
@@ -526,15 +625,16 @@ export default function EditorPage() {
                       containerClassName="flex-1"
                       className="resize-none bg-transparent border-none focus:outline-none min-h-[60px] max-h-[120px]"
                     />
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={isTyping || !value.trim()}
-                      size="sm"
-                      className="rounded-full bg-black text-white hover:bg-gray-800"
-                    >
-                      <SendIcon className="w-4 h-4" />
-                    </Button>
-                  </div>
+                      <Button
+                        onClick={handleSendMessage}
+                        disabled={isTyping || !value.trim()}
+                        size="sm"
+                        className="rounded-full bg-black text-white hover:bg-gray-800"
+                      >
+                        <SendIcon className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
 
