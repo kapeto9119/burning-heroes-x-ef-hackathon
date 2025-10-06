@@ -22,7 +22,7 @@ export class VapiService {
   async handleFunctionCall(
     functionCall: VapiFunctionCall,
     callId: string,
-    userId: string = 'demo_user_123'
+    userId?: string
   ): Promise<VapiFunctionResponse> {
     console.log(`[Vapi Service] Function call: ${functionCall.name}`, functionCall.parameters);
 

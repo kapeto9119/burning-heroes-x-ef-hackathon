@@ -13,8 +13,14 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
    */
   router.get('/', async (req: Request, res: Response) => {
     try {
-      // TODO: Get userId from auth middleware
-      const userId = req.headers['x-user-id'] as string || 'demo_user_123';
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Authentication required'
+        } as ApiResponse);
+      }
       
       const workflowRecords = await workflowRepo.findByUser(userId);
       
@@ -73,8 +79,15 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
   router.post('/', async (req: Request, res: Response) => {
     try {
       const workflow: N8nWorkflow = req.body;
-      const userId = req.headers['x-user-id'] as string || 'demo_user_123';
+      const userId = req.user?.userId;
       const prompt = req.body.prompt; // Optional: original AI prompt
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Authentication required'
+        } as ApiResponse);
+      }
 
       // Validate workflow
       const validation = await mcpClient.validateWorkflow(workflow);
@@ -225,7 +238,14 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
   router.get('/search/:query', async (req: Request, res: Response) => {
     try {
       const { query } = req.params;
-      const userId = req.headers['x-user-id'] as string || 'demo_user_123';
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Authentication required'
+        } as ApiResponse);
+      }
 
       const records = await workflowRepo.search(userId, query);
       const workflows = records.map(record => record.workflow_data);

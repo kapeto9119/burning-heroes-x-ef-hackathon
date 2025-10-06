@@ -16,39 +16,6 @@ interface DeploymentRecord {
 
 const deployments: Map<string, DeploymentRecord> = new Map();
 
-// Sample deployed workflows for demo
-const now = new Date();
-const sampleDeployments: DeploymentRecord[] = [
-  {
-    workflowId: 'deploy_sample_1',
-    n8nWorkflowId: '1',
-    userId: 'demo_user_123',
-    webhookUrl: 'http://localhost:5678/webhook/standup-reminder',
-    status: 'active',
-    deployedAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000) // 5 days ago
-  },
-  {
-    workflowId: 'deploy_sample_2',
-    n8nWorkflowId: '2',
-    userId: 'demo_user_123',
-    webhookUrl: 'http://localhost:5678/webhook/email-alerts',
-    status: 'active',
-    deployedAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000) // 2 days ago
-  },
-  {
-    workflowId: 'deploy_sample_3',
-    n8nWorkflowId: '3',
-    userId: 'demo_user_123',
-    status: 'inactive',
-    deployedAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000) // 1 day ago
-  }
-];
-
-// Initialize with sample data
-sampleDeployments.forEach(deployment => {
-  deployments.set(deployment.workflowId, deployment);
-});
-
 export function createDeployRouter(
   n8nClient: N8nApiClient,
   authService: AuthService
@@ -75,8 +42,17 @@ export function createDeployRouter(
       console.log(`[Deploy] User ${userId} deploying workflow: ${workflow.name}`);
 
       // Get user credentials
-      const user = await authService.getUserById(userId);
-      const userCredentials = user?.credentials;
+      let user;
+      let userCredentials;
+      
+      try {
+        user = await authService.getUserById(userId);
+        userCredentials = user?.credentials;
+      } catch (error: any) {
+        console.error(`[Deploy] Error getting user: ${error.message}`);
+        // Continue without user credentials for now
+        userCredentials = {};
+      }
 
       // Check if user has all required credentials
       const credentialCheck = checkRequiredCredentials(workflow, userCredentials);
