@@ -1,5 +1,5 @@
-import OpenAI from 'openai';
-import { ChatMessage } from '../types';
+import OpenAI from "openai";
+import { ChatMessage } from "../types";
 
 export class AIService {
   private openai: OpenAI;
@@ -7,7 +7,7 @@ export class AIService {
 
   constructor(apiKey: string) {
     this.openai = new OpenAI({ apiKey });
-    
+
     this.systemPrompt = `You are an expert n8n workflow automation assistant. Your role is to help users create automation workflows quickly and efficiently.
 
 IMPORTANT BEHAVIOR:
@@ -30,11 +30,17 @@ You: "Perfect! I'll create a workflow that triggers when a new row is added to G
 Be concise, action-oriented, and avoid asking too many questions.`;
   }
 
-  async chat(userMessage: string, conversationHistory: ChatMessage[] = []): Promise<string> {
+  async chat(
+    userMessage: string,
+    conversationHistory: ChatMessage[] = []
+  ): Promise<string> {
     try {
       // Analyze conversation to extract what we already know
-      const conversationContext = this.analyzeConversationContext(conversationHistory, userMessage);
-      
+      const conversationContext = this.analyzeConversationContext(
+        conversationHistory,
+        userMessage
+      );
+
       // Enhanced system prompt with conversation awareness
       const enhancedSystemPrompt = `${this.systemPrompt}
 
@@ -44,92 +50,126 @@ ${conversationContext}
 CRITICAL: Before asking ANY question, check if the information is already provided above. DO NOT re-ask for information that's already known.`;
 
       const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-        { role: 'system', content: enhancedSystemPrompt },
-        ...conversationHistory.map(msg => ({
-          role: msg.role as 'user' | 'assistant',
-          content: msg.content
+        { role: "system", content: enhancedSystemPrompt },
+        ...conversationHistory.map((msg) => ({
+          role: msg.role as "user" | "assistant",
+          content: msg.content,
         })),
-        { role: 'user', content: userMessage }
+        { role: "user", content: userMessage },
       ];
 
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini', // Fast and cost-effective for hackathon
+        model: "gpt-4o-mini",
         messages,
         temperature: 0.7,
         max_tokens: 1000,
       });
 
-      return completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
+      return (
+        completion.choices[0]?.message?.content ||
+        "Sorry, I could not generate a response."
+      );
     } catch (error) {
-      console.error('OpenAI API error:', error);
-      throw new Error('Failed to get AI response');
+      console.error("OpenAI API error:", error);
+      throw new Error("Failed to get AI response");
     }
   }
 
   /**
    * Analyze conversation to extract what information we already have
    */
-  private analyzeConversationContext(conversationHistory: ChatMessage[], currentMessage: string): string {
-    const allMessages = [...conversationHistory, { role: 'user' as const, content: currentMessage }];
-    const userMessages = allMessages.filter(m => m.role === 'user').map(m => m.content).join(' ');
-    
+  private analyzeConversationContext(
+    conversationHistory: ChatMessage[],
+    currentMessage: string
+  ): string {
+    const allMessages = [
+      ...conversationHistory,
+      { role: "user" as const, content: currentMessage },
+    ];
+    const userMessages = allMessages
+      .filter((m) => m.role === "user")
+      .map((m) => m.content)
+      .join(" ");
+
     const context: string[] = [];
-    
+
     // Check for trigger information
-    if (userMessages.match(/schedul(e|ing)|every (day|week|month|monday|tuesday|wednesday|thursday|friday)|at \d+|cron/i)) {
-      const scheduleMatch = userMessages.match(/(schedul(e|ing)|every) .{0,50}(at \d+|pm|am|\d+ pm|\d+ am)/i);
-      context.push(`✓ Trigger: Schedule - ${scheduleMatch ? scheduleMatch[0] : 'mentioned'}`);
+    if (
+      userMessages.match(
+        /schedul(e|ing)|every (day|week|month|monday|tuesday|wednesday|thursday|friday)|at \d+|cron/i
+      )
+    ) {
+      const scheduleMatch = userMessages.match(
+        /(schedul(e|ing)|every) .{0,50}(at \d+|pm|am|\d+ pm|\d+ am)/i
+      );
+      context.push(
+        `✓ Trigger: Schedule - ${
+          scheduleMatch ? scheduleMatch[0] : "mentioned"
+        }`
+      );
     } else if (userMessages.match(/webhook|http|api call|when.*receive/i)) {
-      context.push('✓ Trigger: Webhook');
+      context.push("✓ Trigger: Webhook");
     } else if (userMessages.match(/manual|button|click|run/i)) {
-      context.push('✓ Trigger: Manual');
+      context.push("✓ Trigger: Manual");
     }
-    
+
     // Check for action/goal
     if (userMessages.match(/send.*email|email.*send|\d+ emails/i)) {
       const emailMatch = userMessages.match(/\d+ emails/i);
-      context.push(`✓ Action: Send email${emailMatch ? ` (${emailMatch[0]})` : ''}`);
-    } else if (userMessages.match(/send.*message|post.*slack|slack.*message/i)) {
-      context.push('✓ Action: Send Slack message');
+      context.push(
+        `✓ Action: Send email${emailMatch ? ` (${emailMatch[0]})` : ""}`
+      );
+    } else if (
+      userMessages.match(/send.*message|post.*slack|slack.*message/i)
+    ) {
+      context.push("✓ Action: Send Slack message");
     } else if (userMessages.match(/update|insert|save.*data/i)) {
-      context.push('✓ Action: Update/save data');
+      context.push("✓ Action: Update/save data");
     }
-    
+
     // Check for services
     const services: string[] = [];
-    if (userMessages.match(/gmail|google mail/i)) services.push('Gmail');
-    if (userMessages.match(/slack/i)) services.push('Slack');
-    if (userMessages.match(/sendgrid/i)) services.push('SendGrid');
-    if (userMessages.match(/sheets|google sheets/i)) services.push('Google Sheets');
-    if (userMessages.match(/openai|gpt|chatgpt|gpt-4/i)) services.push('OpenAI');
-    if (userMessages.match(/claude|anthropic/i)) services.push('Claude');
-    if (userMessages.match(/gemini|google ai/i)) services.push('Google AI');
-    if (userMessages.match(/dall-e|dalle|image generation/i)) services.push('DALL-E');
-    if (userMessages.match(/stable diffusion|stability/i)) services.push('Stability AI');
-    if (userMessages.match(/elevenlabs|voice|text to speech/i)) services.push('ElevenLabs');
+    if (userMessages.match(/gmail|google mail/i)) services.push("Gmail");
+    if (userMessages.match(/slack/i)) services.push("Slack");
+    if (userMessages.match(/sendgrid/i)) services.push("SendGrid");
+    if (userMessages.match(/sheets|google sheets/i))
+      services.push("Google Sheets");
+    if (userMessages.match(/openai|gpt|chatgpt|gpt-4/i))
+      services.push("OpenAI");
+    if (userMessages.match(/claude|anthropic/i)) services.push("Claude");
+    if (userMessages.match(/gemini|google ai/i)) services.push("Google AI");
+    if (userMessages.match(/dall-e|dalle|image generation/i))
+      services.push("DALL-E");
+    if (userMessages.match(/stable diffusion|stability/i))
+      services.push("Stability AI");
+    if (userMessages.match(/elevenlabs|voice|text to speech/i))
+      services.push("ElevenLabs");
     if (services.length > 0) {
-      context.push(`✓ Services: ${services.join(', ')}`);
+      context.push(`✓ Services: ${services.join(", ")}`);
     }
-    
+
     // Check for content/details
     if (userMessages.match(/test content|content|message|body/i)) {
-      context.push('✓ Content: Specified');
+      context.push("✓ Content: Specified");
     }
-    
+
     // Check for channels/recipients
     const channelMatch = userMessages.match(/#[\w-]+|channel.*[\w-]+/i);
     if (channelMatch) {
       context.push(`✓ Channel: ${channelMatch[0]}`);
     }
-    
+
     if (context.length === 0) {
-      return 'No workflow details collected yet.';
+      return "No workflow details collected yet.";
     }
-    
-    return context.join('\n');
+
+    return context.join("\n");
   }
 
-  async generateWorkflowFromDescription(description: string, mcpContext?: any): Promise<any> {
+  async generateWorkflowFromDescription(
+    description: string,
+    mcpContext?: any
+  ): Promise<any> {
     try {
       const prompt = `Based on this workflow description, generate a structured workflow plan:
 
@@ -142,7 +182,15 @@ Examples:
 - "post to #alerts" → use "#alerts"  
 - "message team-updates channel" → use "#team-updates"
 
-${mcpContext ? `Available n8n nodes and templates:\n${JSON.stringify(mcpContext, null, 2)}` : ''}
+${
+  mcpContext
+    ? `Available n8n nodes and templates:\n${JSON.stringify(
+        mcpContext,
+        null,
+        2
+      )}`
+    : ""
+}
 
 IMPORTANT: Use correct n8n node parameter formats:
 
@@ -288,24 +336,28 @@ Respond with a JSON object containing:
 Remember: Only include steps the user actually requested!`;
 
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: "gpt-4o-mini",
         messages: [
-          { role: 'system', content: 'You are a workflow automation expert. Generate structured workflow plans in JSON format.' },
-          { role: 'user', content: prompt }
+          {
+            role: "system",
+            content:
+              "You are a workflow automation expert. Generate structured workflow plans in JSON format.",
+          },
+          { role: "user", content: prompt },
         ],
         temperature: 0.3, // Lower temperature for more consistent JSON
-        response_format: { type: 'json_object' }
+        response_format: { type: "json_object" },
       });
 
       const content = completion.choices[0]?.message?.content;
       if (!content) {
-        throw new Error('No response from AI');
+        throw new Error("No response from AI");
       }
 
       return JSON.parse(content);
     } catch (error) {
-      console.error('Workflow generation error:', error);
-      throw new Error('Failed to generate workflow structure');
+      console.error("Workflow generation error:", error);
+      throw new Error("Failed to generate workflow structure");
     }
   }
 
@@ -318,20 +370,26 @@ ${JSON.stringify(workflow, null, 2)}
 Provide concise, actionable suggestions.`;
 
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: "gpt-4o-mini",
         messages: [
-          { role: 'system', content: 'You are a workflow optimization expert.' },
-          { role: 'user', content: prompt }
+          {
+            role: "system",
+            content: "You are a workflow optimization expert.",
+          },
+          { role: "user", content: prompt },
         ],
         temperature: 0.5,
         max_tokens: 300,
       });
 
-      const content = completion.choices[0]?.message?.content || '';
+      const content = completion.choices[0]?.message?.content || "";
       // Parse suggestions from response
-      return content.split('\n').filter(line => line.trim().length > 0).slice(0, 3);
+      return content
+        .split("\n")
+        .filter((line) => line.trim().length > 0)
+        .slice(0, 3);
     } catch (error) {
-      console.error('Suggestion generation error:', error);
+      console.error("Suggestion generation error:", error);
       return [];
     }
   }
@@ -340,20 +398,31 @@ Provide concise, actionable suggestions.`;
    * AI-powered intent detection
    * Determines if the user wants to create/build a workflow based on conversation context
    */
-  async detectWorkflowIntent(userMessage: string, conversationHistory: ChatMessage[] = []): Promise<boolean> {
+  async detectWorkflowIntent(
+    userMessage: string,
+    conversationHistory: ChatMessage[] = []
+  ): Promise<boolean> {
     try {
       // Quick check: if we have all required components, build immediately
-      const hasAllComponents = this.hasAllRequiredComponents(conversationHistory, userMessage);
+      const hasAllComponents = this.hasAllRequiredComponents(
+        conversationHistory,
+        userMessage
+      );
       if (hasAllComponents) {
-        console.log('[Intent Detection] ✅ All components present, building workflow');
+        console.log(
+          "[Intent Detection] ✅ All components present, building workflow"
+        );
         return true;
       }
 
       // Build conversation context (last 4 messages for efficiency)
       const recentMessages = conversationHistory.slice(-4);
-      const contextLines = recentMessages.map(msg => 
-        `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`
-      ).join('\n');
+      const contextLines = recentMessages
+        .map(
+          (msg) =>
+            `${msg.role === "user" ? "User" : "Assistant"}: ${msg.content}`
+        )
+        .join("\n");
 
       const prompt = `You are analyzing a conversation to determine if the user wants to BUILD/CREATE/GENERATE a workflow RIGHT NOW.
 
@@ -386,51 +455,88 @@ NO if:
 Response:`;
 
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: "gpt-4o-mini",
         messages: [
-          { role: 'system', content: 'You are an intent detection expert. Respond only with YES or NO.' },
-          { role: 'user', content: prompt }
+          {
+            role: "system",
+            content:
+              "You are an intent detection expert. Respond only with YES or NO.",
+          },
+          { role: "user", content: prompt },
         ],
         temperature: 0, // Deterministic
         max_tokens: 5,
       });
 
-      const response = completion.choices[0]?.message?.content?.trim().toUpperCase() || 'NO';
-      const shouldBuild = response.includes('YES');
+      const response =
+        completion.choices[0]?.message?.content?.trim().toUpperCase() || "NO";
+      const shouldBuild = response.includes("YES");
 
-      console.log(`[Intent Detection] Message: "${userMessage.substring(0, 50)}..." → ${shouldBuild ? 'BUILD' : 'CONTINUE CHAT'}`);
-      
+      console.log(
+        `[Intent Detection] Message: "${userMessage.substring(0, 50)}..." → ${
+          shouldBuild ? "BUILD" : "CONTINUE CHAT"
+        }`
+      );
+
       return shouldBuild;
     } catch (error) {
-      console.error('Intent detection error:', error);
+      console.error("Intent detection error:", error);
       // Fallback to keyword detection on error
-      const keywords = ['create workflow', 'build workflow', 'generate workflow', 'make workflow'];
-      return keywords.some(k => userMessage.toLowerCase().includes(k));
+      const keywords = [
+        "create workflow",
+        "build workflow",
+        "generate workflow",
+        "make workflow",
+      ];
+      return keywords.some((k) => userMessage.toLowerCase().includes(k));
     }
   }
 
   /**
    * Check if conversation has all required components for workflow generation
    */
-  private hasAllRequiredComponents(conversationHistory: ChatMessage[], currentMessage: string): boolean {
-    const allMessages = [...conversationHistory, { role: 'user' as const, content: currentMessage }];
-    const userMessages = allMessages.filter(m => m.role === 'user').map(m => m.content).join(' ').toLowerCase();
-    
+  private hasAllRequiredComponents(
+    conversationHistory: ChatMessage[],
+    currentMessage: string
+  ): boolean {
+    const allMessages = [
+      ...conversationHistory,
+      { role: "user" as const, content: currentMessage },
+    ];
+    const userMessages = allMessages
+      .filter((m) => m.role === "user")
+      .map((m) => m.content)
+      .join(" ")
+      .toLowerCase();
+
     // Check for trigger
-    const hasTrigger = userMessages.match(/schedul(e|ing)|webhook|manual|every (day|week|month|monday|tuesday|wednesday|thursday|friday)|at \d+|cron/i);
-    
+    const hasTrigger = userMessages.match(
+      /schedul(e|ing)|webhook|manual|every (day|week|month|monday|tuesday|wednesday|thursday|friday)|at \d+|cron/i
+    );
+
     // Check for action
-    const hasAction = userMessages.match(/send|post|create|update|insert|email|message/i);
-    
+    const hasAction = userMessages.match(
+      /send|post|create|update|insert|email|message/i
+    );
+
     // Check for service
-    const hasService = userMessages.match(/gmail|slack|sendgrid|sheets|airtable|postgres|http|api/i);
-    
+    const hasService = userMessages.match(
+      /gmail|slack|sendgrid|sheets|airtable|postgres|http|api/i
+    );
+
     const hasAll = !!(hasTrigger && hasAction && hasService);
-    
+
     if (hasAll) {
-      console.log('[Component Check] ✓ Trigger:', !!hasTrigger, '✓ Action:', !!hasAction, '✓ Service:', !!hasService);
+      console.log(
+        "[Component Check] ✓ Trigger:",
+        !!hasTrigger,
+        "✓ Action:",
+        !!hasAction,
+        "✓ Service:",
+        !!hasService
+      );
     }
-    
+
     return hasAll;
   }
 
@@ -438,11 +544,16 @@ Response:`;
    * Extract workflow requirements from conversation
    * Analyzes the conversation to extract structured workflow requirements
    */
-  async extractWorkflowRequirements(conversationHistory: ChatMessage[]): Promise<string> {
+  async extractWorkflowRequirements(
+    conversationHistory: ChatMessage[]
+  ): Promise<string> {
     try {
-      const contextLines = conversationHistory.map(msg => 
-        `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`
-      ).join('\n');
+      const contextLines = conversationHistory
+        .map(
+          (msg) =>
+            `${msg.role === "user" ? "User" : "Assistant"}: ${msg.content}`
+        )
+        .join("\n");
 
       const prompt = `Analyze this conversation and extract the workflow requirements in a clear, structured format.
 
@@ -459,21 +570,29 @@ Extract and summarize:
 Provide a concise summary suitable for workflow generation.`;
 
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: "gpt-4o-mini",
         messages: [
-          { role: 'system', content: 'You are a requirements extraction expert.' },
-          { role: 'user', content: prompt }
+          {
+            role: "system",
+            content: "You are a requirements extraction expert.",
+          },
+          { role: "user", content: prompt },
         ],
         temperature: 0.3,
         max_tokens: 500,
       });
 
-      return completion.choices[0]?.message?.content || 'Create a workflow based on the conversation.';
+      return (
+        completion.choices[0]?.message?.content ||
+        "Create a workflow based on the conversation."
+      );
     } catch (error) {
-      console.error('Requirements extraction error:', error);
+      console.error("Requirements extraction error:", error);
       // Fallback: use last user message
-      const lastUserMessage = conversationHistory.filter(m => m.role === 'user').pop();
-      return lastUserMessage?.content || 'Create a workflow';
+      const lastUserMessage = conversationHistory
+        .filter((m) => m.role === "user")
+        .pop();
+      return lastUserMessage?.content || "Create a workflow";
     }
   }
 }

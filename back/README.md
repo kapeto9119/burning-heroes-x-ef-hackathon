@@ -160,7 +160,6 @@ npm run build
 
 ## 📝 Notes
 
-- For hackathon: Using in-memory storage for workflows
 - In production: Replace with database (PostgreSQL, MongoDB, etc.)
 - MCP client currently uses mock data for speed
 - In production: Connect to actual n8n-MCP server
