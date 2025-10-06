@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { Navbar } from "@/components/layout/Navbar";
 import { Background } from "@/components/layout/Background";
 import { useWorkflow } from "@/contexts/WorkflowContext";
-import { LoginDialog } from "@/components/LoginDialog";
+import { useAuth } from "@/contexts/AuthContext";
 import { CredentialSetupModal, CredentialRequirement } from "@/components/CredentialSetupModal";
 import { generateWorkflow, sendChatMessage } from "@/app/actions/chat";
 import {
@@ -140,8 +140,6 @@ export default function EditorPage() {
   >("idle");
   const [deploymentData, setDeploymentData] = useState<any>(null);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [credentialRequirements, setCredentialRequirements] = useState<CredentialRequirement[]>([]);
   const [showCredentialModal, setShowCredentialModal] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
@@ -167,6 +165,9 @@ export default function EditorPage() {
     }
   }, []);
 
+  // Get authenticated user
+  const { user } = useAuth();
+
   // Vapi voice AI integration
   const {
     callStatus,
@@ -180,6 +181,7 @@ export default function EditorPage() {
   } = useVapi({
     publicKey: process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || '',
     assistantId: process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID || '',
+    userId: user?.id, // Pass authenticated user ID to Vapi
     onWorkflowGenerated: (workflow) => {
       console.log('[Editor] 🎉 Workflow generated via voice!', workflow);
       console.log('[Editor] Workflow has', workflow?.nodes?.length, 'nodes');
@@ -320,11 +322,6 @@ export default function EditorPage() {
   };
 
   const handleDeployClick = () => {
-    if (!isAuthenticated) {
-      setShowLoginDialog(true);
-      return;
-    }
-    
     // Check if credentials are needed
     if (credentialRequirements.length > 0) {
       setShowCredentialModal(true);
@@ -343,19 +340,6 @@ export default function EditorPage() {
     setShowCredentialModal(false);
     // Deploy anyway (credentials can be added later)
     handleDeploy();
-  };
-
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-    setShowLoginDialog(false);
-    // Check credentials after login
-    if (workflow) {
-      if (credentialRequirements.length > 0) {
-        setShowCredentialModal(true);
-      } else {
-        handleDeploy();
-      }
-    }
   };
 
   const handleDeploy = async () => {
@@ -816,13 +800,6 @@ export default function EditorPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Login Dialog */}
-      <LoginDialog
-        isOpen={showLoginDialog}
-        onClose={() => setShowLoginDialog(false)}
-        onLogin={handleLogin}
-      />
 
       {/* Credential Setup Modal */}
       {showCredentialModal && credentialRequirements.length > 0 && (

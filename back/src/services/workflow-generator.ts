@@ -217,26 +217,62 @@ export class WorkflowGenerator {
    */
   async modifyWorkflow(workflow: N8nWorkflow, modificationRequest: string): Promise<N8nWorkflow> {
     try {
-      // Use AI to understand what needs to be modified
-      const prompt = `Given this workflow and modification request, describe what changes need to be made:
-
-Workflow: ${JSON.stringify(workflow, null, 2)}
-
-Modification: "${modificationRequest}"
-
-Respond with JSON:
-{
-  "action": "add_node|remove_node|modify_node|reorder",
-  "details": {}
-}`;
-
-      // For hackathon: Simple implementation
-      // In production: Use AI to intelligently modify the workflow
+      console.log('[Workflow Generator] Modifying workflow:', modificationRequest);
       
-      return workflow; // Return unchanged for now
-    } catch (error) {
-      console.error('Workflow modification error:', error);
-      throw new Error('Failed to modify workflow');
+      // Use AI to understand and apply the modification
+      const prompt = `You are modifying an n8n workflow. Given the current workflow and modification request, return the COMPLETE modified workflow in the exact same JSON format.
+
+CURRENT WORKFLOW:
+${JSON.stringify(workflow, null, 2)}
+
+MODIFICATION REQUEST: "${modificationRequest}"
+
+IMPORTANT RULES:
+1. Return the COMPLETE workflow JSON with all nodes and connections
+2. Apply the requested modification (add/remove/modify nodes, change parameters, etc.)
+3. Maintain proper node IDs and connections
+4. Keep the same structure as the input workflow
+5. If modifying a trigger (e.g., from manual to schedule), replace the trigger node entirely
+6. If adding a schedule, use proper cron format in the scheduleTrigger node
+7. Preserve all other nodes that aren't being modified
+
+EXAMPLES:
+- "Change to schedule trigger at 9 AM daily" → Replace manual trigger with scheduleTrigger node with cron "0 9 * * *"
+- "Add email notification" → Add emailSend node and connect it
+- "Change Slack channel to #alerts" → Modify the Slack node's channelId parameter
+
+Return ONLY the complete modified workflow JSON, no explanations.`;
+
+      const completion = await this.aiService.chat(prompt, []);
+      
+      // Parse the AI response to get the modified workflow
+      let modifiedWorkflow: N8nWorkflow;
+      try {
+        // Try to extract JSON from the response
+        const jsonMatch = completion.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          modifiedWorkflow = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('No JSON found in AI response');
+        }
+      } catch (parseError) {
+        console.error('[Workflow Generator] Failed to parse AI response:', parseError);
+        console.log('[Workflow Generator] AI Response:', completion);
+        throw new Error('Failed to parse modified workflow from AI response');
+      }
+
+      // Validate the modified workflow has required fields
+      if (!modifiedWorkflow.nodes || !Array.isArray(modifiedWorkflow.nodes)) {
+        throw new Error('Modified workflow is missing nodes array');
+      }
+
+      console.log('[Workflow Generator] ✅ Workflow modified successfully');
+      console.log('[Workflow Generator] Modified nodes:', modifiedWorkflow.nodes.map(n => n.name).join(', '));
+      
+      return modifiedWorkflow;
+    } catch (error: any) {
+      console.error('[Workflow Generator] Workflow modification error:', error);
+      throw new Error(`Failed to modify workflow: ${error.message}`);
     }
   }
 }

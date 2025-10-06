@@ -16,21 +16,23 @@ import {
   Home,
   Moon,
   Sun,
+  LogIn,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { LoginDialog } from "@/components/LoginDialog";
+import { AuthModal } from "@/components/auth/AuthModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
+  const { user, isAuthenticated, logout } = useAuth();
   const [mounted, setMounted] = useState(false);
   const isEditor = pathname === "/editor";
   const isPlatform = pathname === "/platform";
-  const [showLoginDialog, setShowLoginDialog] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(true); // Auto-authenticated for demo
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -38,21 +40,8 @@ export function Navbar() {
     setMounted(true);
   }, []);
 
-  const handleSaveOrRun = () => {
-    if (isAuthenticated) {
-      router.push("/workflows");
-    } else {
-      setShowLoginDialog(true);
-    }
-  };
-
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-    router.push("/workflows");
-  };
-
   const handleLogout = () => {
-    setIsAuthenticated(false);
+    logout();
     setShowProfileMenu(false);
     router.push("/");
   };
@@ -114,20 +103,30 @@ export function Navbar() {
                 </motion.button>
               )}
 
-              <div className="relative" ref={profileMenuRef}>
+              {/* Auth Button or Profile Menu */}
+              {!isAuthenticated ? (
                 <button
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  onClick={() => setShowAuthModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition-opacity text-sm font-medium"
                 >
-                  <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 border-2 border-black dark:border-gray-300 flex items-center justify-center">
-                    <User className="w-4 h-4 text-black dark:text-gray-100" />
-                  </div>
-                  <ChevronDown
-                    className={`w-4 h-4 text-black dark:text-gray-100 transition-transform ${
-                      showProfileMenu ? "rotate-180" : ""
-                    }`}
-                  />
+                  <LogIn className="w-4 h-4" />
+                  <span>Login</span>
                 </button>
+              ) : (
+                <div className="relative" ref={profileMenuRef}>
+                  <button
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 border-2 border-black dark:border-gray-300 flex items-center justify-center">
+                      <User className="w-4 h-4 text-black dark:text-gray-100" />
+                    </div>
+                    <ChevronDown
+                      className={`w-4 h-4 text-black dark:text-gray-100 transition-transform ${
+                        showProfileMenu ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
 
                 <AnimatePresence>
                   {showProfileMenu && (
@@ -189,16 +188,16 @@ export function Navbar() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </nav>
 
-      <LoginDialog
-        isOpen={showLoginDialog}
-        onClose={() => setShowLoginDialog(false)}
-        onLogin={handleLogin}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
       />
     </>
   );

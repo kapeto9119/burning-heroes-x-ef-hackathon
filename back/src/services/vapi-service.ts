@@ -2,15 +2,18 @@ import { VapiFunctionCall, VapiFunctionResponse, VoiceWorkflowSession } from '..
 import { WorkflowGenerator } from './workflow-generator';
 import { voiceSessionManager } from './voice-session-manager';
 import { N8nWorkflow } from '../types';
+import { N8nApiClient } from './n8n-api-client';
 
 /**
  * Vapi Service - Handles voice AI function calls and workflow generation
  */
 export class VapiService {
   private workflowGenerator: WorkflowGenerator;
+  private n8nApiClient: N8nApiClient | null;
 
-  constructor(workflowGenerator: WorkflowGenerator) {
+  constructor(workflowGenerator: WorkflowGenerator, n8nApiClient: N8nApiClient | null = null) {
     this.workflowGenerator = workflowGenerator;
+    this.n8nApiClient = n8nApiClient;
   }
 
   /**
@@ -151,7 +154,7 @@ export class VapiService {
   }
 
   /**
-   * Deploy workflow (returns deployment info, actual deployment happens in frontend/routes)
+   * Deploy workflow to n8n
    */
   private async handleDeployWorkflow(
     params: any,
@@ -176,17 +179,50 @@ export class VapiService {
       };
     }
 
-    // Mark as ready for deployment
-    voiceSessionManager.updateSession(callId, { status: 'deployed' });
+    // Check if n8n API is available
+    if (!this.n8nApiClient) {
+      console.warn('[Vapi Service] n8n API not configured - workflow will only be displayed in UI');
+      voiceSessionManager.updateSession(callId, { status: 'deployed' });
+      return {
+        result: {
+          workflow: session.currentWorkflow,
+          readyToDeploy: true,
+          message: 'Workflow is ready! Note: n8n deployment is not configured, so the workflow is only displayed in the UI.',
+          sessionId: session.sessionId,
+        }
+      };
+    }
 
-    return {
-      result: {
-        workflow: session.currentWorkflow,
-        readyToDeploy: true,
-        message: 'Perfect! I\'m deploying your workflow now. This will take just a moment...',
-        sessionId: session.sessionId,
-      }
-    };
+    try {
+      console.log('[Vapi Service] Deploying workflow to n8n...');
+      
+      // Create workflow in n8n
+      const workflowId = await this.n8nApiClient.createWorkflow(session.currentWorkflow, userId);
+      
+      console.log('[Vapi Service] ✅ Workflow created in n8n with ID:', workflowId);
+      
+      // Update session with n8n workflow ID
+      voiceSessionManager.updateSession(callId, { 
+        status: 'deployed',
+        n8nWorkflowId: workflowId 
+      });
+
+      return {
+        result: {
+          workflow: session.currentWorkflow,
+          workflowId,
+          deployed: true,
+          message: 'Perfect! Your workflow has been successfully deployed to n8n.',
+          sessionId: session.sessionId,
+        }
+      };
+    } catch (error: any) {
+      console.error('[Vapi Service] ❌ Failed to deploy workflow:', error);
+      return {
+        result: null,
+        error: `Failed to deploy workflow: ${error.message}`
+      };
+    }
   }
 
   /**

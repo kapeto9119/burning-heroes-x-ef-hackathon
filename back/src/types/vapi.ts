@@ -22,6 +22,10 @@ export interface VapiCallData {
   endedReason?: string;
   startedAt?: string;
   endedAt?: string;
+  metadata?: {
+    userId?: string;
+    [key: string]: any;
+  };
 }
 
 export interface VapiWebhookRequest {
@@ -39,6 +43,7 @@ export interface VoiceWorkflowSession {
   userId: string;
   callId?: string;
   currentWorkflow?: any;
+  n8nWorkflowId?: string; // ID of the deployed workflow in n8n
   conversationContext: {
     trigger?: string;
     services: string[];

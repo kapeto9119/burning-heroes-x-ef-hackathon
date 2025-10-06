@@ -1,0 +1,5794 @@
+[Vapi] Client initialized
+f189ba8a11b77e0a.js:1 [Vapi] Call started
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "status-update",
+  "status": "in-progress"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: status-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: status-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "speech-update",
+  "status": "started",
+  "role": "assistant",
+  "turn": 0
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: speech-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: speech-update Object
+f189ba8a11b77e0a.js:1 [Vapi] User started speaking
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "partial",
+  "transcript": "Hi. I'm"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "partial",
+  "transcript": "Hi. I'm your workflow assistant."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "final",
+  "transcript": "Hi. I'm your workflow assistant."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant."
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    }
+  ],
+  "messagesOpenAIFormatted": []
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "partial",
+  "transcript": "Would you like to"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "final",
+  "transcript": "What would you like to automate today?"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    }
+  ],
+  "messagesOpenAIFormatted": []
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "speech-update",
+  "status": "stopped",
+  "role": "assistant",
+  "turn": 0
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: speech-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: speech-update Object
+f189ba8a11b77e0a.js:1 [Vapi] User stopped speaking
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "speech-update",
+  "status": "started",
+  "role": "user",
+  "turn": 0
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: speech-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: speech-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "partial",
+  "transcript": "Hey, man. I wanna"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "partial",
+  "transcript": "Hey, man. I wanna create a workflow"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "speech-update",
+  "status": "stopped",
+  "role": "user",
+  "turn": 0
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: speech-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: speech-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "partial",
+  "transcript": "Hey, man. I wanna create a workflow"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "partial",
+  "transcript": "Hey, man. I wanna create a workflow that is"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "partial",
+  "transcript": "Hey, man. I wanna create a workflow that is triggered manually."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually."
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+            "start": 9.48,
+            "end": 9.98,
+            "confidence": 0.701416,
+            "punctuated_word": "manually."
+          }
+        ]
+      }
+    }
+  ],
+  "messagesOpenAIFormatted": []
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "final",
+  "transcript": "Hey, man. I wanna create a workflow that is triggered manually."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": "Great"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": "!"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " Could"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " you"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " provide"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " more"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " details"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " about"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " the"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " workflow"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": "?"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " Specifically"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "voice-input",
+  "input": "Great! Could you provide more details about the workflow?",
+  "turn": 1
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: voice-input
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(3)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: voice-input Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": ","
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " what"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " actions"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " or"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " services"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " would"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " you"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " like"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " to"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " include"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " in"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " this"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " manually"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " triggered"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " workflow"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": "?"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "voice-input",
+  "input": "Specifically, what actions or services would you like to include in this manually triggered workflow?",
+  "turn": 1
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: voice-input
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(3)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: voice-input Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "partial",
+  "transcript": "And it sends"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "partial",
+  "transcript": "And it sends a message to"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "speech-update",
+  "status": "started",
+  "role": "user",
+  "turn": 1
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: speech-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: speech-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "partial",
+  "transcript": "And it sends a message to my Slack group"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "speech-update",
+  "status": "stopped",
+  "role": "user",
+  "turn": 1
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: speech-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: speech-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group"
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+            "start": 9.48,
+            "end": 9.98,
+            "confidence": 0.701416,
+            "punctuated_word": "manually."
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "message": "And it sends a message to my Slack group",
+      "time": 1759724170130,
+      "endTime": 1759724173250,
+      "secondsFromStart": 8.485,
+      "duration": 3120,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "and",
+            "start": 10.42,
+            "end": 10.740001,
+            "confidence": 1,
+            "punctuated_word": "And"
+          },
+          {
+            "word": "it",
+            "start": 10.740001,
+            "end": 10.900001,
+            "confidence": 1,
+            "punctuated_word": "it"
+          },
+          {
+            "word": "sends",
+            "start": 10.900001,
+            "end": 11.3,
+            "confidence": 0.99902344,
+            "punctuated_word": "sends"
+          },
+          {
+            "word": "a",
+            "start": 11.3,
+            "end": 11.54,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "message",
+            "start": 11.54,
+            "end": 11.940001,
+            "confidence": 1,
+            "punctuated_word": "message"
+          },
+          {
+            "word": "to",
+            "start": 11.940001,
+            "end": 12.1,
+            "confidence": 1,
+            "punctuated_word": "to"
+          },
+          {
+            "word": "my",
+            "start": 12.1,
+            "end": 12.42,
+            "confidence": 1,
+            "punctuated_word": "my"
+          },
+          {
+            "word": "slack",
+            "start": 12.42,
+            "end": 12.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "Slack"
+          },
+          {
+            "word": "group",
+            "start": 13.14,
+            "end": 13.54,
+            "confidence": 0.99902344,
+            "punctuated_word": "group"
+          }
+        ]
+      }
+    }
+  ],
+  "messagesOpenAIFormatted": []
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "final",
+  "transcript": "And it sends a message to my Slack group"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "speech-update",
+  "status": "started",
+  "role": "user",
+  "turn": 2
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: speech-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: speech-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "partial",
+  "transcript": "or Fluidah."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group or Florida."
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+            "start": 9.48,
+            "end": 9.98,
+            "confidence": 0.701416,
+            "punctuated_word": "manually."
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "message": "And it sends a message to my Slack group",
+      "time": 1759724170130,
+      "endTime": 1759724173250,
+      "secondsFromStart": 8.485,
+      "duration": 3120,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "and",
+            "start": 10.42,
+            "end": 10.740001,
+            "confidence": 1,
+            "punctuated_word": "And"
+          },
+          {
+            "word": "it",
+            "start": 10.740001,
+            "end": 10.900001,
+            "confidence": 1,
+            "punctuated_word": "it"
+          },
+          {
+            "word": "sends",
+            "start": 10.900001,
+            "end": 11.3,
+            "confidence": 0.99902344,
+            "punctuated_word": "sends"
+          },
+          {
+            "word": "a",
+            "start": 11.3,
+            "end": 11.54,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "message",
+            "start": 11.54,
+            "end": 11.940001,
+            "confidence": 1,
+            "punctuated_word": "message"
+          },
+          {
+            "word": "to",
+            "start": 11.940001,
+            "end": 12.1,
+            "confidence": 1,
+            "punctuated_word": "to"
+          },
+          {
+            "word": "my",
+            "start": 12.1,
+            "end": 12.42,
+            "confidence": 1,
+            "punctuated_word": "my"
+          },
+          {
+            "word": "slack",
+            "start": 12.42,
+            "end": 12.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "Slack"
+          },
+          {
+            "word": "group",
+            "start": 13.14,
+            "end": 13.54,
+            "confidence": 0.99902344,
+            "punctuated_word": "group"
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "message": "or Florida.",
+      "time": 1759724173250,
+      "endTime": 1759724174295,
+      "secondsFromStart": 11.605,
+      "duration": 1045,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "or",
+            "start": 13.54,
+            "end": 14.04,
+            "confidence": 0.6323242,
+            "punctuated_word": "or"
+          },
+          {
+            "word": "florida",
+            "start": 14.085,
+            "end": 14.585,
+            "confidence": 0.4567871,
+            "punctuated_word": "Florida."
+          }
+        ]
+      }
+    }
+  ],
+  "messagesOpenAIFormatted": []
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "final",
+  "transcript": "or Florida."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "speech-update",
+  "status": "stopped",
+  "role": "user",
+  "turn": 2
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: speech-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: speech-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": [
+    {
+      "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "type": "function",
+      "function": {
+        "name": "generateWorkflow",
+        "arguments": "{\"parameters\":{\"trigger\":\"manual\",\"services\":[\"Slack\"],\"description\":\"Manually triggered workflow to send a message to the Slack group in Florida.\"}}"
+      }
+    }
+  ]
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group or Florida."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "content": "Tool Result Still Pending But Proceed Further If Possible."
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+            "start": 9.48,
+            "end": 9.98,
+            "confidence": 0.701416,
+            "punctuated_word": "manually."
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "message": "And it sends a message to my Slack group",
+      "time": 1759724170130,
+      "endTime": 1759724173250,
+      "secondsFromStart": 8.485,
+      "duration": 3120,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "and",
+            "start": 10.42,
+            "end": 10.740001,
+            "confidence": 1,
+            "punctuated_word": "And"
+          },
+          {
+            "word": "it",
+            "start": 10.740001,
+            "end": 10.900001,
+            "confidence": 1,
+            "punctuated_word": "it"
+          },
+          {
+            "word": "sends",
+            "start": 10.900001,
+            "end": 11.3,
+            "confidence": 0.99902344,
+            "punctuated_word": "sends"
+          },
+          {
+            "word": "a",
+            "start": 11.3,
+            "end": 11.54,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "message",
+            "start": 11.54,
+            "end": 11.940001,
+            "confidence": 1,
+            "punctuated_word": "message"
+          },
+          {
+            "word": "to",
+            "start": 11.940001,
+            "end": 12.1,
+            "confidence": 1,
+            "punctuated_word": "to"
+          },
+          {
+            "word": "my",
+            "start": 12.1,
+            "end": 12.42,
+            "confidence": 1,
+            "punctuated_word": "my"
+          },
+          {
+            "word": "slack",
+            "start": 12.42,
+            "end": 12.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "Slack"
+          },
+          {
+            "word": "group",
+            "start": 13.14,
+            "end": 13.54,
+            "confidence": 0.99902344,
+            "punctuated_word": "group"
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "message": "or Florida.",
+      "time": 1759724173250,
+      "endTime": 1759724174295,
+      "secondsFromStart": 11.605,
+      "duration": 1045,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "or",
+            "start": 13.54,
+            "end": 14.04,
+            "confidence": 0.6323242,
+            "punctuated_word": "or"
+          },
+          {
+            "word": "florida",
+            "start": 14.085,
+            "end": 14.585,
+            "confidence": 0.4567871,
+            "punctuated_word": "Florida."
+          }
+        ]
+      }
+    },
+    {
+      "toolCalls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ],
+      "role": "tool_calls",
+      "message": "",
+      "time": 1759724175910,
+      "secondsFromStart": 14.265
+    }
+  ],
+  "messagesOpenAIFormatted": []
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "tool-calls",
+  "toolCalls": [
+    {
+      "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "type": "function",
+      "function": {
+        "name": "generateWorkflow",
+        "arguments": {
+          "parameters": {
+            "trigger": "manual",
+            "services": [
+              "Slack"
+            ],
+            "description": "Manually triggered workflow to send a message to the Slack group in Florida."
+          }
+        }
+      }
+    }
+  ],
+  "toolCallList": [
+    {
+      "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "type": "function",
+      "function": {
+        "name": "generateWorkflow",
+        "arguments": {
+          "parameters": {
+            "trigger": "manual",
+            "services": [
+              "Slack"
+            ],
+            "description": "Manually triggered workflow to send a message to the Slack group in Florida."
+          }
+        }
+      }
+    }
+  ],
+  "toolWithToolCallList": [
+    {
+      "type": "function",
+      "function": {
+        "name": "generateWorkflow",
+        "strict": true,
+        "parameters": {
+          "type": "object",
+          "required": [
+            "parameters"
+          ],
+          "properties": {
+            "parameters": {
+              "type": "object",
+              "required": [
+                "description",
+                "trigger"
+              ],
+              "properties": {
+                "trigger": {
+                  "enum": [
+                    "webhook",
+                    "schedule",
+                    "manual"
+                  ],
+                  "type": "string",
+                  "description": "Workflow trigger type"
+                },
+                "schedule": {
+                  "type": "string",
+                  "description": "Schedule time if trigger is schedule (e.g., '9 AM daily', 'every Monday')"
+                },
+                "services": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of services to use (e.g., Slack, Gmail, Postgres)"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Complete workflow description based on the conversation"
+                }
+              }
+            }
+          }
+        },
+        "description": "Generate a workflow based on user requirements. Call this when you have enough information about the trigger, actions, and services."
+      },
+      "async": true,
+      "server": {
+        "url": "https://back-production-ff64.up.railway.app"
+      },
+      "messages": [
+        {
+          "type": "request-start",
+          "content": "Let me generate that workflow for you...",
+          "contents": [],
+          "conditions": [],
+          "blocking": true
+        }
+      ],
+      "toolCall": {
+        "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+        "type": "function",
+        "function": {
+          "name": "generateWorkflow",
+          "arguments": {
+            "parameters": {
+              "trigger": "manual",
+              "services": [
+                "Slack"
+              ],
+              "description": "Manually triggered workflow to send a message to the Slack group in Florida."
+            }
+          }
+        }
+      }
+    }
+  ]
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: tool-calls
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 🔧 Tool calls received: Array(1)
+f189ba8a11b77e0a.js:1 [Vapi] 🎯 Generate workflow tool call! Object
+f189ba8a11b77e0a.js:1 [Vapi] Using API URL: https://back-production-ff64.up.railway.app
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group or Florida."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "content": "Success."
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+            "start": 9.48,
+            "end": 9.98,
+            "confidence": 0.701416,
+            "punctuated_word": "manually."
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "message": "And it sends a message to my Slack group",
+      "time": 1759724170130,
+      "endTime": 1759724173250,
+      "secondsFromStart": 8.485,
+      "duration": 3120,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "and",
+            "start": 10.42,
+            "end": 10.740001,
+            "confidence": 1,
+            "punctuated_word": "And"
+          },
+          {
+            "word": "it",
+            "start": 10.740001,
+            "end": 10.900001,
+            "confidence": 1,
+            "punctuated_word": "it"
+          },
+          {
+            "word": "sends",
+            "start": 10.900001,
+            "end": 11.3,
+            "confidence": 0.99902344,
+            "punctuated_word": "sends"
+          },
+          {
+            "word": "a",
+            "start": 11.3,
+            "end": 11.54,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "message",
+            "start": 11.54,
+            "end": 11.940001,
+            "confidence": 1,
+            "punctuated_word": "message"
+          },
+          {
+            "word": "to",
+            "start": 11.940001,
+            "end": 12.1,
+            "confidence": 1,
+            "punctuated_word": "to"
+          },
+          {
+            "word": "my",
+            "start": 12.1,
+            "end": 12.42,
+            "confidence": 1,
+            "punctuated_word": "my"
+          },
+          {
+            "word": "slack",
+            "start": 12.42,
+            "end": 12.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "Slack"
+          },
+          {
+            "word": "group",
+            "start": 13.14,
+            "end": 13.54,
+            "confidence": 0.99902344,
+            "punctuated_word": "group"
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "message": "or Florida.",
+      "time": 1759724173250,
+      "endTime": 1759724174295,
+      "secondsFromStart": 11.605,
+      "duration": 1045,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "or",
+            "start": 13.54,
+            "end": 14.04,
+            "confidence": 0.6323242,
+            "punctuated_word": "or"
+          },
+          {
+            "word": "florida",
+            "start": 14.085,
+            "end": 14.585,
+            "confidence": 0.4567871,
+            "punctuated_word": "Florida."
+          }
+        ]
+      }
+    },
+    {
+      "toolCalls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ],
+      "role": "tool_calls",
+      "message": "",
+      "time": 1759724175910,
+      "secondsFromStart": 14.265
+    },
+    {
+      "role": "tool_call_result",
+      "time": 1759724175919,
+      "secondsFromStart": 14.274,
+      "name": "generateWorkflow",
+      "result": "Success.",
+      "toolCallId": "call_tcRP6Byq9J0I6j8u2Uy4XOmW"
+    }
+  ],
+  "messagesOpenAIFormatted": []
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "speech-update",
+  "status": "started",
+  "role": "user",
+  "turn": 3
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: speech-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: speech-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": "The"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " workflow"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " to"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " send"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " a"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " message"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " to"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " your"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " Slack"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " group"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " in"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " Florida"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " when"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " triggered"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " manually"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " has"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " been"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " successfully"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " created"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": "."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " Would"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "voice-input",
+  "input": "The workflow to send a message to your Slack group in Florida when triggered manually has been successfully created.",
+  "turn": 1
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: voice-input
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(3)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: voice-input Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " you"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "partial",
+  "transcript": "The saying"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "partial",
+  "transcript": "The saying good morning, boys."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group or Florida. The saying good morning, boys."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "content": "Success."
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+            "start": 9.48,
+            "end": 9.98,
+            "confidence": 0.701416,
+            "punctuated_word": "manually."
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "message": "And it sends a message to my Slack group",
+      "time": 1759724170130,
+      "endTime": 1759724173250,
+      "secondsFromStart": 8.485,
+      "duration": 3120,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "and",
+            "start": 10.42,
+            "end": 10.740001,
+            "confidence": 1,
+            "punctuated_word": "And"
+          },
+          {
+            "word": "it",
+            "start": 10.740001,
+            "end": 10.900001,
+            "confidence": 1,
+            "punctuated_word": "it"
+          },
+          {
+            "word": "sends",
+            "start": 10.900001,
+            "end": 11.3,
+            "confidence": 0.99902344,
+            "punctuated_word": "sends"
+          },
+          {
+            "word": "a",
+            "start": 11.3,
+            "end": 11.54,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "message",
+            "start": 11.54,
+            "end": 11.940001,
+            "confidence": 1,
+            "punctuated_word": "message"
+          },
+          {
+            "word": "to",
+            "start": 11.940001,
+            "end": 12.1,
+            "confidence": 1,
+            "punctuated_word": "to"
+          },
+          {
+            "word": "my",
+            "start": 12.1,
+            "end": 12.42,
+            "confidence": 1,
+            "punctuated_word": "my"
+          },
+          {
+            "word": "slack",
+            "start": 12.42,
+            "end": 12.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "Slack"
+          },
+          {
+            "word": "group",
+            "start": 13.14,
+            "end": 13.54,
+            "confidence": 0.99902344,
+            "punctuated_word": "group"
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "message": "or Florida.",
+      "time": 1759724173250,
+      "endTime": 1759724174295,
+      "secondsFromStart": 11.605,
+      "duration": 1045,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "or",
+            "start": 13.54,
+            "end": 14.04,
+            "confidence": 0.6323242,
+            "punctuated_word": "or"
+          },
+          {
+            "word": "florida",
+            "start": 14.085,
+            "end": 14.585,
+            "confidence": 0.4567871,
+            "punctuated_word": "Florida."
+          }
+        ]
+      }
+    },
+    {
+      "toolCalls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ],
+      "role": "tool_calls",
+      "message": "",
+      "time": 1759724175910,
+      "secondsFromStart": 14.265
+    },
+    {
+      "role": "tool_call_result",
+      "time": 1759724175919,
+      "secondsFromStart": 14.274,
+      "name": "generateWorkflow",
+      "result": "Success.",
+      "toolCallId": "call_tcRP6Byq9J0I6j8u2Uy4XOmW"
+    },
+    {
+      "role": "user",
+      "message": "The saying good morning, boys.",
+      "time": 1759724175120,
+      "endTime": 1759724176740,
+      "secondsFromStart": 13.475,
+      "duration": 1620,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "the",
+            "start": 15.41,
+            "end": 15.650001,
+            "confidence": 0.5576172,
+            "punctuated_word": "The"
+          },
+          {
+            "word": "saying",
+            "start": 15.650001,
+            "end": 15.97,
+            "confidence": 0.6542969,
+            "punctuated_word": "saying"
+          },
+          {
+            "word": "good",
+            "start": 15.97,
+            "end": 16.130001,
+            "confidence": 0.8017578,
+            "punctuated_word": "good"
+          },
+          {
+            "word": "morning",
+            "start": 16.130001,
+            "end": 16.53,
+            "confidence": 0.8947754,
+            "punctuated_word": "morning,"
+          },
+          {
+            "word": "boys",
+            "start": 16.53,
+            "end": 17.03,
+            "confidence": 0.9836426,
+            "punctuated_word": "boys."
+          }
+        ]
+      }
+    }
+  ],
+  "messagesOpenAIFormatted": []
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "final",
+  "transcript": "The saying good morning, boys."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": "The"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " workflow"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " has"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " been"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " successfully"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "speech-update",
+  "status": "stopped",
+  "role": "user",
+  "turn": 3
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: speech-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: speech-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " generated"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": "!"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " Would"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "voice-input",
+  "input": "The workflow has been successfully generated!",
+  "turn": 1
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: voice-input
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(3)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: voice-input Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " you"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " like"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " to"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " deploy"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " it"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " now"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": "?"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "voice-input",
+  "input": "Would you like to deploy it now?",
+  "turn": 1
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: voice-input
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(3)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: voice-input Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "speech-update",
+  "status": "started",
+  "role": "assistant",
+  "turn": 1
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: speech-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: speech-update Object
+f189ba8a11b77e0a.js:1 [Vapi] User started speaking
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "partial",
+  "transcript": "The workflow has been"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "final",
+  "transcript": "The workflow has been successfully generated."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group or Florida. The saying good morning, boys."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully generated."
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+            "start": 9.48,
+            "end": 9.98,
+            "confidence": 0.701416,
+            "punctuated_word": "manually."
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "message": "And it sends a message to my Slack group",
+      "time": 1759724170130,
+      "endTime": 1759724173250,
+      "secondsFromStart": 8.485,
+      "duration": 3120,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "and",
+            "start": 10.42,
+            "end": 10.740001,
+            "confidence": 1,
+            "punctuated_word": "And"
+          },
+          {
+            "word": "it",
+            "start": 10.740001,
+            "end": 10.900001,
+            "confidence": 1,
+            "punctuated_word": "it"
+          },
+          {
+            "word": "sends",
+            "start": 10.900001,
+            "end": 11.3,
+            "confidence": 0.99902344,
+            "punctuated_word": "sends"
+          },
+          {
+            "word": "a",
+            "start": 11.3,
+            "end": 11.54,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "message",
+            "start": 11.54,
+            "end": 11.940001,
+            "confidence": 1,
+            "punctuated_word": "message"
+          },
+          {
+            "word": "to",
+            "start": 11.940001,
+            "end": 12.1,
+            "confidence": 1,
+            "punctuated_word": "to"
+          },
+          {
+            "word": "my",
+            "start": 12.1,
+            "end": 12.42,
+            "confidence": 1,
+            "punctuated_word": "my"
+          },
+          {
+            "word": "slack",
+            "start": 12.42,
+            "end": 12.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "Slack"
+          },
+          {
+            "word": "group",
+            "start": 13.14,
+            "end": 13.54,
+            "confidence": 0.99902344,
+            "punctuated_word": "group"
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "message": "or Florida.",
+      "time": 1759724173250,
+      "endTime": 1759724174295,
+      "secondsFromStart": 11.605,
+      "duration": 1045,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "or",
+            "start": 13.54,
+            "end": 14.04,
+            "confidence": 0.6323242,
+            "punctuated_word": "or"
+          },
+          {
+            "word": "florida",
+            "start": 14.085,
+            "end": 14.585,
+            "confidence": 0.4567871,
+            "punctuated_word": "Florida."
+          }
+        ]
+      }
+    },
+    {
+      "toolCalls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ],
+      "role": "tool_calls",
+      "message": "",
+      "time": 1759724175910,
+      "secondsFromStart": 14.265
+    },
+    {
+      "role": "tool_call_result",
+      "time": 1759724175919,
+      "secondsFromStart": 14.274,
+      "name": "generateWorkflow",
+      "result": "Success.",
+      "toolCallId": "call_tcRP6Byq9J0I6j8u2Uy4XOmW"
+    },
+    {
+      "role": "user",
+      "message": "The saying good morning, boys.",
+      "time": 1759724175120,
+      "endTime": 1759724176740,
+      "secondsFromStart": 13.475,
+      "duration": 1620,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "the",
+            "start": 15.41,
+            "end": 15.650001,
+            "confidence": 0.5576172,
+            "punctuated_word": "The"
+          },
+          {
+            "word": "saying",
+            "start": 15.650001,
+            "end": 15.97,
+            "confidence": 0.6542969,
+            "punctuated_word": "saying"
+          },
+          {
+            "word": "good",
+            "start": 15.97,
+            "end": 16.130001,
+            "confidence": 0.8017578,
+            "punctuated_word": "good"
+          },
+          {
+            "word": "morning",
+            "start": 16.130001,
+            "end": 16.53,
+            "confidence": 0.8947754,
+            "punctuated_word": "morning,"
+          },
+          {
+            "word": "boys",
+            "start": 16.53,
+            "end": 17.03,
+            "confidence": 0.9836426,
+            "punctuated_word": "boys."
+          }
+        ]
+      }
+    },
+    {
+      "role": "bot",
+      "message": "The workflow has been successfully generated.",
+      "time": 1759724177499.999,
+      "endTime": 1759724179440,
+      "secondsFromStart": 15.8549990234375,
+      "duration": 1940.0009765625,
+      "source": ""
+    }
+  ],
+  "messagesOpenAIFormatted": []
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "partial",
+  "transcript": "Would you like to deploy"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "final",
+  "transcript": "Would you like to deploy it now?"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group or Florida. The saying good morning, boys."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully generated. Would you like to deploy it now?"
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+            "start": 9.48,
+            "end": 9.98,
+            "confidence": 0.701416,
+            "punctuated_word": "manually."
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "message": "And it sends a message to my Slack group",
+      "time": 1759724170130,
+      "endTime": 1759724173250,
+      "secondsFromStart": 8.485,
+      "duration": 3120,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "and",
+            "start": 10.42,
+            "end": 10.740001,
+            "confidence": 1,
+            "punctuated_word": "And"
+          },
+          {
+            "word": "it",
+            "start": 10.740001,
+            "end": 10.900001,
+            "confidence": 1,
+            "punctuated_word": "it"
+          },
+          {
+            "word": "sends",
+            "start": 10.900001,
+            "end": 11.3,
+            "confidence": 0.99902344,
+            "punctuated_word": "sends"
+          },
+          {
+            "word": "a",
+            "start": 11.3,
+            "end": 11.54,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "message",
+            "start": 11.54,
+            "end": 11.940001,
+            "confidence": 1,
+            "punctuated_word": "message"
+          },
+          {
+            "word": "to",
+            "start": 11.940001,
+            "end": 12.1,
+            "confidence": 1,
+            "punctuated_word": "to"
+          },
+          {
+            "word": "my",
+            "start": 12.1,
+            "end": 12.42,
+            "confidence": 1,
+            "punctuated_word": "my"
+          },
+          {
+            "word": "slack",
+            "start": 12.42,
+            "end": 12.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "Slack"
+          },
+          {
+            "word": "group",
+            "start": 13.14,
+            "end": 13.54,
+            "confidence": 0.99902344,
+            "punctuated_word": "group"
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "message": "or Florida.",
+      "time": 1759724173250,
+      "endTime": 1759724174295,
+      "secondsFromStart": 11.605,
+      "duration": 1045,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "or",
+            "start": 13.54,
+            "end": 14.04,
+            "confidence": 0.6323242,
+            "punctuated_word": "or"
+          },
+          {
+            "word": "florida",
+            "start": 14.085,
+            "end": 14.585,
+            "confidence": 0.4567871,
+            "punctuated_word": "Florida."
+          }
+        ]
+      }
+    },
+    {
+      "toolCalls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ],
+      "role": "tool_calls",
+      "message": "",
+      "time": 1759724175910,
+      "secondsFromStart": 14.265
+    },
+    {
+      "role": "tool_call_result",
+      "time": 1759724175919,
+      "secondsFromStart": 14.274,
+      "name": "generateWorkflow",
+      "result": "Success.",
+      "toolCallId": "call_tcRP6Byq9J0I6j8u2Uy4XOmW"
+    },
+    {
+      "role": "user",
+      "message": "The saying good morning, boys.",
+      "time": 1759724175120,
+      "endTime": 1759724176740,
+      "secondsFromStart": 13.475,
+      "duration": 1620,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "the",
+            "start": 15.41,
+            "end": 15.650001,
+            "confidence": 0.5576172,
+            "punctuated_word": "The"
+          },
+          {
+            "word": "saying",
+            "start": 15.650001,
+            "end": 15.97,
+            "confidence": 0.6542969,
+            "punctuated_word": "saying"
+          },
+          {
+            "word": "good",
+            "start": 15.97,
+            "end": 16.130001,
+            "confidence": 0.8017578,
+            "punctuated_word": "good"
+          },
+          {
+            "word": "morning",
+            "start": 16.130001,
+            "end": 16.53,
+            "confidence": 0.8947754,
+            "punctuated_word": "morning,"
+          },
+          {
+            "word": "boys",
+            "start": 16.53,
+            "end": 17.03,
+            "confidence": 0.9836426,
+            "punctuated_word": "boys."
+          }
+        ]
+      }
+    },
+    {
+      "role": "bot",
+      "message": "The workflow has been successfully generated.",
+      "time": 1759724177499.999,
+      "endTime": 1759724179440,
+      "secondsFromStart": 15.8549990234375,
+      "duration": 1940.0009765625,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "Would you like to deploy it now?",
+      "time": 1759724179810,
+      "endTime": 1759724181130,
+      "secondsFromStart": 18.165,
+      "duration": 1320,
+      "source": ""
+    }
+  ],
+  "messagesOpenAIFormatted": []
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "speech-update",
+  "status": "stopped",
+  "role": "assistant",
+  "turn": 1
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: speech-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: speech-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "partial",
+  "transcript": "Yes."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] User stopped speaking
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group or Florida. The saying good morning, boys."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully generated. Would you like to deploy it now?"
+    },
+    {
+      "role": "user",
+      "content": "Yes."
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+            "start": 9.48,
+            "end": 9.98,
+            "confidence": 0.701416,
+            "punctuated_word": "manually."
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "message": "And it sends a message to my Slack group",
+      "time": 1759724170130,
+      "endTime": 1759724173250,
+      "secondsFromStart": 8.485,
+      "duration": 3120,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "and",
+            "start": 10.42,
+            "end": 10.740001,
+            "confidence": 1,
+            "punctuated_word": "And"
+          },
+          {
+            "word": "it",
+            "start": 10.740001,
+            "end": 10.900001,
+            "confidence": 1,
+            "punctuated_word": "it"
+          },
+          {
+            "word": "sends",
+            "start": 10.900001,
+            "end": 11.3,
+            "confidence": 0.99902344,
+            "punctuated_word": "sends"
+          },
+          {
+            "word": "a",
+            "start": 11.3,
+            "end": 11.54,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "message",
+            "start": 11.54,
+            "end": 11.940001,
+            "confidence": 1,
+            "punctuated_word": "message"
+          },
+          {
+            "word": "to",
+            "start": 11.940001,
+            "end": 12.1,
+            "confidence": 1,
+            "punctuated_word": "to"
+          },
+          {
+            "word": "my",
+            "start": 12.1,
+            "end": 12.42,
+            "confidence": 1,
+            "punctuated_word": "my"
+          },
+          {
+            "word": "slack",
+            "start": 12.42,
+            "end": 12.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "Slack"
+          },
+          {
+            "word": "group",
+            "start": 13.14,
+            "end": 13.54,
+            "confidence": 0.99902344,
+            "punctuated_word": "group"
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "message": "or Florida.",
+      "time": 1759724173250,
+      "endTime": 1759724174295,
+      "secondsFromStart": 11.605,
+      "duration": 1045,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "or",
+            "start": 13.54,
+            "end": 14.04,
+            "confidence": 0.6323242,
+            "punctuated_word": "or"
+          },
+          {
+            "word": "florida",
+            "start": 14.085,
+            "end": 14.585,
+            "confidence": 0.4567871,
+            "punctuated_word": "Florida."
+          }
+        ]
+      }
+    },
+    {
+      "toolCalls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ],
+      "role": "tool_calls",
+      "message": "",
+      "time": 1759724175910,
+      "secondsFromStart": 14.265
+    },
+    {
+      "role": "tool_call_result",
+      "time": 1759724175919,
+      "secondsFromStart": 14.274,
+      "name": "generateWorkflow",
+      "result": "Success.",
+      "toolCallId": "call_tcRP6Byq9J0I6j8u2Uy4XOmW"
+    },
+    {
+      "role": "user",
+      "message": "The saying good morning, boys.",
+      "time": 1759724175120,
+      "endTime": 1759724176740,
+      "secondsFromStart": 13.475,
+      "duration": 1620,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "the",
+            "start": 15.41,
+            "end": 15.650001,
+            "confidence": 0.5576172,
+            "punctuated_word": "The"
+          },
+          {
+            "word": "saying",
+            "start": 15.650001,
+            "end": 15.97,
+            "confidence": 0.6542969,
+            "punctuated_word": "saying"
+          },
+          {
+            "word": "good",
+            "start": 15.97,
+            "end": 16.130001,
+            "confidence": 0.8017578,
+            "punctuated_word": "good"
+          },
+          {
+            "word": "morning",
+            "start": 16.130001,
+            "end": 16.53,
+            "confidence": 0.8947754,
+            "punctuated_word": "morning,"
+          },
+          {
+            "word": "boys",
+            "start": 16.53,
+            "end": 17.03,
+            "confidence": 0.9836426,
+            "punctuated_word": "boys."
+          }
+        ]
+      }
+    },
+    {
+      "role": "bot",
+      "message": "The workflow has been successfully generated.",
+      "time": 1759724177499.999,
+      "endTime": 1759724179440,
+      "secondsFromStart": 15.8549990234375,
+      "duration": 1940.0009765625,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "Would you like to deploy it now?",
+      "time": 1759724179810,
+      "endTime": 1759724181130,
+      "secondsFromStart": 18.165,
+      "duration": 1320,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Yes.",
+      "time": 1759724181480,
+      "endTime": 1759724181980,
+      "secondsFromStart": 19.835,
+      "duration": 500,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "yes",
+            "start": 21.77,
+            "end": 22.27,
+            "confidence": 0.9682617,
+            "punctuated_word": "Yes."
+          }
+        ]
+      }
+    }
+  ],
+  "messagesOpenAIFormatted": []
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "user",
+  "transcriptType": "final",
+  "transcript": "Yes."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": [
+    {
+      "id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+      "type": "function",
+      "function": {
+        "name": "deployWorkflow",
+        "arguments": "{\"name\":\"Manual Slack Message\",\"parameters\":{\"confirm\":true},\"description\":\"Deploy the 'Manual Slack Message' workflow which is manually triggered and sends a message to the Slack group in Florida.\"}"
+      }
+    }
+  ]
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group or Florida. The saying good morning, boys."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully generated. Would you like to deploy it now?"
+    },
+    {
+      "role": "user",
+      "content": "Yes."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+          "type": "function",
+          "function": {
+            "name": "deployWorkflow",
+            "arguments": "{\n  \"name\": \"Manual Slack Message\",\n  \"parameters\": {\"confirm\": true},\n  \"description\": \"Deploy the 'Manual Slack Message' workflow which is manually triggered and sends a message to the Slack group in Florida.\"\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+      "content": "Tool Result Still Pending But Proceed Further If Possible."
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+            "start": 9.48,
+            "end": 9.98,
+            "confidence": 0.701416,
+            "punctuated_word": "manually."
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "messa
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "tool-calls",
+  "toolCalls": [
+    {
+      "id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+      "type": "function",
+      "function": {
+        "name": "deployWorkflow",
+        "arguments": {
+          "name": "Manual Slack Message",
+          "parameters": {
+            "confirm": true
+          },
+          "description": "Deploy the 'Manual Slack Message' workflow which is manually triggered and sends a message to the Slack group in Florida."
+        }
+      }
+    }
+  ],
+  "toolCallList": [
+    {
+      "id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+      "type": "function",
+      "function": {
+        "name": "deployWorkflow",
+        "arguments": {
+          "name": "Manual Slack Message",
+          "parameters": {
+            "confirm": true
+          },
+          "description": "Deploy the 'Manual Slack Message' workflow which is manually triggered and sends a message to the Slack group in Florida."
+        }
+      }
+    }
+  ],
+  "toolWithToolCallList": [
+    {
+      "type": "function",
+      "function": {
+        "name": "deployWorkflow",
+        "strict": true,
+        "parameters": {
+          "type": "object",
+          "required": [
+            "name",
+            "description",
+            "parameters"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "parameters": {
+              "type": "object",
+              "required": [
+                "confirm"
+              ],
+              "properties": {
+                "confirm": {
+                  "type": "boolean",
+                  "description": "User confirmation to deploy"
+                }
+              }
+            },
+            "description": {
+              "type": "string",
+              "description": "Deploy the workflow to n8n. Only call this after user confirms they want to deploy."
+            }
+          }
+        },
+        "description": "Deploy the workflow to n8n. Only call this after user confirms they want to deploy.\n"
+      },
+      "async": true,
+      "server": {
+        "url": "https://back-production-ff64.up.railway.app",
+        "timeoutSeconds": 30
+      },
+      "messages": [
+        {
+          "type": "request-start",
+          "content": "Deploying your workflow now...",
+          "contents": [],
+          "conditions": [],
+          "blocking": true
+        }
+      ],
+      "toolCall": {
+        "id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+        "type": "function",
+        "function": {
+          "name": "deployWorkflow",
+          "arguments": {
+            "name": "Manual Slack Message",
+            "parameters": {
+              "confirm": true
+            },
+            "description": "Deploy the 'Manual Slack Message' workflow which is manually triggered and sends a message to the Slack group in Florida."
+          }
+        }
+      }
+    }
+  ]
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: tool-calls
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 🔧 Tool calls received: Array(1)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: tool-calls Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group or Florida. The saying good morning, boys."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully generated. Would you like to deploy it now?"
+    },
+    {
+      "role": "user",
+      "content": "Yes."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+          "type": "function",
+          "function": {
+            "name": "deployWorkflow",
+            "arguments": "{\n  \"name\": \"Manual Slack Message\",\n  \"parameters\": {\"confirm\": true},\n  \"description\": \"Deploy the 'Manual Slack Message' workflow which is manually triggered and sends a message to the Slack group in Florida.\"\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+      "content": "Success."
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+            "start": 9.48,
+            "end": 9.98,
+            "confidence": 0.701416,
+            "punctuated_word": "manually."
+          }
+        ]
+      }
+    },
+    {
+      "role": "user",
+      "message": "And it sends a message to my Slack group",
+ 
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": "The"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " workflow"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " has"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " been"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " successfully"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " deployed"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": "."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " You"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "voice-input",
+  "input": "The workflow has been successfully deployed.",
+  "turn": 2
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: voice-input
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(3)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: voice-input Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " can"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " now"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " trigger"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " it"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " manually"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " to"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " send"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " a"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " message"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " saying"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " \""
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": "Good"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " morning"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": ","
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " boys"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "voice-input",
+  "input": "You can now trigger it manually to send a message saying \"Good morning,",
+  "turn": 2
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: voice-input
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(3)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: voice-input Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": "\""
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " to"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " your"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " Slack"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " group"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " in"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " Florida"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": "."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " If"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "voice-input",
+  "input": "boys\" to your Slack group in Florida.",
+  "turn": 2
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: voice-input
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(3)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: voice-input Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " you"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " need"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " any"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " more"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " assistance"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " or"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " modifications"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": ","
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " feel"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "voice-input",
+  "input": "If you need any more assistance or modifications,",
+  "turn": 2
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: voice-input
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(3)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: voice-input Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " free"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " to"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": " ask"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "model-output",
+  "output": "!"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: model-output
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(2)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: model-output Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "voice-input",
+  "input": "feel free to ask!",
+  "turn": 2
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: voice-input
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(3)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: voice-input Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "speech-update",
+  "status": "started",
+  "role": "assistant",
+  "turn": 2
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: speech-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: speech-update Object
+f189ba8a11b77e0a.js:1 [Vapi] User started speaking
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "partial",
+  "transcript": "The workflow has been"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "final",
+  "transcript": "The workflow has been successfully deployed."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group or Florida. The saying good morning, boys."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully generated. Would you like to deploy it now?"
+    },
+    {
+      "role": "user",
+      "content": "Yes."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+          "type": "function",
+          "function": {
+            "name": "deployWorkflow",
+            "arguments": "{\n  \"name\": \"Manual Slack Message\",\n  \"parameters\": {\"confirm\": true},\n  \"description\": \"Deploy the 'Manual Slack Message' workflow which is manually triggered and sends a message to the Slack group in Florida.\"\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully deployed."
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+            "start": 9.48,
+            "end": 9.98,
+            "confidence": 0.701416,
+            "punctuated_word": "manually."
+          }
+        ]
+ 
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 🎉 Workflow generated! Object
+f189ba8a11b77e0a.js:1 [Editor] 🎉 Workflow generated via voice! Object
+f189ba8a11b77e0a.js:1 [Editor] Workflow has 2 nodes
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: tool-calls Object
+480c806f06b27833.js:1 [WorkflowCanvas] Processing connections: Object
+480c806f06b27833.js:1 [WorkflowCanvas] Available nodes: Array(2)
+480c806f06b27833.js:1 [WorkflowCanvas] Processing source node: Manual Trigger
+480c806f06b27833.js:1 [WorkflowCanvas] Source node data: Object
+480c806f06b27833.js:1 [WorkflowCanvas] Main connections: Array(1)
+480c806f06b27833.js:1 [WorkflowCanvas] Processing connection: Object
+480c806f06b27833.js:1 [WorkflowCanvas] Target node data: Object
+480c806f06b27833.js:1 [WorkflowCanvas] Creating edge: Object
+480c806f06b27833.js:1 [WorkflowCanvas] ✓ Connected: Manual Trigger → send_slack_message
+480c806f06b27833.js:1 [WorkflowCanvas] Total edges now: 1
+480c806f06b27833.js:1 [WorkflowCanvas] Set nodes: 2
+480c806f06b27833.js:1 [WorkflowCanvas] Set edges: 1
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "partial",
+  "transcript": "Can now trigger it"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "partial",
+  "transcript": "Can now trigger it manually, uh, to send"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "final",
+  "transcript": "Can now trigger it manually, uh, to send a message."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group or Florida. The saying good morning, boys."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully generated. Would you like to deploy it now?"
+    },
+    {
+      "role": "user",
+      "content": "Yes."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+          "type": "function",
+          "function": {
+            "name": "deployWorkflow",
+            "arguments": "{\n  \"name\": \"Manual Slack Message\",\n  \"parameters\": {\"confirm\": true},\n  \"description\": \"Deploy the 'Manual Slack Message' workflow which is manually triggered and sends a message to the Slack group in Florida.\"\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully deployed. Can now trigger it manually, uh, to send a message."
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+            "start": 9.48,
+            "end": 9.98,
+            "confidence": 0.701416,
+            "p
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "final",
+  "transcript": "Saying,"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group or Florida. The saying good morning, boys."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully generated. Would you like to deploy it now?"
+    },
+    {
+      "role": "user",
+      "content": "Yes."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+          "type": "function",
+          "function": {
+            "name": "deployWorkflow",
+            "arguments": "{\n  \"name\": \"Manual Slack Message\",\n  \"parameters\": {\"confirm\": true},\n  \"description\": \"Deploy the 'Manual Slack Message' workflow which is manually triggered and sends a message to the Slack group in Florida.\"\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully deployed. Can now trigger it manually, uh, to send a message. Saying,"
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+            "start": 9.48,
+            "end": 9.98,
+            "confidence": 0.701416,
+      
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "final",
+  "transcript": "morning, boys."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group or Florida. The saying good morning, boys."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully generated. Would you like to deploy it now?"
+    },
+    {
+      "role": "user",
+      "content": "Yes."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+          "type": "function",
+          "function": {
+            "name": "deployWorkflow",
+            "arguments": "{\n  \"name\": \"Manual Slack Message\",\n  \"parameters\": {\"confirm\": true},\n  \"description\": \"Deploy the 'Manual Slack Message' workflow which is manually triggered and sends a message to the Slack group in Florida.\"\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully deployed. Can now trigger it manually, uh, to send a message. Saying, morning, boys."
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+            "start": 9.48,
+            "end": 9.98,
+            "confidence": 0
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "partial",
+  "transcript": "To your"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "partial",
+  "transcript": "To your Slack group in Florida."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "final",
+  "transcript": "To your Slack group in Florida."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group or Florida. The saying good morning, boys."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully generated. Would you like to deploy it now?"
+    },
+    {
+      "role": "user",
+      "content": "Yes."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+          "type": "function",
+          "function": {
+            "name": "deployWorkflow",
+            "arguments": "{\n  \"name\": \"Manual Slack Message\",\n  \"parameters\": {\"confirm\": true},\n  \"description\": \"Deploy the 'Manual Slack Message' workflow which is manually triggered and sends a message to the Slack group in Florida.\"\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully deployed. Can now trigger it manually, uh, to send a message. Saying, morning, boys. To your Slack group in Florida."
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+            "start": 9.48,
+            "end": 9
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "partial",
+  "transcript": "You need any more"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "partial",
+  "transcript": "You need any more assistance or"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "final",
+  "transcript": "You need any more assistance or modifications,"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group or Florida. The saying good morning, boys."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully generated. Would you like to deploy it now?"
+    },
+    {
+      "role": "user",
+      "content": "Yes."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+          "type": "function",
+          "function": {
+            "name": "deployWorkflow",
+            "arguments": "{\n  \"name\": \"Manual Slack Message\",\n  \"parameters\": {\"confirm\": true},\n  \"description\": \"Deploy the 'Manual Slack Message' workflow which is manually triggered and sends a message to the Slack group in Florida.\"\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully deployed. Can now trigger it manually, uh, to send a message. Saying, morning, boys. To your Slack group in Florida. You need any more assistance or modifications,"
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "word": "manually",
+
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "partial",
+  "transcript": "feel free to ask."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "transcript",
+  "role": "assistant",
+  "transcriptType": "final",
+  "transcript": "feel free to ask."
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: transcript
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "conversation-update",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "This is a blank template with minimal defaults, you can change the model, temperature, and messages."
+    },
+    {
+      "role": "assistant",
+      "content": "Hi. I'm your workflow assistant. What would you like to automate today?"
+    },
+    {
+      "role": "user",
+      "content": "Hey, man. I wanna create a workflow that is triggered manually. And it sends a message to my Slack group or Florida. The saying good morning, boys."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+          "type": "function",
+          "function": {
+            "name": "generateWorkflow",
+            "arguments": "{\n  \"parameters\": {\n    \"trigger\": \"manual\",\n    \"services\": [\"Slack\"],\n    \"description\": \"Manually triggered workflow to send a message to the Slack group in Florida.\"\n  }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_tcRP6Byq9J0I6j8u2Uy4XOmW",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully generated. Would you like to deploy it now?"
+    },
+    {
+      "role": "user",
+      "content": "Yes."
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+          "type": "function",
+          "function": {
+            "name": "deployWorkflow",
+            "arguments": "{\n  \"name\": \"Manual Slack Message\",\n  \"parameters\": {\"confirm\": true},\n  \"description\": \"Deploy the 'Manual Slack Message' workflow which is manually triggered and sends a message to the Slack group in Florida.\"\n}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_vwmjXmGkGZ2QrCNhVW8G5tvU",
+      "content": "Success."
+    },
+    {
+      "role": "assistant",
+      "content": "The workflow has been successfully deployed. Can now trigger it manually, uh, to send a message. Saying, morning, boys. To your Slack group in Florida. You need any more assistance or modifications, feel free to ask."
+    }
+  ],
+  "messages": [
+    {
+      "role": "system",
+      "message": "This is a blank template with minimal defaults, you can change the model, temperature, and messages.",
+      "time": 1759724159572,
+      "secondsFromStart": 0
+    },
+    {
+      "role": "bot",
+      "message": "Hi. I'm your workflow assistant.",
+      "time": 1759724160990,
+      "endTime": 1759724162610,
+      "secondsFromStart": -0.655,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "bot",
+      "message": "What would you like to automate today?",
+      "time": 1759724163070,
+      "endTime": 1759724164690,
+      "secondsFromStart": 1.425,
+      "duration": 1620,
+      "source": ""
+    },
+    {
+      "role": "user",
+      "message": "Hey, man. I wanna create a workflow that is triggered manually.",
+      "time": 1759724165830,
+      "endTime": 1759724169690,
+      "secondsFromStart": 4.185,
+      "duration": 3860,
+      "metadata": {
+        "wordLevelConfidence": [
+          {
+            "word": "hey",
+            "start": 6.12,
+            "end": 6.36,
+            "confidence": 0.9560547,
+            "punctuated_word": "Hey,"
+          },
+          {
+            "word": "man",
+            "start": 6.36,
+            "end": 6.52,
+            "confidence": 0.97875977,
+            "punctuated_word": "man."
+          },
+          {
+            "word": "i",
+            "start": 6.52,
+            "end": 6.68,
+            "confidence": 1,
+            "punctuated_word": "I"
+          },
+          {
+            "word": "wanna",
+            "start": 6.68,
+            "end": 7,
+            "confidence": 0.9980469,
+            "punctuated_word": "wanna"
+          },
+          {
+            "word": "create",
+            "start": 7,
+            "end": 7.3199997,
+            "confidence": 1,
+            "punctuated_word": "create"
+          },
+          {
+            "word": "a",
+            "start": 7.3199997,
+            "end": 7.48,
+            "confidence": 1,
+            "punctuated_word": "a"
+          },
+          {
+            "word": "workflow",
+            "start": 7.48,
+            "end": 7.98,
+            "confidence": 0.9951172,
+            "punctuated_word": "workflow"
+          },
+          {
+            "word": "that",
+            "start": 8.04,
+            "end": 8.54,
+            "confidence": 1,
+            "punctuated_word": "that"
+          },
+          {
+            "word": "is",
+            "start": 8.68,
+            "end": 8.92,
+            "confidence": 0.9980469,
+            "punctuated_word": "is"
+          },
+          {
+            "word": "triggered",
+            "start": 8.92,
+            "end": 9.42,
+            "confidence": 0.9790039,
+            "punctuated_word": "triggered"
+          },
+          {
+            "w
+f189ba8a11b77e0a.js:1 [Vapi] Message type: conversation-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: conversation-update Object
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "speech-update",
+  "status": "stopped",
+  "role": "assistant",
+  "turn": 2
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: speech-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(4)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: speech-update Object
+f189ba8a11b77e0a.js:1 [Vapi] User stopped speaking
+f189ba8a11b77e0a.js:1 [Vapi] Call ended
+f189ba8a11b77e0a.js:1 [Vapi] 📨 RAW MESSAGE: {
+  "type": "status-update",
+  "status": "ended",
+  "endedReason": "customer-ended-call"
+}
+f189ba8a11b77e0a.js:1 [Vapi] Message type: status-update
+f189ba8a11b77e0a.js:1 [Vapi] Message keys: Array(3)
+f189ba8a11b77e0a.js:1 [Vapi] 📋 Other message type: status-update Object

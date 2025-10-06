@@ -53,7 +53,6 @@ const aiService = new AIService(process.env.OPENAI_API_KEY!);
 const authService = new AuthService(process.env.JWT_SECRET!);
 const mcpClient = new N8nMCPClient();
 const workflowGenerator = new WorkflowGenerator(mcpClient, aiService);
-const vapiService = new VapiService(workflowGenerator);
 
 // Initialize n8n API client if configured
 let n8nApiClient: N8nApiClient | null = null;
@@ -76,6 +75,9 @@ if (process.env.N8N_API_URL && process.env.N8N_API_KEY) {
 } else {
   console.warn('⚠️  n8n API not configured - deployment features will be disabled');
 }
+
+// Initialize Vapi service with n8n API client
+const vapiService = new VapiService(workflowGenerator, n8nApiClient);
 
 console.log('✅ Services initialized');
 

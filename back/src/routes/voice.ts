@@ -23,10 +23,14 @@ export function createVoiceRouter(vapiService: VapiService): Router {
 
       // Handle function calls
       if (message.type === 'function-call' && message.functionCall) {
-        const userId = req.headers['x-user-id'] as string || 'demo_user_123';
+        // Extract user ID from Vapi metadata or fallback to demo
+        const userId = webhookData.call?.metadata?.userId || 
+                       req.headers['x-user-id'] as string || 
+                       'demo_user_123';
         const callId = webhookData.call?.id || 'unknown';
 
         console.log('[Voice API] 🔧 Processing function call:', message.functionCall.name);
+        console.log('[Voice API] 👤 User ID:', userId);
 
         const result = await vapiService.handleFunctionCall(
           message.functionCall,

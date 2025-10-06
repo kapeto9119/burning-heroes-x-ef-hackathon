@@ -3,15 +3,16 @@ import { VapiCallStatus, VapiTranscript, VapiMessageEvent } from '@/types/vapi';
 
 // Type definition for Vapi SDK (will be installed)
 interface VapiClient {
-  start: (assistantId: string) => Promise<void>;
+  start: (assistantId: string, config?: { metadata?: Record<string, any> }) => Promise<any>;
   stop: () => void;
-  on: (event: string, callback: (data: any) => void) => void;
-  off: (event: string, callback: (data: any) => void) => void;
+  on: (event: string, callback: (data: any) => void) => any;
+  off: (event: string, callback: (data: any) => void) => any;
 }
 
 interface UseVapiProps {
   publicKey: string;
   assistantId: string;
+  userId?: string; // User ID to pass to backend
   onWorkflowGenerated?: (workflow: any) => void;
   onWorkflowUpdated?: (workflow: any) => void;
   onDeployReady?: (workflow: any) => void;
@@ -20,6 +21,7 @@ interface UseVapiProps {
 export function useVapi({
   publicKey,
   assistantId,
+  userId,
   onWorkflowGenerated,
   onWorkflowUpdated,
   onDeployReady,
@@ -42,7 +44,7 @@ export function useVapi({
       try {
         // Dynamically import Vapi SDK
         const { default: Vapi } = await import('@vapi-ai/web');
-        vapiClientRef.current = new Vapi(publicKey);
+        vapiClientRef.current = new Vapi(publicKey) as any;
         console.log('[Vapi] Client initialized');
       } catch (error) {
         console.error('[Vapi] Failed to initialize:', error);
@@ -68,6 +70,7 @@ export function useVapi({
     }
 
     try {
+      setCallStatus({ status: 'connecting' });
       
       // Set up event listeners
       const client = vapiClientRef.current;
@@ -229,14 +232,16 @@ export function useVapi({
         setCallStatus({ status: 'error', error: error.message });
       });
 
-      // Start the call
-      await client.start(assistantId);
+      // Start the call with user metadata
+      await client.start(assistantId, {
+        metadata: userId ? { userId } : undefined
+      });
       
     } catch (error: any) {
       console.error('[Vapi] Failed to start call:', error);
       setCallStatus({ status: 'error', error: error.message });
     }
-  }, [assistantId]);
+  }, [assistantId, userId, onWorkflowGenerated]);
 
   // Stop voice call
   const stopCall = useCallback(() => {
