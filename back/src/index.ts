@@ -11,6 +11,8 @@ import { createChatRouter } from './routes/chat';
 import { createWorkflowsRouter } from './routes/workflows';
 import { createAuthRouter } from './routes/auth';
 import { createDeployRouter } from './routes/deploy';
+import { createVoiceRouter } from './routes/voice';
+import { VapiService } from './services/vapi-service';
 
 // Load environment variables
 dotenv.config();
@@ -51,6 +53,7 @@ const aiService = new AIService(process.env.OPENAI_API_KEY!);
 const authService = new AuthService(process.env.JWT_SECRET!);
 const mcpClient = new N8nMCPClient();
 const workflowGenerator = new WorkflowGenerator(mcpClient, aiService);
+const vapiService = new VapiService(workflowGenerator);
 
 // Initialize n8n API client if configured
 let n8nApiClient: N8nApiClient | null = null;
@@ -92,6 +95,7 @@ app.get('/', (req: Request, res: Response) => {
       chat: '/api/chat',
       workflows: '/api/workflows',
       deploy: '/api/deploy',
+      voice: '/api/voice',
       health: '/health'
     }
   });
@@ -110,6 +114,7 @@ app.get('/health', (req: Request, res: Response) => {
 app.use('/api/auth', createAuthRouter(authService));
 app.use('/api/chat', createChatRouter(aiService, mcpClient, workflowGenerator));
 app.use('/api/workflows', createWorkflowsRouter(mcpClient));
+app.use('/api/voice', createVoiceRouter(vapiService));
 
 // Deploy routes (only if n8n is configured)
 if (n8nApiClient) {
@@ -163,6 +168,10 @@ app.listen(PORT, () => {
   console.log('💬 Chat:');
   console.log(`   - POST http://localhost:${PORT}/api/chat`);
   console.log(`   - POST http://localhost:${PORT}/api/chat/generate-workflow`);
+  console.log('');
+  console.log('🎙️  Voice AI:');
+  console.log(`   - POST http://localhost:${PORT}/api/voice/functions`);
+  console.log(`   - GET  http://localhost:${PORT}/api/voice/assistant-config`);
   console.log('');
   console.log('📋 Workflows:');
   console.log(`   - GET  http://localhost:${PORT}/api/workflows`);
