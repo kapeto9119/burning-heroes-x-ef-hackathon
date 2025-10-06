@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { VapiService } from '../services/vapi-service';
 import { VapiWebhookRequest, VapiAssistantConfig } from '../types/vapi';
 import { ApiResponse } from '../types';
+import { vapiAuthMiddleware } from '../middleware/vapi-auth';
 
 export function createVoiceRouter(vapiService: VapiService): Router {
   const router = Router();
@@ -9,8 +10,9 @@ export function createVoiceRouter(vapiService: VapiService): Router {
   /**
    * POST /api/voice/functions
    * Handle Vapi function calls
+   * Protected by Vapi webhook authentication
    */
-  router.post('/functions', async (req: Request, res: Response) => {
+  router.post('/functions', vapiAuthMiddleware, async (req: Request, res: Response) => {
     try {
       const webhookData: VapiWebhookRequest = req.body;
       const message = webhookData.message;
