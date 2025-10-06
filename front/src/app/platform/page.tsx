@@ -15,6 +15,15 @@ import { NewWorkflowDialog } from '@/components/NewWorkflowDialog';
 
 export default function PlatformPage() {
   const router = useRouter();
+
+  // Check authentication on mount
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      console.log('[Platform] No auth token found, redirecting to login');
+      router.push('/login');
+    }
+  }, [router]);
   const {
     workflows,
     selectedWorkflowId,
