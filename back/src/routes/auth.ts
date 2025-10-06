@@ -92,7 +92,7 @@ export function createAuthRouter(authService: AuthService): Router {
    */
   router.get('/me', authMiddleware, async (req: Request, res: Response) => {
     try {
-      const user = authService.getUserById(req.user!.userId);
+      const user = await authService.getUserById(req.user!.userId);
 
       if (!user) {
         return res.status(404).json({
@@ -147,7 +147,7 @@ export function createAuthRouter(authService: AuthService): Router {
   router.get('/credentials/:service', authMiddleware, async (req: Request, res: Response) => {
     try {
       const { service } = req.params;
-      const credentials = authService.getCredentials(req.user!.userId, service);
+      const credentials = await authService.getCredentials(req.user!.userId, service);
 
       if (!credentials) {
         return res.status(404).json({

@@ -75,7 +75,8 @@ export function createDeployRouter(
       console.log(`[Deploy] User ${userId} deploying workflow: ${workflow.name}`);
 
       // Get user credentials
-      const userCredentials = authService.getUserById(userId)?.credentials;
+      const user = await authService.getUserById(userId);
+      const userCredentials = user?.credentials;
 
       // Check if user has all required credentials
       const credentialCheck = checkRequiredCredentials(workflow, userCredentials);

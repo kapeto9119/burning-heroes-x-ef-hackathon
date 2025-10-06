@@ -1,157 +1,33 @@
 import { Router, Request, Response } from 'express';
 import { N8nMCPClient } from '../services/n8n-mcp-client';
 import { ApiResponse, N8nWorkflow } from '../types';
+import { WorkflowRepository } from '../repositories/workflow-repository';
 
 export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
   const router = Router();
-
-  // In-memory storage for hackathon (replace with database in production)
-  const workflows: Map<string, N8nWorkflow> = new Map();
-
-  // Sample data for demo
-  const sampleWorkflows: N8nWorkflow[] = [
-    {
-      id: 'sample_1',
-      name: 'Daily Slack Standup Reminder',
-      nodes: [
-        {
-          id: 'schedule_1',
-          name: 'Every Weekday at 9am',
-          type: 'n8n-nodes-base.scheduleTrigger',
-          position: [250, 300],
-          parameters: {
-            rule: {
-              interval: [{
-                field: 'cronExpression',
-                expression: '0 9 * * 1-5'
-              }]
-            }
-          },
-          credentials: {}
-        },
-        {
-          id: 'slack_1',
-          name: 'Send Standup Message',
-          type: 'n8n-nodes-base.slack',
-          position: [600, 300],
-          parameters: {
-            resource: 'message',
-            operation: 'post',
-            select: 'channel',
-            channelId: '#team',
-            text: '🌅 Good morning team! Time for daily standup!'
-          },
-          credentials: { slackApi: 'slack_credentials' }
-        }
-      ],
-      connections: {
-        'Every Weekday at 9am': {
-          main: [[{ node: 'Send Standup Message', type: 'main', index: 0 }]]
-        }
-      },
-      active: true,
-      settings: { executionOrder: 'v1' }
-    },
-    {
-      id: 'sample_2',
-      name: 'Email Notification System',
-      nodes: [
-        {
-          id: 'webhook_1',
-          name: 'Webhook Trigger',
-          type: 'n8n-nodes-base.webhook',
-          position: [250, 300],
-          parameters: {
-            httpMethod: 'POST',
-            path: '/notify'
-          },
-          credentials: {}
-        },
-        {
-          id: 'email_1',
-          name: 'Send Email Alert',
-          type: 'n8n-nodes-base.emailSend',
-          position: [600, 300],
-          parameters: {
-            fromEmail: 'alerts@example.com',
-            toEmail: 'team@example.com',
-            subject: 'New Alert Received',
-            text: 'A new notification has been triggered!'
-          },
-          credentials: { smtp: 'email_credentials' }
-        }
-      ],
-      connections: {
-        'Webhook Trigger': {
-          main: [[{ node: 'Send Email Alert', type: 'main', index: 0 }]]
-        }
-      },
-      active: true,
-      settings: { executionOrder: 'v1' }
-    },
-    {
-      id: 'sample_3',
-      name: 'Google Sheets Data Logger',
-      nodes: [
-        {
-          id: 'schedule_2',
-          name: 'Every Hour',
-          type: 'n8n-nodes-base.scheduleTrigger',
-          position: [250, 300],
-          parameters: {
-            rule: {
-              interval: [{
-                field: 'cronExpression',
-                expression: '0 * * * *'
-              }]
-            }
-          },
-          credentials: {}
-        },
-        {
-          id: 'sheets_1',
-          name: 'Append to Sheet',
-          type: 'n8n-nodes-base.googleSheets',
-          position: [600, 300],
-          parameters: {
-            operation: 'append',
-            sheetId: 'your-sheet-id',
-            range: 'Sheet1!A:C',
-            values: [['{{$now}}', 'Automated Entry', 'Success']]
-          },
-          credentials: { googleSheetsOAuth2Api: 'sheets_credentials' }
-        }
-      ],
-      connections: {
-        'Every Hour': {
-          main: [[{ node: 'Append to Sheet', type: 'main', index: 0 }]]
-        }
-      },
-      active: false,
-      settings: { executionOrder: 'v1' }
-    }
-  ];
-
-  // Initialize with sample data
-  sampleWorkflows.forEach(workflow => {
-    workflows.set(workflow.id!, workflow);
-  });
+  const workflowRepo = new WorkflowRepository();
 
   /**
    * GET /api/workflows
-   * List all workflows
+   * List all workflows for the authenticated user
    */
   router.get('/', async (req: Request, res: Response) => {
     try {
-      const workflowList = Array.from(workflows.values());
+      // TODO: Get userId from auth middleware
+      const userId = req.headers['x-user-id'] as string || 'demo_user_123';
+      
+      const workflowRecords = await workflowRepo.findByUser(userId);
+      
+      // Convert to N8nWorkflow format
+      const workflows = workflowRecords.map(record => record.workflow_data);
 
       res.json({
         success: true,
-        data: workflowList
+        data: workflows
       } as ApiResponse<N8nWorkflow[]>);
 
     } catch (error) {
-      console.error('List workflows error:', error);
+      console.error('[Workflows] List error:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to list workflows'
@@ -166,9 +42,10 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
   router.get('/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const workflow = workflows.get(id);
+      
+      const record = await workflowRepo.findById(id);
 
-      if (!workflow) {
+      if (!record) {
         return res.status(404).json({
           success: false,
           error: 'Workflow not found'
@@ -177,11 +54,11 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
 
       res.json({
         success: true,
-        data: workflow
+        data: record.workflow_data
       } as ApiResponse<N8nWorkflow>);
 
     } catch (error) {
-      console.error('Get workflow error:', error);
+      console.error('[Workflows] Get error:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to get workflow'
@@ -196,32 +73,31 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
   router.post('/', async (req: Request, res: Response) => {
     try {
       const workflow: N8nWorkflow = req.body;
+      const userId = req.headers['x-user-id'] as string || 'demo_user_123';
+      const prompt = req.body.prompt; // Optional: original AI prompt
 
       // Validate workflow
       const validation = await mcpClient.validateWorkflow(workflow);
       if (!validation.valid) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid workflow',
-          data: { errors: validation.errors }
-        } as ApiResponse);
+        console.warn('[Workflows] Validation warnings:', validation.errors);
       }
 
-      // Generate ID if not provided
-      const id = workflow.id || `wf_${Date.now()}`;
-      workflow.id = id;
+      // Save to database
+      const saved = await workflowRepo.create(userId, workflow, prompt);
 
-      // Store workflow
-      workflows.set(id, workflow);
+      console.log(`[Workflows] Created workflow: ${saved.id} - ${workflow.name}`);
 
       res.status(201).json({
         success: true,
-        data: workflow,
+        data: {
+          ...workflow,
+          id: saved.id
+        },
         message: 'Workflow created successfully'
       } as ApiResponse<N8nWorkflow>);
 
     } catch (error) {
-      console.error('Create workflow error:', error);
+      console.error('[Workflows] Create error:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to create workflow'
@@ -238,7 +114,9 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
       const { id } = req.params;
       const updatedWorkflow: N8nWorkflow = req.body;
 
-      if (!workflows.has(id)) {
+      // Check if exists
+      const existing = await workflowRepo.findById(id);
+      if (!existing) {
         return res.status(404).json({
           success: false,
           error: 'Workflow not found'
@@ -248,15 +126,13 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
       // Validate workflow
       const validation = await mcpClient.validateWorkflow(updatedWorkflow);
       if (!validation.valid) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid workflow',
-          data: { errors: validation.errors }
-        } as ApiResponse);
+        console.warn('[Workflows] Validation warnings:', validation.errors);
       }
 
-      updatedWorkflow.id = id;
-      workflows.set(id, updatedWorkflow);
+      // Update in database
+      await workflowRepo.update(id, updatedWorkflow);
+
+      console.log(`[Workflows] Updated workflow: ${id} - ${updatedWorkflow.name}`);
 
       res.json({
         success: true,
@@ -265,7 +141,7 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
       } as ApiResponse<N8nWorkflow>);
 
     } catch (error) {
-      console.error('Update workflow error:', error);
+      console.error('[Workflows] Update error:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to update workflow'
@@ -281,14 +157,19 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
     try {
       const { id } = req.params;
 
-      if (!workflows.has(id)) {
+      // Check if exists
+      const existing = await workflowRepo.findById(id);
+      if (!existing) {
         return res.status(404).json({
           success: false,
           error: 'Workflow not found'
         } as ApiResponse);
       }
 
-      workflows.delete(id);
+      // Delete from database
+      await workflowRepo.delete(id);
+
+      console.log(`[Workflows] Deleted workflow: ${id}`);
 
       res.json({
         success: true,
@@ -296,7 +177,7 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
       } as ApiResponse);
 
     } catch (error) {
-      console.error('Delete workflow error:', error);
+      console.error('[Workflows] Delete error:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to delete workflow'
@@ -311,16 +192,17 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
   router.post('/:id/validate', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const workflow = workflows.get(id);
+      
+      const record = await workflowRepo.findById(id);
 
-      if (!workflow) {
+      if (!record) {
         return res.status(404).json({
           success: false,
           error: 'Workflow not found'
         } as ApiResponse);
       }
 
-      const validation = await mcpClient.validateWorkflow(workflow);
+      const validation = await mcpClient.validateWorkflow(record.workflow_data);
 
       res.json({
         success: true,
@@ -328,10 +210,36 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
       } as ApiResponse);
 
     } catch (error) {
-      console.error('Validate workflow error:', error);
+      console.error('[Workflows] Validate error:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to validate workflow'
+      } as ApiResponse);
+    }
+  });
+
+  /**
+   * GET /api/workflows/search/:query
+   * Search workflows by name or description
+   */
+  router.get('/search/:query', async (req: Request, res: Response) => {
+    try {
+      const { query } = req.params;
+      const userId = req.headers['x-user-id'] as string || 'demo_user_123';
+
+      const records = await workflowRepo.search(userId, query);
+      const workflows = records.map(record => record.workflow_data);
+
+      res.json({
+        success: true,
+        data: workflows
+      } as ApiResponse<N8nWorkflow[]>);
+
+    } catch (error) {
+      console.error('[Workflows] Search error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to search workflows'
       } as ApiResponse);
     }
   });

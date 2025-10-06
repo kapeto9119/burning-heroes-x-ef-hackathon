@@ -1,26 +1,17 @@
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { User, UserCredentials } from '../types';
-
-// In-memory user storage (replace with database in production)
-const users: Map<string, User & { password: string }> = new Map();
-
-// Create demo user for hackathon
-const demoUser: User & { password: string } = {
-  id: 'demo_user_123',
-  email: 'demo@example.com',
-  name: 'Demo User',
-  password: 'demo_password_hash',
-  createdAt: new Date(),
-  credentials: {}
-};
-users.set(demoUser.id, demoUser);
+import { User } from '../types';
+import { UserRepository } from '../repositories/user-repository';
+import { CredentialRepository } from '../repositories/credential-repository';
 
 export class AuthService {
   private jwtSecret: string;
+  private userRepo: UserRepository;
+  private credentialRepo: CredentialRepository;
 
   constructor(jwtSecret: string) {
     this.jwtSecret = jwtSecret;
+    this.userRepo = new UserRepository();
+    this.credentialRepo = new CredentialRepository();
   }
 
   /**
@@ -28,56 +19,52 @@ export class AuthService {
    */
   async register(email: string, password: string, name: string): Promise<{ user: User; token: string }> {
     // Check if user already exists
-    const existingUser = Array.from(users.values()).find(u => u.email === email);
+    const existingUser = await this.userRepo.findByEmail(email);
     if (existingUser) {
       throw new Error('User already exists');
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user
-    const user: User & { password: string } = {
-      id: `user_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-      email,
-      name,
-      password: hashedPassword,
-      createdAt: new Date(),
-      credentials: {}
-    };
-
-    users.set(user.id, user);
+    // Create user (password hashing handled by repository)
+    const user = await this.userRepo.create({ email, password, name });
 
     // Generate token
     const token = this.generateToken(user.id, user.email);
 
-    // Return user without password
-    const { password: _, ...userWithoutPassword } = user;
-    return { user: userWithoutPassword, token };
+    return { 
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: user.created_at,
+        credentials: {} // Will be loaded separately
+      }, 
+      token 
+    };
   }
 
   /**
    * Login user
    */
   async login(email: string, password: string): Promise<{ user: User; token: string }> {
-    // Find user
-    const user = Array.from(users.values()).find(u => u.email === email);
+    // Verify password (repository handles bcrypt comparison)
+    const user = await this.userRepo.verifyPassword(email, password);
     if (!user) {
-      throw new Error('Invalid credentials');
-    }
-
-    // Verify password
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) {
       throw new Error('Invalid credentials');
     }
 
     // Generate token
     const token = this.generateToken(user.id, user.email);
 
-    // Return user without password
-    const { password: _, ...userWithoutPassword } = user;
-    return { user: userWithoutPassword, token };
+    return { 
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: user.created_at,
+        credentials: {} // Will be loaded separately
+      }, 
+      token 
+    };
   }
 
   /**
@@ -95,39 +82,65 @@ export class AuthService {
   /**
    * Get user by ID
    */
-  getUserById(userId: string): User | null {
-    const user = users.get(userId);
+  async getUserById(userId: string): Promise<User | null> {
+    const user = await this.userRepo.findById(userId);
     if (!user) return null;
 
-    const { password: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      createdAt: user.created_at,
+      credentials: {} // Will be loaded separately
+    };
   }
 
   /**
    * Update user credentials
    */
-  async updateCredentials(userId: string, service: string, credentials: any): Promise<void> {
-    const user = users.get(userId);
+  async updateCredentials(userId: string, service: string, credentialData: any): Promise<void> {
+    // Verify user exists
+    const user = await this.userRepo.findById(userId);
     if (!user) {
       throw new Error('User not found');
     }
 
-    if (!user.credentials) {
-      user.credentials = {};
-    }
+    // Determine N8N credential type from service
+    const n8nCredentialType = this.getN8nCredentialType(service);
 
-    user.credentials[service as keyof UserCredentials] = credentials;
-    users.set(userId, user);
+    // Check if credential already exists
+    const existing = await this.credentialRepo.findByUserServiceAndType(
+      userId, 
+      service, 
+      n8nCredentialType
+    );
+
+    if (existing) {
+      // Update existing credential
+      await this.credentialRepo.update(existing.id, credentialData);
+    } else {
+      // Create new credential
+      await this.credentialRepo.create(
+        userId,
+        service,
+        n8nCredentialType,
+        credentialData
+      );
+    }
   }
 
   /**
    * Get user credentials for a service
    */
-  getCredentials(userId: string, service: string): any | null {
-    const user = users.get(userId);
-    if (!user || !user.credentials) return null;
+  async getCredentials(userId: string, service: string): Promise<any | null> {
+    const credentials = await this.credentialRepo.findByUserAndService(userId, service);
+    
+    if (credentials.length === 0) {
+      return null;
+    }
 
-    return user.credentials[service as keyof UserCredentials] || null;
+    // Return the first (most recent) credential's data
+    return credentials[0].credential_data;
   }
 
   /**
@@ -144,7 +157,29 @@ export class AuthService {
   /**
    * List all users (for debugging)
    */
-  getAllUsers(): User[] {
-    return Array.from(users.values()).map(({ password: _, ...user }) => user);
+  async getAllUsers(): Promise<User[]> {
+    // Not implemented for production security
+    // In development, you can query the database directly
+    return [];
+  }
+
+  /**
+   * Map service name to N8N credential type
+   */
+  private getN8nCredentialType(service: string): string {
+    const mapping: Record<string, string> = {
+      'slack': 'slackApi',
+      'email': 'smtp',
+      'gmail': 'gmailOAuth2',
+      'postgres': 'postgres',
+      'googlesheets': 'googleSheetsOAuth2',
+      'airtable': 'airtableApi',
+      'twitter': 'twitterOAuth1',
+      'discord': 'discordApi',
+      'notion': 'notionApi',
+      'twilio': 'twilioApi'
+    };
+
+    return mapping[service.toLowerCase()] || service;
   }
 }

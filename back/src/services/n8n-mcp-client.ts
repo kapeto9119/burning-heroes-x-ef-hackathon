@@ -36,7 +36,7 @@ export class N8nMCPClient {
       // Create transport using npx to run the MCP server
       this.transport = new StdioClientTransport({
         command: 'npx',
-        args: ['-y', '@czlonkowski/n8n-mcp'],
+        args: ['-y', 'n8n-mcp'],
         env: process.env as Record<string, string>,
       });
 
