@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
+  const router = useRouter();
   const { register } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -11,10 +13,17 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validation
+    if (!name.trim()) {
+      setError('Please enter your name');
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -30,9 +39,14 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
 
     try {
       await register(email, password, name);
+      setSuccess(true);
+      
+      // Show success briefly then redirect
+      setTimeout(() => {
+        router.push('/editor');
+      }, 1000);
     } catch (err: any) {
-      setError(err.message || 'Registration failed');
-    } finally {
+      setError(err.message || 'Registration failed. Please try again.');
       setIsLoading(false);
     }
   };
@@ -43,8 +57,14 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
       <p className="dark:text-white/60 text-gray-600 text-center mb-8">Start building powerful workflows</p>
       
       {error && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 dark:text-red-400 text-red-600 rounded-lg">
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 dark:text-red-400 text-red-600 rounded-lg animate-shake">
           {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 dark:text-green-400 text-green-600 rounded-lg">
+          ✓ Account created! Redirecting...
         </div>
       )}
 
@@ -111,10 +131,10 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
 
         <button
           type="submit"
-          disabled={isLoading}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 text-white font-semibold py-3 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+          disabled={isLoading || success}
+          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98]"
         >
-          {isLoading ? 'Creating account...' : 'Register'}
+          {success ? '✓ Account Created!' : isLoading ? 'Creating account...' : 'Create Account'}
         </button>
       </form>
 

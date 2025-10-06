@@ -1,14 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => void }) {
+  const router = useRouter();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,9 +20,22 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
 
     try {
       await login(email, password);
+      setSuccess(true);
+      
+      // Show success briefly then redirect
+      setTimeout(() => {
+        // Check if there's a redirect URL in query params
+        const params = new URLSearchParams(window.location.search);
+        const redirect = params.get('redirect');
+        
+        if (redirect) {
+          window.location.href = redirect;
+        } else {
+          router.push('/editor');
+        }
+      }, 500);
     } catch (err: any) {
-      setError(err.message || 'Login failed');
-    } finally {
+      setError(err.message || 'Invalid email or password. Please try again.');
       setIsLoading(false);
     }
   };
@@ -30,8 +46,14 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
       <p className="dark:text-white/60 text-gray-600 text-center mb-8">Login to continue building workflows</p>
       
       {error && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 dark:text-red-400 text-red-600 rounded-lg">
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 dark:text-red-400 text-red-600 rounded-lg animate-shake">
           {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 dark:text-green-400 text-green-600 rounded-lg">
+          ✓ Login successful! Redirecting...
         </div>
       )}
 
@@ -68,10 +90,10 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
 
         <button
           type="submit"
-          disabled={isLoading}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 text-white font-semibold py-3 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+          disabled={isLoading || success}
+          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98]"
         >
-          {isLoading ? 'Logging in...' : 'Login'}
+          {success ? '✓ Success!' : isLoading ? 'Logging in...' : 'Login'}
         </button>
       </form>
 
