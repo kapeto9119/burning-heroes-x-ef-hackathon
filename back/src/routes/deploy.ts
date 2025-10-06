@@ -4,6 +4,7 @@ import { AuthService } from '../services/auth-service';
 import { createAuthMiddleware } from '../middleware/auth';
 import { N8nWorkflow, ApiResponse, DeploymentResponse } from '../types';
 import { DeploymentRepository, ExecutionRepository } from '../repositories/deployment-repository';
+import { CredentialRepository } from '../repositories/credential-repository';
 import { Pool } from 'pg';
 import { NotificationClient } from '../services/notification-client';
 
@@ -16,6 +17,7 @@ export function createDeployRouter(
   const authMiddleware = createAuthMiddleware(authService);
   const deploymentRepo = new DeploymentRepository(dbPool);
   const executionRepo = new ExecutionRepository(dbPool);
+  const credentialRepo = new CredentialRepository();
   const notificationClient = new NotificationClient();
 
   /**
@@ -36,21 +38,12 @@ export function createDeployRouter(
 
       console.log(`[Deploy] User ${userId} deploying workflow: ${workflow.name}`);
 
-      // Get user credentials
-      let user;
-      let userCredentials;
-      
-      try {
-        user = await authService.getUserById(userId);
-        userCredentials = user?.credentials;
-      } catch (error: any) {
-        console.error(`[Deploy] Error getting user: ${error.message}`);
-        // Continue without user credentials for now
-        userCredentials = {};
-      }
+      // Get user credentials from repository
+      const userCredentials = await credentialRepo.findByUser(userId);
+      console.log(`[Deploy] Found ${userCredentials.length} credentials for user`);
 
       // Check if user has all required credentials
-      const credentialCheck = checkRequiredCredentials(workflow, userCredentials);
+      const credentialCheck = await checkRequiredCredentials(workflow, userCredentials, credentialRepo, userId);
       if (!credentialCheck.valid) {
         return res.status(400).json({
           success: false,
@@ -63,12 +56,12 @@ export function createDeployRouter(
       }
 
       // Map user credentials to n8n credential IDs
-      // For demo: We'll create credentials in n8n on-the-fly
       const workflowWithCredentials = await mapUserCredentialsToWorkflow(
         workflow,
         userId,
         userCredentials,
-        n8nClient
+        n8nClient,
+        credentialRepo
       );
 
       // Log the workflow being deployed for debugging
@@ -532,29 +525,38 @@ export function createDeployRouter(
 /**
  * Helper: Check if user has all required credentials for workflow nodes
  */
-function checkRequiredCredentials(
+async function checkRequiredCredentials(
   workflow: N8nWorkflow,
-  userCredentials: any
-): { valid: boolean; missing: Array<{ nodeName: string; service: string; nodeType: string }>; message: string } {
+  userCredentials: any[],
+  credentialRepo: CredentialRepository,
+  userId: string
+): Promise<{ valid: boolean; missing: Array<{ nodeName: string; service: string; nodeType: string }>; message: string }> {
   const nodeServiceMapping: Record<string, string> = {
     'n8n-nodes-base.slack': 'slack',
     'n8n-nodes-base.gmail': 'gmail',
-    'n8n-nodes-base.emailSend': 'email',
+    'n8n-nodes-base.emailSend': 'smtp',
     'n8n-nodes-base.httpRequest': 'http',
     'n8n-nodes-base.postgres': 'postgres',
-    'n8n-nodes-base.googleSheets': 'googleSheets'
+    'n8n-nodes-base.googleSheets': 'googleSheets',
+    'n8n-nodes-base.hubspot': 'hubspot',
+    'n8n-nodes-base.sendGrid': 'sendgrid'
   };
 
   const serviceDisplayNames: Record<string, string> = {
     slack: 'Slack',
     gmail: 'Gmail',
-    email: 'Email/SMTP',
+    smtp: 'Email (SMTP)',
     http: 'HTTP Authentication',
     postgres: 'PostgreSQL',
-    googleSheets: 'Google Sheets'
+    googleSheets: 'Google Sheets',
+    hubspot: 'HubSpot',
+    sendgrid: 'SendGrid'
   };
 
   const missing: Array<{ nodeName: string; service: string; nodeType: string }> = [];
+
+  // Create a map of services user has credentials for
+  const userServices = new Set(userCredentials.map(cred => cred.service));
 
   workflow.nodes.forEach(node => {
     const service = nodeServiceMapping[node.type];
@@ -562,7 +564,7 @@ function checkRequiredCredentials(
     // If this node type requires credentials
     if (service) {
       // Check if user has credentials for this service
-      if (!userCredentials || !userCredentials[service]) {
+      if (!userServices.has(service)) {
         missing.push({
           nodeName: node.name,
           service: serviceDisplayNames[service] || service,
@@ -596,47 +598,59 @@ function checkRequiredCredentials(
 async function mapUserCredentialsToWorkflow(
   workflow: N8nWorkflow,
   userId: string,
-  userCredentials: any,
-  n8nClient: N8nApiClient
+  userCredentials: any[],
+  n8nClient: N8nApiClient,
+  credentialRepo: CredentialRepository
 ): Promise<N8nWorkflow> {
   
-  if (!userCredentials || Object.keys(userCredentials).length === 0) {
+  if (!userCredentials || userCredentials.length === 0) {
     console.log('[Deploy] No user credentials found - workflow will need manual credential setup in n8n');
     return workflow;
   }
+
+  // Create a map of service -> credential for quick lookup
+  const credentialMap = new Map();
+  userCredentials.forEach(cred => {
+    credentialMap.set(cred.service, cred);
+  });
 
   // Map node types to services
   const nodeServiceMapping: Record<string, string> = {
     'n8n-nodes-base.slack': 'slack',
     'n8n-nodes-base.gmail': 'gmail',
-    'n8n-nodes-base.emailSend': 'email',
+    'n8n-nodes-base.emailSend': 'smtp',
     'n8n-nodes-base.httpRequest': 'http',
     'n8n-nodes-base.postgres': 'postgres',
-    'n8n-nodes-base.googleSheets': 'googleSheets'
+    'n8n-nodes-base.googleSheets': 'googleSheets',
+    'n8n-nodes-base.hubspot': 'hubspot',
+    'n8n-nodes-base.sendGrid': 'sendgrid'
   };
 
   const updatedNodes = await Promise.all(
     workflow.nodes.map(async (node) => {
       const service = nodeServiceMapping[node.type];
       
-      if (!service || !userCredentials[service]) {
+      if (!service || !credentialMap.has(service)) {
         // No credentials needed or not available for this node
         return node;
       }
 
       try {
-        // Check if we already created credentials for this service
-        let credentialId = userCredentials[service].n8nCredentialId;
+        const credential = credentialMap.get(service);
+        
+        // Check if we already created credentials in n8n for this credential
+        let credentialId = credential.n8n_credential_id;
 
         if (!credentialId) {
           // Create new credential in n8n
           credentialId = await n8nClient.createCredentials(
             service,
             userId,
-            userCredentials[service]
+            credential.credential_data
           );
           
-          // TODO: Store credentialId back to user's credentials for reuse
+          // Store credentialId back to database for reuse
+          await credentialRepo.updateN8nCredentialId(credential.id, credentialId);
           console.log(`[Deploy] Created n8n credential for ${service}: ${credentialId}`);
         } else {
           console.log(`[Deploy] Reusing existing n8n credential for ${service}: ${credentialId}`);
@@ -646,10 +660,12 @@ async function mapUserCredentialsToWorkflow(
         const credentialType = {
           slack: 'slackApi',
           gmail: 'gmailOAuth2',
-          email: 'smtp',
+          smtp: 'smtp',
           http: 'httpBasicAuth',
           postgres: 'postgres',
-          googleSheets: 'googleSheetsOAuth2'
+          googleSheets: 'googleSheetsOAuth2',
+          hubspot: 'hubspotOAuth2',
+          sendgrid: 'sendGridApi'
         }[service];
 
         return {

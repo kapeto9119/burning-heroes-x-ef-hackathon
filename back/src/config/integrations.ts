@@ -49,7 +49,7 @@ export interface IntegrationConfig {
 
 export const INTEGRATIONS: Record<string, IntegrationConfig> = {
   // ============================================
-  // COMMUNICATION (5)
+  // COMMUNICATION (6)
   // ============================================
   slack: {
     id: 'slack',
@@ -179,6 +179,64 @@ export const INTEGRATIONS: Record<string, IntegrationConfig> = {
       icon: '📧',
       color: '#1A82E2',
       description: 'Send transactional and marketing emails'
+    }
+  },
+
+  smtp: {
+    id: 'smtp',
+    name: 'Email (SMTP)',
+    category: 'communication',
+    authType: 'basic',
+    n8nCredentialType: 'smtp',
+    n8nNodeType: 'n8n-nodes-base.emailSend',
+    apiKey: {
+      fields: [
+        {
+          name: 'user',
+          label: 'Email Address',
+          type: 'text',
+          required: true,
+          placeholder: 'your-email@gmail.com',
+          description: 'Your email address'
+        },
+        {
+          name: 'password',
+          label: 'Password',
+          type: 'password',
+          required: true,
+          description: 'Email password or app-specific password'
+        },
+        {
+          name: 'host',
+          label: 'SMTP Host',
+          type: 'text',
+          required: true,
+          placeholder: 'smtp.gmail.com',
+          description: 'SMTP server hostname'
+        },
+        {
+          name: 'port',
+          label: 'SMTP Port',
+          type: 'number',
+          required: true,
+          placeholder: '587',
+          description: 'SMTP port (usually 587 for TLS or 465 for SSL)'
+        },
+        {
+          name: 'secure',
+          label: 'Use SSL/TLS',
+          type: 'text',
+          required: false,
+          placeholder: 'false',
+          description: 'Use SSL (true for port 465, false for port 587)'
+        }
+      ]
+    },
+    ui: {
+      icon: '✉️',
+      color: '#EA4335',
+      description: 'Send emails using your own SMTP server (Gmail, Outlook, etc.)',
+      setupGuideUrl: 'https://support.google.com/accounts/answer/185833'
     }
   },
 

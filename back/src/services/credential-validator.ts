@@ -83,6 +83,9 @@ export class CredentialValidator {
       case 'mongodb':
         return this.validateMongoDB(data);
       
+      case 'smtp':
+        return this.validateSMTP(data);
+      
       default:
         // For services without specific validation, assume valid
         console.log(`[Credential Validator] No validation implemented for ${service}, skipping`);
@@ -401,6 +404,48 @@ export class CredentialValidator {
       return {
         valid: false,
         error: error.message || 'Invalid MongoDB connection string'
+      };
+    }
+  }
+
+  /**
+   * SMTP validation
+   */
+  private async validateSMTP(data: any): Promise<ValidationResult> {
+    try {
+      const nodemailer = require('nodemailer');
+      
+      // Create transporter
+      const transporter = nodemailer.createTransport({
+        host: data.host,
+        port: data.port || 587,
+        secure: data.secure === true || data.secure === 'true' || data.port === 465,
+        auth: {
+          user: data.user,
+          pass: data.password
+        },
+        connectionTimeout: 5000
+      });
+
+      // Verify connection
+      await transporter.verify();
+
+      return {
+        valid: true,
+        metadata: {
+          host: data.host,
+          port: data.port,
+          user: data.user
+        }
+      };
+    } catch (error: any) {
+      return {
+        valid: false,
+        error: error.code === 'EAUTH' 
+          ? 'Invalid email credentials' 
+          : error.code === 'ECONNECTION'
+          ? 'Cannot connect to SMTP server'
+          : error.message || 'SMTP validation failed'
       };
     }
   }

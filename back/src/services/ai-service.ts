@@ -355,12 +355,50 @@ For webhook trigger - use Webhook node with HubSpot webhook URL
   "text": "={{$json.emailBody}}"
 }
 
+CRITICAL EMAIL WORKFLOW PATTERN:
+When user wants to send personalized/AI-generated emails, you MUST create TWO separate steps:
+Step 1: Generate email content using Managed AI (HTTP Request)
+Step 2: Send email using SMTP (n8n-nodes-base.emailSend)
+
+Example for "Send personalized emails to HubSpot leads":
+{
+  "steps": [
+    { 
+      "action": "fetch_leads_from_hubspot", 
+      "service": "hubspot", 
+      "config": {"resource": "contact", "operation": "getAll", "limit": 10} 
+    },
+    { 
+      "action": "generate_personalized_email", 
+      "service": "ai", 
+      "prompt": "Generate a personalized email for {{$json.firstname}} {{$json.lastname}} at {{$json.company}}",
+      "config": {
+        "method": "POST",
+        "url": "https://your-backend.com/api/managed-ai/generate-content"
+      }
+    },
+    { 
+      "action": "send_email", 
+      "service": "email", 
+      "config": {
+        "fromEmail": "={{$json.owneremail || 'noreply@company.com'}}",
+        "toEmail": "={{$json.email}}",
+        "subject": "={{$('generate_personalized_email').item.json.subject}}",
+        "text": "={{$('generate_personalized_email').item.json.body}}"
+      }
+    }
+  ],
+  "requiredCredentials": ["hubspot", "smtp"]
+}
+
 CRITICAL RULES:
 1. ONLY include services/nodes that the user EXPLICITLY mentioned
 2. DO NOT add extra services (e.g., don't add Slack if user didn't mention it)
 3. DO NOT hallucinate steps - only include what was requested
 4. For Salesforce data fetching, use "manual" trigger + Salesforce node as first action
 5. For AI content generation, use the Managed AI HTTP Request format shown above
+6. For email sending with AI content, ALWAYS use TWO steps: AI generation + emailSend
+7. NEVER try to send emails via HTTP request to /api/managed-ai/generate-content alone
 
 Respond with a JSON object containing:
 {
