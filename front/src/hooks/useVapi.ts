@@ -147,8 +147,9 @@ export function useVapi({
               const params = toolCall.function.arguments?.parameters || toolCall.function.arguments;
               
               // Call our backend directly to generate the workflow
+              const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
               try {
-                const response = await fetch('http://localhost:3001/api/chat/generate-workflow', {
+                const response = await fetch(`${apiUrl}/api/chat/generate-workflow`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
