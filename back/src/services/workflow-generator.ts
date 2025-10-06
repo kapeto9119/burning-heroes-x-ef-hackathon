@@ -2,6 +2,7 @@ import { N8nWorkflow, N8nNode, N8nConnection } from '../types';
 import { N8nMCPClient } from './n8n-mcp-client';
 import { AIService } from './ai-service';
 import { CredentialDetector, CredentialRequirement } from './credential-detector';
+import { lintWorkflow } from './workflow-linter';
 
 export interface WorkflowGenerationResult {
   workflow: N8nWorkflow;
@@ -44,13 +45,23 @@ export class WorkflowGenerator {
       );
 
       // Step 4: Convert AI plan to n8n workflow format
-      const workflow = await this.convertPlanToWorkflow(workflowPlan, description);
+      let workflow = await this.convertPlanToWorkflow(workflowPlan, description);
 
-      // Step 5: Detect credential requirements
+      // Step 5: Lint and fix common issues
+      const lintResult = lintWorkflow(workflow);
+      workflow = lintResult.workflow;
+      if (lintResult.fixes.length > 0) {
+        console.log('[Workflow Generator] Applied fixes:', lintResult.fixes);
+      }
+      if (lintResult.warnings.length > 0) {
+        console.warn('[Workflow Generator] Warnings:', lintResult.warnings);
+      }
+
+      // Step 6: Detect credential requirements
       const credentialRequirements = await this.credentialDetector.detectRequiredCredentials(workflow);
       console.log(`[Workflow Generator] Detected ${credentialRequirements.length} credential requirements`);
 
-      // Step 6: Validate the workflow
+      // Step 7: Validate the workflow
       const validation = await this.mcpClient.validateWorkflow(workflow);
       if (!validation.valid) {
         console.warn('[Workflow Generator] Validation warnings:', validation.errors);
@@ -230,6 +241,16 @@ export class WorkflowGenerator {
           operation: 'getAll',
           returnAll: false,
           limit: 10
+        }
+      },
+      'hubspot': { 
+        type: 'n8n-nodes-base.hubspot',
+        defaultParams: {
+          resource: 'contact',
+          operation: 'getAll',
+          returnAll: false,
+          limit: 10,
+          additionalFields: {}
         }
       },
       'email': { 
@@ -524,13 +545,13 @@ export class WorkflowGenerator {
 
   /**
    * Modify an existing workflow based on user request
+   * Uses structured JSON response for reliability
    */
   async modifyWorkflow(workflow: N8nWorkflow, modificationRequest: string): Promise<N8nWorkflow> {
     try {
       console.log('[Workflow Generator] Modifying workflow:', modificationRequest);
       
-      // Use AI to understand and apply the modification
-      const prompt = `You are modifying an n8n workflow. Given the current workflow and modification request, return the COMPLETE modified workflow in the exact same JSON format.
+      const prompt = `You are modifying an n8n workflow. Given the current workflow and modification request, return the COMPLETE modified workflow.
 
 CURRENT WORKFLOW:
 ${JSON.stringify(workflow, null, 2)}
@@ -551,35 +572,44 @@ EXAMPLES:
 - "Add email notification" → Add emailSend node and connect it
 - "Change Slack channel to #alerts" → Modify the Slack node's channelId parameter
 
-Return ONLY the complete modified workflow JSON, no explanations.`;
+Return the complete modified workflow as valid JSON.`;
 
-      const completion = await this.aiService.chat(prompt, []);
-      
-      // Parse the AI response to get the modified workflow
-      let modifiedWorkflow: N8nWorkflow;
-      try {
-        // Try to extract JSON from the response
-        const jsonMatch = completion.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          modifiedWorkflow = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error('No JSON found in AI response');
-        }
-      } catch (parseError) {
-        console.error('[Workflow Generator] Failed to parse AI response:', parseError);
-        console.log('[Workflow Generator] AI Response:', completion);
-        throw new Error('Failed to parse modified workflow from AI response');
+      // Use structured JSON response for reliability
+      const completion = await this.aiService['openai'].chat.completions.create({
+        model: 'gpt-4o-mini',
+        temperature: 0.2,
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a workflow modification expert. Return ONLY valid JSON matching the n8n workflow schema.'
+          },
+          { role: 'user', content: prompt }
+        ]
+      });
+
+      const content = completion.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error('No response from AI');
       }
+
+      const modifiedWorkflow: N8nWorkflow = JSON.parse(content);
 
       // Validate the modified workflow has required fields
       if (!modifiedWorkflow.nodes || !Array.isArray(modifiedWorkflow.nodes)) {
         throw new Error('Modified workflow is missing nodes array');
       }
 
+      // Lint the modified workflow
+      const lintResult = lintWorkflow(modifiedWorkflow);
+      if (lintResult.fixes.length > 0) {
+        console.log('[Workflow Generator] Applied fixes to modified workflow:', lintResult.fixes);
+      }
+
       console.log('[Workflow Generator] ✅ Workflow modified successfully');
-      console.log('[Workflow Generator] Modified nodes:', modifiedWorkflow.nodes.map(n => n.name).join(', '));
+      console.log('[Workflow Generator] Modified nodes:', lintResult.workflow.nodes.map(n => n.name).join(', '));
       
-      return modifiedWorkflow;
+      return lintResult.workflow;
     } catch (error: any) {
       console.error('[Workflow Generator] Workflow modification error:', error);
       throw new Error(`Failed to modify workflow: ${error.message}`);

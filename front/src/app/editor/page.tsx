@@ -482,11 +482,18 @@ export default function EditorPage() {
 
       try {
         // Check if user wants to deploy existing workflow
-        if (
-          workflow &&
+        // Only deploy on explicit "deploy" or "yes" if last message asked about deployment
+        const lastAssistantMessage = messages
+          .filter(m => !m.isUser)
+          .slice(-1)[0]?.text || '';
+        
+        const isDeployConfirmation = 
+          workflow && 
           (messageText.toLowerCase().includes("deploy") ||
-            messageText.toLowerCase().includes("yes"))
-        ) {
+           (messageText.toLowerCase().match(/^(yes|yep|yeah|ok|okay|sure)$/i) && 
+            lastAssistantMessage.toLowerCase().includes("deploy")));
+        
+        if (isDeployConfirmation) {
           await handleDeploy();
           return;
         }

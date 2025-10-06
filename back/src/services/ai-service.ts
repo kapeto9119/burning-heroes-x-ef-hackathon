@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { ChatMessage } from "../types";
+import { analyzeSlots, generateBundledQuestion, looksLikeBuildCommand } from './slots';
 
 export class AIService {
   private openai: OpenAI;
@@ -8,26 +9,28 @@ export class AIService {
   constructor(apiKey: string) {
     this.openai = new OpenAI({ apiKey });
 
-    this.systemPrompt = `You are an expert n8n workflow automation assistant. Your role is to help users create automation workflows quickly and efficiently.
+    this.systemPrompt = `You are an expert n8n workflow automation assistant.
 
-IMPORTANT BEHAVIOR:
-- If the user has provided enough information to build a workflow (trigger + action + services), tell them you're ready to build it
-- Don't ask too many questions - use reasonable defaults when details are missing
-- Be proactive and action-oriented
-- If user says "do it", "build it", "create it", "make the workflow" - acknowledge you'll build it now
+🔥 NON-NEGOTIABLE RULES:
+- **BUILD-FIRST**: If essential info is present OR safe defaults exist, propose a draft workflow NOW.
+- **QUESTION BUDGET**: Ask at most ONE compact follow-up if truly blocking. NEVER ask the same question twice.
+- **REASONABLE DEFAULTS**: Use safe defaults (manual trigger, #general, placeholder emails) and state them explicitly.
+- **SINGLE CONFIRM**: After proposing a plan, ask only "Deploy now?" - do NOT add new questions.
+- **NO RE-ASKING**: Check conversation state first; never re-ask known information.
 
-When a user describes what they want to automate:
-1. Identify the trigger (webhook, schedule, manual, etc.)
-2. Identify the actions (send message, email, update data, etc.)
-3. Identify the services (Slack, Gmail, Google Sheets, etc.)
-4. If you have enough info, say you're ready to build
-5. Only ask 1-2 clarifying questions if absolutely critical info is missing
+📋 OUTPUT STYLE:
+- Start with a one-line decision ("Draft created with defaults" / "Need 1 choice").
+- If you created a draft, list inferred defaults in bullets.
+- End with exactly ONE action CTA ("Type **deploy** to go live, or say **change channel** / **switch to schedule 9am**.").
 
-Example:
-User: "Send email when Google Sheet row is added"
-You: "Perfect! I'll create a workflow that triggers when a new row is added to Google Sheets and sends an email. I'm ready to build this now!"
+✅ EXAMPLES:
+User: "Send Slack message when webhook triggers"
+You: "Draft created! Manual trigger → Slack message to #general. Type **deploy** or say **change channel**."
 
-Be concise, action-oriented, and avoid asking too many questions.`;
+User: "Get HubSpot leads and email them"
+You: "Draft created! Manual trigger → Fetch HubSpot leads → AI greeting email. Type **deploy** to activate."
+
+Be decisive, concise, and build-first.`;
   }
 
   async chat(
@@ -35,6 +38,9 @@ Be concise, action-oriented, and avoid asking too many questions.`;
     conversationHistory: ChatMessage[] = []
   ): Promise<string> {
     try {
+      // Check question budget - have we already asked a question?
+      const hasAskedQuestion = this.hasAskedQuestion(conversationHistory);
+      
       // Analyze conversation to extract what we already know
       const conversationContext = this.analyzeConversationContext(
         conversationHistory,
@@ -46,6 +52,8 @@ Be concise, action-oriented, and avoid asking too many questions.`;
 
 CURRENT CONVERSATION STATE:
 ${conversationContext}
+
+${hasAskedQuestion ? '⚠️ QUESTION BUDGET EXCEEDED: You already asked a question. DO NOT ask another. Build with defaults instead.' : ''}
 
 CRITICAL: Before asking ANY question, check if the information is already provided above. DO NOT re-ask for information that's already known.`;
 
@@ -73,6 +81,17 @@ CRITICAL: Before asking ANY question, check if the information is already provid
       console.error("OpenAI API error:", error);
       throw new Error("Failed to get AI response");
     }
+  }
+
+  /**
+   * Check if we've already asked a follow-up question
+   */
+  private hasAskedQuestion(history: ChatMessage[]): boolean {
+    const lastTwo = history.slice(-2);
+    return lastTwo.some(m => 
+      m.role === 'assistant' && 
+      /\?|clarify|choose|pick|which|what|how|need to know/i.test(m.content)
+    );
   }
 
   /**
@@ -303,7 +322,17 @@ For fetching leads:
   "options": {}
 }
 
-For webhook trigger - use Webhook node with Salesforce webhook URL
+11. HubSpot (n8n-nodes-base.hubspot):
+For fetching contacts/leads:
+{
+  "resource": "contact",
+  "operation": "getAll",
+  "returnAll": false,
+  "limit": 10,
+  "additionalFields": {}
+}
+
+For webhook trigger - use Webhook node with HubSpot webhook URL
 
 11. Email Send (n8n-nodes-base.emailSend) - NOT emailReadImap!:
 {
@@ -361,33 +390,48 @@ Remember: Only include steps the user actually requested!`;
     }
   }
 
+  /**
+   * Helper: Make a JSON-structured completion call
+   */
+  async jsonComplete(systemPrompt: string, userPrompt: string, temperature: number = 0.2): Promise<any> {
+    try {
+      const completion = await this.openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        temperature,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ]
+      });
+
+      const content = completion.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error('No response from AI');
+      }
+
+      return JSON.parse(content);
+    } catch (error) {
+      console.error('JSON completion error:', error);
+      throw error;
+    }
+  }
+
   async suggestImprovements(workflow: any): Promise<string[]> {
     try {
-      const prompt = `Analyze this n8n workflow and suggest 3 improvements:
+      const prompt = `Analyze this n8n workflow and suggest 3 concise improvements:
 
 ${JSON.stringify(workflow, null, 2)}
 
-Provide concise, actionable suggestions.`;
+Return JSON: { "improvements": ["suggestion 1", "suggestion 2", "suggestion 3"] }`;
 
-      const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "You are a workflow optimization expert.",
-          },
-          { role: "user", content: prompt },
-        ],
-        temperature: 0.5,
-        max_tokens: 300,
-      });
+      const result = await this.jsonComplete(
+        'You are a workflow optimization expert. Return JSON with an "improvements" array.',
+        prompt,
+        0.3
+      );
 
-      const content = completion.choices[0]?.message?.content || "";
-      // Parse suggestions from response
-      return content
-        .split("\n")
-        .filter((line) => line.trim().length > 0)
-        .slice(0, 3);
+      return result.improvements || [];
     } catch (error) {
       console.error("Suggestion generation error:", error);
       return [];
@@ -403,14 +447,23 @@ Provide concise, actionable suggestions.`;
     conversationHistory: ChatMessage[] = []
   ): Promise<boolean> {
     try {
-      // Quick check: if we have all required components, build immediately
-      const hasAllComponents = this.hasAllRequiredComponents(
-        conversationHistory,
-        userMessage
-      );
-      if (hasAllComponents) {
+      // Use slot-based analysis first
+      const historyText = conversationHistory
+        .filter(m => m.role === 'user')
+        .map(m => m.content);
+      
+      const analysis = analyzeSlots(userMessage, historyText);
+      
+      // Check if message looks like build command (only if we have complete slots or draft)
+      if (looksLikeBuildCommand(userMessage, analysis.canBuild)) {
+        console.log('[Intent Detection] ✅ Build command detected:', userMessage.substring(0, 30));
+        return true;
+      }
+      
+      if (analysis.canBuild) {
         console.log(
-          "[Intent Detection] ✅ All components present, building workflow"
+          "[Intent Detection] ✅ Slots complete, building workflow",
+          { services: analysis.slots.services, actions: analysis.slots.actions }
         );
         return true;
       }
@@ -494,98 +547,77 @@ Response:`;
 
   /**
    * Check if conversation has all required components for workflow generation
+   * @deprecated - Now using slot-based analysis
    */
   private hasAllRequiredComponents(
     conversationHistory: ChatMessage[],
     currentMessage: string
   ): boolean {
-    const allMessages = [
-      ...conversationHistory,
-      { role: "user" as const, content: currentMessage },
-    ];
-    const userMessages = allMessages
-      .filter((m) => m.role === "user")
-      .map((m) => m.content)
-      .join(" ")
-      .toLowerCase();
-
-    // Check for trigger
-    const hasTrigger = userMessages.match(
-      /schedul(e|ing)|webhook|manual|every (day|week|month|monday|tuesday|wednesday|thursday|friday)|at \d+|cron/i
-    );
-
-    // Check for action
-    const hasAction = userMessages.match(
-      /send|post|create|update|insert|email|message/i
-    );
-
-    // Check for service
-    const hasService = userMessages.match(
-      /gmail|slack|sendgrid|sheets|airtable|postgres|http|api/i
-    );
-
-    const hasAll = !!(hasTrigger && hasAction && hasService);
-
-    if (hasAll) {
-      console.log(
-        "[Component Check] ✓ Trigger:",
-        !!hasTrigger,
-        "✓ Action:",
-        !!hasAction,
-        "✓ Service:",
-        !!hasService
-      );
-    }
-
-    return hasAll;
+    // Use new slot-based approach
+    const historyText = conversationHistory
+      .filter(m => m.role === 'user')
+      .map(m => m.content);
+    
+    const analysis = analyzeSlots(currentMessage, historyText);
+    return analysis.canBuild;
   }
 
   /**
    * Extract workflow requirements from conversation
-   * Analyzes the conversation to extract structured workflow requirements
+   * Returns structured description suitable for workflow generation
    */
   async extractWorkflowRequirements(
     conversationHistory: ChatMessage[]
   ): Promise<string> {
     try {
-      const contextLines = conversationHistory
-        .map(
-          (msg) =>
-            `${msg.role === "user" ? "User" : "Assistant"}: ${msg.content}`
-        )
-        .join("\n");
-
-      const prompt = `Analyze this conversation and extract the workflow requirements in a clear, structured format.
-
-Conversation:
-${contextLines}
-
-Extract and summarize:
-1. Trigger: What starts the workflow?
-2. Actions: What should happen?
-3. Services: Which tools/platforms are involved?
-4. Data: What data needs to be passed between steps?
-5. Specific details: Channels, fields, formats, etc.
-
-Provide a concise summary suitable for workflow generation.`;
-
-      const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "You are a requirements extraction expert.",
-          },
-          { role: "user", content: prompt },
-        ],
-        temperature: 0.3,
-        max_tokens: 500,
-      });
-
-      return (
-        completion.choices[0]?.message?.content ||
-        "Create a workflow based on the conversation."
-      );
+      // Use slot-based extraction for structured approach
+      const userMessages = conversationHistory
+        .filter((m) => m.role === "user")
+        .map((m) => m.content);
+      
+      const lastMessage = userMessages[userMessages.length - 1] || '';
+      const analysis = analyzeSlots(lastMessage, userMessages.slice(0, -1));
+      
+      // Build a natural language description from slots
+      const parts: string[] = [];
+      
+      // Trigger
+      if (analysis.slots.trigger === 'schedule' && analysis.slots.scheduleSpec) {
+        parts.push(`Run on schedule (${analysis.slots.scheduleSpec})`);
+      } else if (analysis.slots.trigger === 'webhook') {
+        parts.push('Trigger via webhook');
+      } else {
+        parts.push('Manual trigger');
+      }
+      
+      // Actions with services
+      if (analysis.slots.actions.includes('fetch leads') && analysis.slots.services.includes('hubspot')) {
+        parts.push('fetch leads from HubSpot');
+      } else if (analysis.slots.actions.includes('fetch leads') && analysis.slots.services.includes('salesforce')) {
+        parts.push('fetch leads from Salesforce');
+      }
+      
+      if (analysis.slots.actions.includes('generate content') && analysis.slots.services.some(s => ['openai', 'claude', 'googleAI'].includes(s))) {
+        const contentType = analysis.slots.contentHint || 'personalized content';
+        parts.push(`generate AI ${contentType}`);
+      }
+      
+      if (analysis.slots.actions.includes('send email')) {
+        const emailService = analysis.slots.services.find(s => ['gmail', 'email', 'sendgrid'].includes(s)) || 'email';
+        const recipient = analysis.slots.recipient || 'each lead';
+        parts.push(`send ${emailService} to ${recipient}`);
+      }
+      
+      if (analysis.slots.actions.includes('post slack')) {
+        const channel = analysis.slots.channel || '#general';
+        parts.push(`post Slack message to ${channel}`);
+      }
+      
+      // Build final description
+      const description = parts.join(', then ');
+      console.log('[Requirements Extraction] Generated description:', description);
+      
+      return description || userMessages.join(' ');
     } catch (error) {
       console.error("Requirements extraction error:", error);
       // Fallback: use last user message
