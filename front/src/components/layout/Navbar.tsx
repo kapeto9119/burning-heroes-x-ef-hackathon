@@ -131,90 +131,91 @@ export function Navbar() {
                     />
                   </button>
 
-                <AnimatePresence>
-                  {showProfileMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-56 backdrop-blur-xl bg-background/95 border border-border rounded-2xl shadow-xl overflow-hidden"
-                    >
-                      <div className="p-2">
-                        <button
-                          onClick={() => {
-                            setShowProfileMenu(false);
-                            router.push("/");
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left cursor-pointer"
-                        >
-                          <Home className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-medium text-foreground">
-                            Home
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowProfileMenu(false);
-                            router.push("/workflows");
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left cursor-pointer"
-                        >
-                          <Workflow className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-medium text-foreground">
-                            Workflows
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowProfileMenu(false);
-                            router.push("/integrations");
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left cursor-pointer"
-                        >
-                          <Plug className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-medium text-foreground">
-                            Integrations
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowProfileMenu(false);
-                            router.push("/billing");
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left cursor-pointer"
-                        >
-                          <CreditCard className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-medium text-foreground">
-                            Billing & Usage
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowProfileMenu(false);
-                            router.push("/settings");
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left cursor-pointer"
-                        >
-                          <Settings className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-medium text-foreground">
-                            Settings
-                          </span>
-                        </button>
-                        <div className="my-1 border-t border-border" />
-                        <button
-                          onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-500/10 transition-colors text-left cursor-pointer"
-                        >
-                          <LogOut className="w-4 h-4 text-red-500" />
-                          <span className="text-sm font-medium text-red-500">
-                            Logout
-                          </span>
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                  <AnimatePresence>
+                    {showProfileMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute right-0 mt-2 w-56 backdrop-blur-xl bg-background/95 border border-border rounded-2xl shadow-xl overflow-hidden"
+                      >
+                        <div className="p-2">
+                          <button
+                            onClick={() => {
+                              setShowProfileMenu(false);
+                              router.push("/");
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left cursor-pointer"
+                          >
+                            <Home className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm font-medium text-foreground">
+                              Home
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowProfileMenu(false);
+                              router.push("/workflows");
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left cursor-pointer"
+                          >
+                            <Workflow className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm font-medium text-foreground">
+                              Workflows
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowProfileMenu(false);
+                              router.push("/integrations");
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left cursor-pointer"
+                          >
+                            <Plug className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm font-medium text-foreground">
+                              Integrations
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowProfileMenu(false);
+                              router.push("/billing");
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left cursor-pointer"
+                          >
+                            <CreditCard className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm font-medium text-foreground">
+                              Billing & Usage
+                            </span>
+                          </button>
+                          {/* Settings page hidden - deprecated, use /integrations instead */}
+                          {/* <button
+                            onClick={() => {
+                              setShowProfileMenu(false);
+                              router.push("/settings");
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left cursor-pointer"
+                          >
+                            <Settings className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm font-medium text-foreground">
+                              Settings
+                            </span>
+                          </button> */}
+                          <div className="my-1 border-t border-border" />
+                          <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-500/10 transition-colors text-left cursor-pointer"
+                          >
+                            <LogOut className="w-4 h-4 text-red-500" />
+                            <span className="text-sm font-medium text-red-500">
+                              Logout
+                            </span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
             </div>

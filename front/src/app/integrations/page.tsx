@@ -1,5 +1,43 @@
 'use client';
 
+/**
+ * 🔗 INTEGRATIONS PAGE - Modern OAuth & API Key Management
+ * 
+ * This is the MAIN page for connecting external services to workflows.
+ * 
+ * FEATURES:
+ * ✅ 23 integrations loaded dynamically from backend
+ * ✅ OAuth services: One-click "Connect" → redirects to provider (Slack, Twitter, Salesforce, etc.)
+ * ✅ API key services: Modal form for manual entry (OpenAI, Airtable, Twilio, etc.)
+ * ✅ Category filtering (Communication, Productivity, Database, Marketing, etc.)
+ * ✅ Search functionality
+ * ✅ Connection status tracking
+ * ✅ Auto-refresh tokens via TokenRefreshService (backend)
+ * 
+ * BACKEND ENDPOINTS USED:
+ * - GET  /api/credentials/services - Fetch all available integrations
+ * - GET  /api/credentials - Get user's connected services
+ * - GET  /api/oauth/:service/connect - Initiate OAuth flow (redirects to provider)
+ * - POST /api/credentials - Add API key credentials
+ * - DELETE /api/credentials/:id - Disconnect service
+ * 
+ * HOW IT WORKS:
+ * 1. User clicks "Connect" on OAuth service (e.g., Slack)
+ * 2. Redirects to /api/oauth/slack/connect?token=xxx
+ * 3. Backend redirects to Slack OAuth page
+ * 4. User authorizes → Slack redirects to /api/oauth/slack/callback
+ * 5. Backend stores tokens in database (encrypted)
+ * 6. User redirected back to this page
+ * 7. Service shows as "Connected" ✅
+ * 
+ * For API key services (e.g., OpenAI):
+ * 1. User clicks "Connect"
+ * 2. Modal opens with form fields
+ * 3. User enters API key
+ * 4. POST /api/credentials stores encrypted key
+ * 5. Service shows as "Connected" ✅
+ */
+
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Navbar } from '@/components/layout/Navbar';

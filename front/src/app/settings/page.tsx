@@ -1,12 +1,38 @@
 'use client';
 
+/**
+ * ⚠️ DEPRECATED: This page is being replaced by /integrations
+ * 
+ * DIFFERENCE BETWEEN PAGES:
+ * 
+ * 1. /settings (THIS PAGE) - Old manual credential entry
+ *    - Hardcoded 4 services only (Slack, Email, PostgreSQL, Google Sheets)
+ *    - Manual form entry for ALL credentials (including OAuth)
+ *    - No OAuth flow - user has to manually paste tokens
+ *    - Uses /api/credentials endpoint
+ *    - Less user-friendly
+ * 
+ * 2. /integrations (NEW PAGE) - Modern OAuth + API key management
+ *    - Dynamic loading of all 23 integrations from backend
+ *    - OAuth services: One-click "Connect" button → redirects to provider
+ *    - API key services: Modal form for manual entry
+ *    - Uses /api/oauth/:service/connect for OAuth
+ *    - Uses /api/credentials for API keys
+ *    - Auto-refresh tokens via TokenRefreshService
+ *    - Better UX with categories, search, connection status
+ * 
+ * RECOMMENDATION: Use /integrations for all new features
+ * TODO: Redirect this page to /integrations or remove entirely
+ */
+
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Background } from '@/components/layout/Background';
 import { Button } from '@/components/ui/button';
-import { Zap, Mail, Database, FileSpreadsheet, CheckCircle, Plus, X } from 'lucide-react';
+import { Zap, Mail, Database, FileSpreadsheet, CheckCircle, Plus, X, AlertTriangle } from 'lucide-react';
 import { addCredentials, getCredentials } from '@/app/actions/auth';
+import { useRouter } from 'next/navigation';
 
 interface Service {
   id: string;
@@ -16,6 +42,8 @@ interface Service {
   fields: { name: string; label: string; type: string; placeholder: string }[];
 }
 
+// DEPRECATED: Only 4 services hardcoded here
+// The new /integrations page loads all 23 services dynamically
 const services: Service[] = [
   {
     id: 'slack',
@@ -66,6 +94,7 @@ const services: Service[] = [
 ];
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [connectedServices, setConnectedServices] = useState<Set<string>>(new Set());
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [formData, setFormData] = useState<Record<string, string>>({});
@@ -127,9 +156,37 @@ export default function SettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-8"
           >
+            {/* Deprecation Warning */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-6"
+            >
+              <div className="flex items-start gap-4">
+                <AlertTriangle className="w-6 h-6 text-yellow-500 flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-yellow-500 mb-2">
+                    ⚠️ This page is deprecated
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    This is the old manual credential entry page with only 4 services. 
+                    We now have a new <strong>Integrations page</strong> with 23 services, 
+                    one-click OAuth connections, and better UX.
+                  </p>
+                  <Button
+                    onClick={() => router.push('/integrations')}
+                    variant="default"
+                    className="bg-yellow-500 hover:bg-yellow-600 text-black"
+                  >
+                    Go to New Integrations Page →
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+
             <div>
-              <h1 className="text-4xl font-bold mb-2">Settings</h1>
-              <p className="text-muted-foreground">Manage your service connections and credentials</p>
+              <h1 className="text-4xl font-bold mb-2">Settings (Legacy)</h1>
+              <p className="text-muted-foreground">Old manual credential entry - Use /integrations instead</p>
             </div>
 
             {message && (
