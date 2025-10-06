@@ -253,7 +253,8 @@ export default function EditorPage() {
       const sendFirstMessage = async () => {
         setIsTyping(true);
         try {
-          const result = await sendChatMessage(messages[0].text);
+          const token = localStorage.getItem("auth_token");
+          const result = await sendChatMessage(messages[0].text, token || undefined);
 
           if (result.success && result.data) {
             const aiMessage = {
@@ -295,7 +296,8 @@ export default function EditorPage() {
     setDeploymentStatus("generating");
 
     try {
-      const result = await generateWorkflow(description);
+      const token = localStorage.getItem("auth_token");
+      const result = await generateWorkflow(description, token || undefined);
 
       if (result.success && result.data) {
         // Handle both old format (just workflow) and new format (workflow + credentials)
@@ -391,17 +393,17 @@ export default function EditorPage() {
     setMessages((prev) => [...prev, deployMessage]);
 
     try {
-      // Auto-save workflow first
-      await saveWorkflow(workflow);
-
-      const deployResult = await deployWorkflow(workflow);
+      // Pass token from localStorage to server action
+      const token = localStorage.getItem("auth_token");
+      const deployResult = await deployWorkflow(workflow, token || undefined);
 
       if (deployResult.success && deployResult.data) {
         setDeploymentData(deployResult.data);
 
         // Auto-activate
         const activateResult = await activateWorkflow(
-          deployResult.data.workflowId
+          deployResult.data.workflowId,
+          token || undefined
         );
 
         if (activateResult.success) {
@@ -493,7 +495,8 @@ export default function EditorPage() {
         }
 
         // Use the real chat API - it will decide if it should generate a workflow
-        const result = await sendChatMessage(messageText);
+        const token = localStorage.getItem("auth_token");
+        const result = await sendChatMessage(messageText, token || undefined);
 
         if (result.success && result.data) {
           // The response format is { message, workflow, suggestions }

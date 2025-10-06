@@ -1,14 +1,14 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { ensureAuth } from './auth';
+// Note: All functions now require token parameter for consistency
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-export async function sendChatMessage(message: string) {
+export async function sendChatMessage(message: string, token?: string) {
   try {
-    // Auto-authenticate for demo
-    const token = await ensureAuth();
+    if (!token) {
+      return { success: false, error: 'Authentication token required' };
+    }
 
     const response = await fetch(`${API_URL}/api/chat`, {
       method: 'POST',
@@ -26,10 +26,11 @@ export async function sendChatMessage(message: string) {
   }
 }
 
-export async function generateWorkflow(description: string) {
+export async function generateWorkflow(description: string, token?: string) {
   try {
-    // Auto-authenticate for demo
-    const token = await ensureAuth();
+    if (!token) {
+      return { success: false, error: 'Authentication token required' };
+    }
 
     const response = await fetch(`${API_URL}/api/chat/generate-workflow`, {
       method: 'POST',

@@ -1,7 +1,7 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { ensureAuth } from './auth';
+// Note: All functions now require token parameter for consistency
+// This eliminates the client/server cookie mismatch issue
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -39,10 +39,11 @@ export interface N8nWorkflow {
   settings: Record<string, any>;
 }
 
-export async function saveWorkflow(workflow: N8nWorkflow) {
+export async function saveWorkflow(workflow: N8nWorkflow, token?: string) {
   try {
-    // Auto-authenticate for demo
-    const token = await ensureAuth();
+    if (!token) {
+      return { success: false, error: 'Authentication token required' };
+    }
 
     const response = await fetch(`${API_URL}/api/workflows`, {
       method: 'POST',
@@ -60,10 +61,11 @@ export async function saveWorkflow(workflow: N8nWorkflow) {
   }
 }
 
-export async function deployWorkflow(workflow: N8nWorkflow) {
+export async function deployWorkflow(workflow: N8nWorkflow, token?: string) {
   try {
-    // Auto-authenticate for demo
-    const token = await ensureAuth();
+    if (!token) {
+      return { success: false, error: 'Authentication token required' };
+    }
 
     const response = await fetch(`${API_URL}/api/deploy`, {
       method: 'POST',
@@ -81,10 +83,11 @@ export async function deployWorkflow(workflow: N8nWorkflow) {
   }
 }
 
-export async function activateWorkflow(workflowId: string) {
+export async function activateWorkflow(workflowId: string, token?: string) {
   try {
-    // Auto-authenticate for demo
-    const token = await ensureAuth();
+    if (!token) {
+      return { success: false, error: 'Authentication token required' };
+    }
 
     const response = await fetch(`${API_URL}/api/deploy/${workflowId}/activate`, {
       method: 'POST',
@@ -100,10 +103,11 @@ export async function activateWorkflow(workflowId: string) {
   }
 }
 
-export async function getWorkflows() {
+export async function getWorkflows(token?: string) {
   try {
-    // Auto-authenticate for demo
-    const token = await ensureAuth();
+    if (!token) {
+      return { success: false, error: 'Authentication token required' };
+    }
 
     const response = await fetch(`${API_URL}/api/workflows`, {
       headers: {
@@ -118,10 +122,11 @@ export async function getWorkflows() {
   }
 }
 
-export async function getWorkflowExecutions(workflowId: string, limit: number = 10) {
+export async function getWorkflowExecutions(workflowId: string, limit: number = 10, token?: string) {
   try {
-    // Auto-authenticate for demo
-    const token = await ensureAuth();
+    if (!token) {
+      return { success: false, error: 'Authentication token required' };
+    }
 
     const response = await fetch(`${API_URL}/api/deploy/${workflowId}/executions?limit=${limit}`, {
       headers: {
@@ -136,10 +141,11 @@ export async function getWorkflowExecutions(workflowId: string, limit: number = 
   }
 }
 
-export async function executeWorkflow(workflowId: string, data: any = {}) {
+export async function executeWorkflow(workflowId: string, data: any = {}, token?: string) {
   try {
-    // Auto-authenticate for demo
-    const token = await ensureAuth();
+    if (!token) {
+      return { success: false, error: 'Authentication token required' };
+    }
 
     const response = await fetch(`${API_URL}/api/deploy/${workflowId}/execute`, {
       method: 'POST',
@@ -160,9 +166,11 @@ export async function executeWorkflow(workflowId: string, data: any = {}) {
 /**
  * Get user statistics (total deployments, executions, success rate)
  */
-export async function getUserStats() {
+export async function getUserStats(token?: string) {
   try {
-    const token = await ensureAuth();
+    if (!token) {
+      return { success: false, error: 'Authentication token required' };
+    }
 
     const response = await fetch(`${API_URL}/api/deploy/user/stats`, {
       headers: {
@@ -180,9 +188,11 @@ export async function getUserStats() {
 /**
  * Get workflow-specific statistics
  */
-export async function getWorkflowStats(workflowId: string, days: number = 7) {
+export async function getWorkflowStats(workflowId: string, days: number = 7, token?: string) {
   try {
-    const token = await ensureAuth();
+    if (!token) {
+      return { success: false, error: 'Authentication token required' };
+    }
 
     const response = await fetch(`${API_URL}/api/deploy/${workflowId}/stats?days=${days}`, {
       headers: {
@@ -200,9 +210,11 @@ export async function getWorkflowStats(workflowId: string, days: number = 7) {
 /**
  * Get recent errors for user
  */
-export async function getRecentErrors(limit: number = 10) {
+export async function getRecentErrors(limit: number = 10, token?: string) {
   try {
-    const token = await ensureAuth();
+    if (!token) {
+      return { success: false, error: 'Authentication token required' };
+    }
 
     const response = await fetch(`${API_URL}/api/deploy/user/errors?limit=${limit}`, {
       headers: {
