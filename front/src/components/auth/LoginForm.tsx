@@ -26,18 +26,18 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
 
   return (
     <div className="w-full p-8">
-      <h2 className="text-3xl font-bold mb-2 text-white dark:text-white text-gray-900 text-center">Welcome Back</h2>
-      <p className="text-white/60 dark:text-white/60 text-gray-600 text-center mb-8">Login to continue building workflows</p>
+      <h2 className="text-3xl font-bold mb-2 dark:text-white text-gray-900 text-center">Welcome Back</h2>
+      <p className="dark:text-white/60 text-gray-600 text-center mb-8">Login to continue building workflows</p>
       
       {error && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 dark:text-red-400 text-red-600 rounded-lg">
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 dark:text-red-400 text-red-600 rounded-lg">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium mb-2 text-white/90 dark:text-white/90 text-gray-700">
+          <label htmlFor="email" className="block text-sm font-medium mb-2 dark:text-white/90 text-gray-700">
             Email
           </label>
           <input
@@ -46,13 +46,13 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-4 py-3 bg-white/5 dark:bg-white/5 bg-gray-100 border border-white/10 dark:border-white/10 border-gray-300 rounded-xl text-white dark:text-white text-gray-900 placeholder-white/40 dark:placeholder-white/40 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+            className="w-full px-4 py-3 dark:bg-white/5 bg-gray-100 border dark:border-white/10 border-gray-300 rounded-xl dark:text-white text-gray-900 dark:placeholder-white/40 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
             placeholder="you@example.com"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium mb-2 text-white/90 dark:text-white/90 text-gray-700">
+          <label htmlFor="password" className="block text-sm font-medium mb-2 dark:text-white/90 text-gray-700">
             Password
           </label>
           <input
@@ -61,7 +61,7 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-4 py-3 bg-white/5 dark:bg-white/5 bg-gray-100 border border-white/10 dark:border-white/10 border-gray-300 rounded-xl text-white dark:text-white text-gray-900 placeholder-white/40 dark:placeholder-white/40 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+            className="w-full px-4 py-3 dark:bg-white/5 bg-gray-100 border dark:border-white/10 border-gray-300 rounded-xl dark:text-white text-gray-900 dark:placeholder-white/40 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
             placeholder="••••••••"
           />
         </div>
@@ -76,10 +76,10 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
       </form>
 
       <div className="mt-6 text-center text-sm">
-        <span className="text-white/60 dark:text-white/60 text-gray-600">Don't have an account? </span>
+        <span className="dark:text-white/60 text-gray-600">Don't have an account? </span>
         <button
           onClick={onSwitchToRegister}
-          className="text-blue-400 dark:text-blue-400 text-blue-600 hover:text-blue-300 dark:hover:text-blue-300 hover:text-blue-700 font-semibold transition-colors"
+          className="dark:text-blue-400 text-blue-600 dark:hover:text-blue-300 hover:text-blue-700 font-semibold transition-colors"
         >
           Sign up
         </button>
