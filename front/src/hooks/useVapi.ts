@@ -81,34 +81,60 @@ export function useVapi({
         setIsSpeaking(false);
       });
 
-      // Transcripts - use speech-update event for better control
+      // Transcripts - only show when speech is complete
+      let lastUserTranscript = '';
+      let lastAssistantTranscript = '';
+
       client.on('speech-update', (update: any) => {
         console.log('[Vapi] Speech update:', update);
         
         // Only add final transcripts (when user/assistant finishes speaking)
-        if (update.status === 'complete' && update.transcript) {
+        if (update.status === 'stopped' && update.transcript) {
           const transcript: VapiTranscript = {
             role: update.role || 'user',
             text: update.transcript,
             timestamp: new Date(),
           };
-          setTranscripts(prev => [...prev, transcript]);
+          
+          // Prevent duplicates
+          if (update.role === 'user' && update.transcript !== lastUserTranscript) {
+            lastUserTranscript = update.transcript;
+            setTranscripts(prev => [...prev, transcript]);
+          } else if (update.role === 'assistant' && update.transcript !== lastAssistantTranscript) {
+            lastAssistantTranscript = update.transcript;
+            setTranscripts(prev => [...prev, transcript]);
+          }
         }
       });
 
-      // Also listen to message events for function calls
-      client.on('message', (message: VapiMessageEvent) => {
+      // Listen to message events for function calls and results
+      client.on('message', (message: any) => {
         console.log('[Vapi] Message:', message);
 
-        // Handle function calls
+        // Handle function call results (when backend responds)
+        if (message.type === 'function-call-result') {
+          console.log('[Vapi] Function result:', message);
+          const result = message.result || message.functionCallResult;
+          
+          if (result?.workflow) {
+            console.log('[Vapi] Workflow received from function result:', result.workflow);
+            if (onWorkflowGenerated) {
+              onWorkflowGenerated(result.workflow);
+            }
+          }
+        }
+
+        // Handle function calls being initiated
         if (message.type === 'function-call' && message.functionCall) {
-          handleFunctionCall(message.functionCall);
+          console.log('[Vapi] Function call initiated:', message.functionCall);
+          // The result will come in function-call-result event
         }
 
         // Fallback: If speech-update doesn't work, use message transcripts
         if (message.type === 'transcript' && message.transcript) {
-          // Check if it's a final transcript (not partial)
-          const isFinal = (message as any).isFinal !== false;
+          // Only show final transcripts
+          const isFinal = (message as any).transcriptType === 'final' || 
+                         (message as any).isFinal === true;
           
           if (isFinal) {
             const transcript: VapiTranscript = {
@@ -171,33 +197,11 @@ export function useVapi({
     }
   }, []);
 
-  // Handle function calls from Vapi
+  // Handle function calls from Vapi (kept for compatibility)
   const handleFunctionCall = useCallback((functionCall: { name: string; parameters: any }) => {
-    console.log('[Vapi] Function call:', functionCall.name, functionCall.parameters);
-
-    switch (functionCall.name) {
-      case 'generateWorkflow':
-        if (onWorkflowGenerated && functionCall.parameters.workflow) {
-          onWorkflowGenerated(functionCall.parameters.workflow);
-        }
-        break;
-
-      case 'updateWorkflow':
-        if (onWorkflowUpdated && functionCall.parameters.workflow) {
-          onWorkflowUpdated(functionCall.parameters.workflow);
-        }
-        break;
-
-      case 'deployWorkflow':
-        if (onDeployReady && functionCall.parameters.workflow) {
-          onDeployReady(functionCall.parameters.workflow);
-        }
-        break;
-
-      default:
-        console.log('[Vapi] Unknown function:', functionCall.name);
-    }
-  }, [onWorkflowGenerated, onWorkflowUpdated, onDeployReady]);
+    console.log('[Vapi] Function call handler (legacy):', functionCall.name, functionCall.parameters);
+    // Function results now come through function-call-result event
+  }, []);
 
   // Clear transcripts
   const clearTranscripts = useCallback(() => {

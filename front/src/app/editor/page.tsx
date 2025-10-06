@@ -181,16 +181,26 @@ export default function EditorPage() {
     publicKey: process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || '',
     assistantId: process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID || '',
     onWorkflowGenerated: (workflow) => {
-      console.log('[Voice] Workflow generated:', workflow);
+      console.log('[Editor] 🎉 Workflow generated via voice!', workflow);
+      console.log('[Editor] Workflow has', workflow?.nodes?.length, 'nodes');
       setWorkflow(workflow);
       setDeploymentStatus('idle');
+      
+      // Add a message to show workflow was created
+      const workflowMessage = {
+        id: `workflow_${Date.now()}`,
+        text: `✅ Workflow created! It has ${workflow?.nodes?.length || 0} nodes. Ready to deploy?`,
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, workflowMessage]);
     },
     onWorkflowUpdated: (workflow) => {
-      console.log('[Voice] Workflow updated:', workflow);
+      console.log('[Editor] Workflow updated via voice:', workflow);
       setWorkflow(workflow);
     },
     onDeployReady: (workflow) => {
-      console.log('[Voice] Ready to deploy:', workflow);
+      console.log('[Editor] Ready to deploy via voice:', workflow);
       handleDeploy();
     },
   });
