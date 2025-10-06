@@ -173,7 +173,7 @@ export default function EditorPage() {
   }, []);
 
   // Get authenticated user
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   // Vapi voice AI integration
   const {
@@ -338,8 +338,8 @@ export default function EditorPage() {
   };
 
   const handleDeployClick = () => {
-    // Check if user is authenticated
-    if (!user) {
+    // Check if user is authenticated (use isAuthenticated instead of user to avoid race condition)
+    if (!isAuthenticated) {
       setShowAuthModal(true);
       return;
     }
@@ -367,15 +367,9 @@ export default function EditorPage() {
   const handleDeploy = async () => {
     if (!workflow) return;
 
-    // Double-check authentication
-    if (!user) {
-      setShowAuthModal(true);
-      return;
-    }
-
-    // Check if token exists
+    // Check if token exists (more reliable than checking user object)
     const token = localStorage.getItem("auth_token");
-    if (!token) {
+    if (!token || !isAuthenticated) {
       const errorMessage = {
         id: Date.now().toString(),
         text: "Your session has expired. Please login again.",
