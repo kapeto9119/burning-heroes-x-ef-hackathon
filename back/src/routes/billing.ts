@@ -10,10 +10,15 @@ import { authenticateToken } from '../middleware/auth';
 
 const router = express.Router();
 
-const stripeService = new StripeService(
-  process.env.STRIPE_SECRET_KEY || '',
-  pool
-);
+// Initialize Stripe service only if API key is provided
+let stripeService: StripeService | null = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripeService = new StripeService(process.env.STRIPE_SECRET_KEY, pool);
+  console.log('✅ Stripe service initialized');
+} else {
+  console.warn('⚠️  Stripe not configured - billing features will be disabled');
+}
+
 const usageLimiter = new UsageLimiter(pool);
 
 /**
@@ -22,6 +27,9 @@ const usageLimiter = new UsageLimiter(pool);
  */
 router.get('/plans', async (req, res) => {
   try {
+    if (!stripeService) {
+      return res.status(503).json({ success: false, error: 'Billing not configured' });
+    }
     const plans = await stripeService.getPlans();
     res.json({ success: true, data: plans });
   } catch (error: any) {
@@ -78,6 +86,10 @@ router.post('/checkout', authenticateToken, async (req, res) => {
       });
     }
 
+    if (!stripeService) {
+      return res.status(503).json({ success: false, error: 'Billing not configured' });
+    }
+
     // Validate plan exists
     const plans = await stripeService.getPlans();
     const plan = plans.find(p => p.planTier === planTier);
@@ -125,6 +137,10 @@ router.post('/checkout', authenticateToken, async (req, res) => {
  */
 router.post('/portal', authenticateToken, async (req, res) => {
   try {
+    if (!stripeService) {
+      return res.status(503).json({ success: false, error: 'Billing not configured' });
+    }
+
     const userId = (req as any).user.id;
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     
@@ -153,6 +169,10 @@ router.post('/portal', authenticateToken, async (req, res) => {
  */
 router.post('/cancel', authenticateToken, async (req, res) => {
   try {
+    if (!stripeService) {
+      return res.status(503).json({ success: false, error: 'Billing not configured' });
+    }
+
     const userId = (req as any).user.id;
     
     await stripeService.cancelSubscription(userId);
@@ -177,6 +197,10 @@ router.post('/cancel', authenticateToken, async (req, res) => {
  */
 router.post('/reactivate', authenticateToken, async (req, res) => {
   try {
+    if (!stripeService) {
+      return res.status(503).json({ success: false, error: 'Billing not configured' });
+    }
+
     const userId = (req as any).user.id;
     
     await stripeService.reactivateSubscription(userId);
@@ -239,6 +263,10 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
   }
 
   try {
+    if (!stripeService) {
+      return res.status(503).send('Billing not configured');
+    }
+
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
 
