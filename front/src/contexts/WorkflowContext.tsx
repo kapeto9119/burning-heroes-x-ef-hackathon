@@ -81,6 +81,16 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json();
 
+      // Handle 401 - token is invalid or expired
+      if (response.status === 401) {
+        console.error('Token is invalid or expired, clearing auth');
+        localStorage.removeItem('auth_token');
+        setError('Session expired. Please login again.');
+        setWorkflows([]);
+        setIsLoading(false);
+        return;
+      }
+
       if (data.success && data.data) {
         // Transform API data to Workflow format
         const transformedWorkflows: Workflow[] = data.data.map((wf: any) => ({
