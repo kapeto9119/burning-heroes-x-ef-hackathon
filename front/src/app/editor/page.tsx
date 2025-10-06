@@ -22,6 +22,7 @@ import { Background } from "@/components/layout/Background";
 import { useWorkflow } from "@/contexts/WorkflowContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { CredentialSetupModal, CredentialRequirement } from "@/components/CredentialSetupModal";
+import { AuthModal } from "@/components/auth/AuthModal";
 import { generateWorkflow, sendChatMessage } from "@/app/actions/chat";
 import {
   deployWorkflow,
@@ -142,6 +143,7 @@ export default function EditorPage() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [credentialRequirements, setCredentialRequirements] = useState<CredentialRequirement[]>([]);
   const [showCredentialModal, setShowCredentialModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
   const hasRespondedRef = useRef(false);
   const voiceAutoStartRef = useRef(false);
@@ -322,6 +324,12 @@ export default function EditorPage() {
   };
 
   const handleDeployClick = () => {
+    // Check if user is authenticated
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
     // Check if credentials are needed
     if (credentialRequirements.length > 0) {
       setShowCredentialModal(true);
@@ -344,6 +352,12 @@ export default function EditorPage() {
 
   const handleDeploy = async () => {
     if (!workflow) return;
+    
+    // Double-check authentication
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
 
     setDeploymentStatus("deploying");
     const deployMessage = {
@@ -691,7 +705,7 @@ export default function EditorPage() {
                       ) : (
                         <>
                           <Sparkles className="w-4 h-4 mr-2" />
-                          Deploy Workflow
+                          {user ? 'Deploy Workflow' : 'Login to Deploy'}
                         </>
                       )}
                     </Button>
@@ -809,6 +823,13 @@ export default function EditorPage() {
           onSkip={handleCredentialsSkip}
         />
       )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        initialMode="login"
+      />
     </div>
   );
 }

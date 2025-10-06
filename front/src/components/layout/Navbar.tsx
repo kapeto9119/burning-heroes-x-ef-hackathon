@@ -105,13 +105,14 @@ export function Navbar() {
 
               {/* Auth Button or Profile Menu */}
               {!isAuthenticated ? (
-                <button
+                <motion.button
                   onClick={() => setShowAuthModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition-opacity text-sm font-medium"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-4 py-1.5 rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition-opacity text-sm font-medium"
                 >
-                  <LogIn className="w-4 h-4" />
-                  <span>Login</span>
-                </button>
+                  Login
+                </motion.button>
               ) : (
                 <div className="relative" ref={profileMenuRef}>
                   <button

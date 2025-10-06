@@ -25,18 +25,19 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+    <div className="w-full p-8">
+      <h2 className="text-3xl font-bold mb-2 text-white text-center">Welcome Back</h2>
+      <p className="text-white/60 text-center mb-8">Login to continue building workflows</p>
       
       {error && (
-        <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-400 rounded">
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium mb-1">
+          <label htmlFor="email" className="block text-sm font-medium mb-2 text-white/90">
             Email
           </label>
           <input
@@ -45,13 +46,13 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
             placeholder="you@example.com"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium mb-1">
+          <label htmlFor="password" className="block text-sm font-medium mb-2 text-white/90">
             Password
           </label>
           <input
@@ -60,7 +61,7 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
             placeholder="••••••••"
           />
         </div>
@@ -68,19 +69,19 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-md transition-colors"
+          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 text-white font-semibold py-3 px-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98]"
         >
           {isLoading ? 'Logging in...' : 'Login'}
         </button>
       </form>
 
-      <div className="mt-4 text-center text-sm">
-        <span className="text-gray-600 dark:text-gray-400">Don't have an account? </span>
+      <div className="mt-6 text-center text-sm">
+        <span className="text-white/60">Don't have an account? </span>
         <button
           onClick={onSwitchToRegister}
-          className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+          className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
         >
-          Register
+          Sign up
         </button>
       </div>
     </div>
