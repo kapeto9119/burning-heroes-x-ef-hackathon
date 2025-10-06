@@ -34,41 +34,39 @@ function CustomNode({ data }: any) {
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.3, type: 'spring' }}
-      className="relative nodrag"
+      className="relative"
+      style={{ width: '220px' }}
     >
+      {/* Input handle (left side) - positioned at left center border */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="input"
+        className="w-3 h-3 !bg-purple-500 border-2 border-white"
+        style={{ 
+          left: '0px',
+        }}
+        isConnectable={false}
+      />
+      
+      {/* Output handle (right side) - positioned at right center border */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="output"
+        className="w-3 h-3 !bg-purple-500 border-2 border-white"
+        style={{ 
+          right: '0px',
+        }}
+        isConnectable={false}
+      />
+      
       <div className={`
         px-4 py-3 rounded-xl border-2 backdrop-blur-xl
         bg-gradient-to-br ${visual.color}
         shadow-lg hover:shadow-xl transition-all duration-200
-        w-[220px] relative
+        w-full relative nodrag
       `}>
-        {/* Input handle (left side) - positioned at left center border */}
-        <Handle
-          type="target"
-          position={Position.Left}
-          id="input"
-          className="w-3 h-3 !bg-purple-500 border-2 border-white"
-          style={{ 
-            left: '-6px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-          }}
-          isConnectable={false}
-        />
-        
-        {/* Output handle (right side) - positioned at right center border */}
-        <Handle
-          type="source"
-          position={Position.Right}
-          id="output"
-          className="w-3 h-3 !bg-purple-500 border-2 border-white"
-          style={{ 
-            right: '-6px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-          }}
-          isConnectable={false}
-        />
         
         {/* Status Badge */}
         {nodeStatus && (
