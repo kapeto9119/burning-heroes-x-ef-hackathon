@@ -26,6 +26,14 @@ export class VapiService {
   ): Promise<VapiFunctionResponse> {
     console.log(`[Vapi Service] Function call: ${functionCall.name}`, functionCall.parameters);
 
+    // Check authentication for all functions
+    if (!userId) {
+      return {
+        result: null,
+        error: 'Authentication required. Please login first.'
+      };
+    }
+
     try {
       switch (functionCall.name) {
         case 'generateWorkflow':
