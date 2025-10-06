@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { WorkflowProvider } from "@/contexts/WorkflowContext";
 import { ToastContainer } from "@/components/ToastContainer";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,10 +30,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <WorkflowProvider>
-          {children}
-          <ToastContainer />
-        </WorkflowProvider>
+        <ThemeProvider>
+          <WorkflowProvider>
+            {children}
+            <ToastContainer />
+          </WorkflowProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

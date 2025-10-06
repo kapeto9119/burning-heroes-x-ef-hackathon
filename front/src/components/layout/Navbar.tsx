@@ -14,20 +14,29 @@ import {
   ChevronDown,
   Workflow,
   Home,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { LoginDialog } from "@/components/LoginDialog";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const isEditor = pathname === "/editor";
   const isPlatform = pathname === "/platform";
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(true); // Auto-authenticated for demo
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSaveOrRun = () => {
     if (isAuthenticated) {
@@ -70,7 +79,7 @@ export function Navbar() {
     <>
       <nav className="sticky top-4 z-50 px-4 w-full">
         <div className="container mx-auto max-w-3xl">
-          <div className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-full shadow-lg px-6 flex items-center justify-between">
+          <div className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-full shadow-lg px-6 flex items-center justify-between">
             <Link
               href="/"
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -82,22 +91,39 @@ export function Navbar() {
                 height={32}
                 className="rounded-full"
               />
-              <span className="text-lg font-light tracking-tight text-black">
+              <span className="text-lg font-light tracking-tight text-black dark:text-white">
                 Mozart
               </span>
             </Link>
 
             <div className="flex items-center gap-3">
+              {/* Dark Mode Toggle */}
+              {mounted && (
+                <motion.button
+                  onClick={toggleTheme}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  aria-label="Toggle dark mode"
+                >
+                  {theme === "dark" ? (
+                    <Sun className="w-5 h-5 text-gray-900 dark:text-gray-100" />
+                  ) : (
+                    <Moon className="w-5 h-5 text-gray-900 dark:text-gray-100" />
+                  )}
+                </motion.button>
+              )}
+
               <div className="relative" ref={profileMenuRef}>
                 <button
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-white border-2 border-black flex items-center justify-center">
-                    <User className="w-4 h-4 text-black" />
+                  <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 border-2 border-black dark:border-gray-300 flex items-center justify-center">
+                    <User className="w-4 h-4 text-black dark:text-gray-100" />
                   </div>
                   <ChevronDown
-                    className={`w-4 h-4 text-black transition-transform ${
+                    className={`w-4 h-4 text-black dark:text-gray-100 transition-transform ${
                       showProfileMenu ? "rotate-180" : ""
                     }`}
                   />
@@ -110,7 +136,7 @@ export function Navbar() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-xl overflow-hidden"
+                      className="absolute right-0 mt-2 w-56 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden"
                     >
                       <div className="p-2">
                         <button
@@ -118,10 +144,10 @@ export function Navbar() {
                             setShowProfileMenu(false);
                             router.push("/");
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
                         >
-                          <Home className="w-4 h-4 text-gray-600" />
-                          <span className="text-sm font-medium text-gray-900">
+                          <Home className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                             Home
                           </span>
                         </button>
@@ -130,10 +156,10 @@ export function Navbar() {
                             setShowProfileMenu(false);
                             router.push("/workflows");
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
                         >
-                          <Workflow className="w-4 h-4 text-gray-600" />
-                          <span className="text-sm font-medium text-gray-900">
+                          <Workflow className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                             Workflows
                           </span>
                         </button>
@@ -142,20 +168,20 @@ export function Navbar() {
                             setShowProfileMenu(false);
                             router.push("/settings");
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
                         >
-                          <Settings className="w-4 h-4 text-gray-600" />
-                          <span className="text-sm font-medium text-gray-900">
+                          <Settings className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                             Settings
                           </span>
                         </button>
-                        <div className="my-1 border-t border-gray-200" />
+                        <div className="my-1 border-t border-gray-200 dark:border-gray-700" />
                         <button
                           onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-50 transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left"
                         >
-                          <LogOut className="w-4 h-4 text-red-600" />
-                          <span className="text-sm font-medium text-red-600">
+                          <LogOut className="w-4 h-4 text-red-600 dark:text-red-400" />
+                          <span className="text-sm font-medium text-red-600 dark:text-red-400">
                             Logout
                           </span>
                         </button>
