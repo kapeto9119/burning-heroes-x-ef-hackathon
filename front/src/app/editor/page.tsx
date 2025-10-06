@@ -173,7 +173,15 @@ export default function EditorPage() {
   }, []);
 
   // Get authenticated user
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  // Auth guard - redirect to home if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      console.log('[Editor] User not authenticated, showing auth modal');
+      setShowAuthModal(true);
+    }
+  }, [isLoading, isAuthenticated]);
 
   // Vapi voice AI integration
   const {
@@ -251,10 +259,17 @@ export default function EditorPage() {
 
       // Send the first message to the real chat API
       const sendFirstMessage = async () => {
+        // Check auth before sending
+        const token = localStorage.getItem("auth_token");
+        if (!token) {
+          console.log('[Editor] No auth token, cannot send message');
+          setShowAuthModal(true);
+          return;
+        }
+
         setIsTyping(true);
         try {
-          const token = localStorage.getItem("auth_token");
-          const result = await sendChatMessage(messages[0].text, token || undefined);
+          const result = await sendChatMessage(messages[0].text, token);
 
           if (result.success && result.data) {
             const aiMessage = {
@@ -292,12 +307,19 @@ export default function EditorPage() {
   }, []); // Empty deps - only run once on mount
 
   const handleGenerateWorkflow = async (description: string) => {
+    // Check auth before generating
+    const token = localStorage.getItem("auth_token");
+    if (!token) {
+      console.log('[Editor] No auth token, cannot generate workflow');
+      setShowAuthModal(true);
+      return;
+    }
+
     setIsTyping(true);
     setDeploymentStatus("generating");
 
     try {
-      const token = localStorage.getItem("auth_token");
-      const result = await generateWorkflow(description, token || undefined);
+      const result = await generateWorkflow(description, token);
 
       if (result.success && result.data) {
         // Handle both old format (just workflow) and new format (workflow + credentials)
@@ -477,6 +499,15 @@ export default function EditorPage() {
       setIsTyping(true);
 
       try {
+        // Check auth before sending
+        const token = localStorage.getItem("auth_token");
+        if (!token) {
+          console.log('[Editor] No auth token, cannot send message');
+          setShowAuthModal(true);
+          setIsTyping(false);
+          return;
+        }
+
         // Check if user wants to deploy existing workflow
         // Only deploy on explicit "deploy" or "yes" if last message asked about deployment
         const lastAssistantMessage = messages
@@ -495,8 +526,7 @@ export default function EditorPage() {
         }
 
         // Use the real chat API - it will decide if it should generate a workflow
-        const token = localStorage.getItem("auth_token");
-        const result = await sendChatMessage(messageText, token || undefined);
+        const result = await sendChatMessage(messageText, token);
 
         if (result.success && result.data) {
           // The response format is { message, workflow, suggestions }

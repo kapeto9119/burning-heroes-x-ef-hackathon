@@ -137,7 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         register,
         logout,
         isLoading,
-        isAuthenticated: !!user,
+        isAuthenticated: !!token, // Use token (sync) instead of user (async)
       }}
     >
       {children}
