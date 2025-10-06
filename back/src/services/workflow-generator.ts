@@ -139,13 +139,37 @@ export class WorkflowGenerator {
 
   /**
    * Create a trigger node based on type
+   * Enhanced to handle service-specific triggers (e.g., Salesforce)
    */
   private createTriggerNode(trigger: any, x: number, y: number): N8nNode {
     const triggerTypes: Record<string, string> = {
       webhook: 'n8n-nodes-base.webhook',
       schedule: 'n8n-nodes-base.scheduleTrigger',
-      manual: 'n8n-nodes-base.manualTrigger'
+      manual: 'n8n-nodes-base.manualTrigger',
+      salesforce: 'n8n-nodes-base.webhook', // Salesforce webhooks come via webhook trigger
+      cron: 'n8n-nodes-base.scheduleTrigger'
     };
+
+    // Detect if this is a data-fetching trigger (not a traditional trigger)
+    // e.g., "grab leads from Salesforce" should be a regular Salesforce node, not a trigger
+    const isFetchAction = trigger.config?.operation === 'getAll' || 
+                          trigger.config?.operation === 'get' ||
+                          trigger.type === 'fetch' ||
+                          trigger.type === 'salesforce';
+    
+    if (isFetchAction) {
+      // This is actually a data-fetching action, not a trigger
+      // Use manual trigger and let the first action node handle the data fetching
+      console.log('[Workflow Generator] Using manual trigger for data-fetching workflow');
+      return {
+        id: this.generateNodeId(),
+        name: 'Manual Trigger',
+        type: 'n8n-nodes-base.manualTrigger',
+        position: [x, y],
+        parameters: {},
+        credentials: {}
+      };
+    }
 
     const nodeType = triggerTypes[trigger.type] || 'n8n-nodes-base.manualTrigger';
 
@@ -163,56 +187,109 @@ export class WorkflowGenerator {
    * Create an action node based on step definition
    * Now uses MCP to dynamically find the correct node type
    * Enhanced with AI-specific node recognition
+   * Uses MANAGED AI via HTTP Request nodes (no user credentials needed!)
    */
   private async createActionNode(step: any, index: number, x: number, y: number): Promise<N8nNode> {
     let nodeType = 'n8n-nodes-base.httpRequest'; // Default fallback
     
-    // AI-specific node mapping (check first for performance)
-    const aiNodeMap: Record<string, string> = {
-      'openai': 'n8n-nodes-langchain.openai',
-      'gpt': 'n8n-nodes-langchain.openai',
-      'gpt-4': 'n8n-nodes-langchain.openai',
-      'chatgpt': 'n8n-nodes-langchain.openai',
-      'claude': 'n8n-nodes-langchain.lmChatAnthropic',
-      'anthropic': 'n8n-nodes-langchain.lmChatAnthropic',
-      'gemini': 'n8n-nodes-langchain.lmChatGooglePalm',
-      'google ai': 'n8n-nodes-langchain.lmChatGooglePalm',
-      'ai agent': 'n8n-nodes-langchain.agent',
-      'chatbot': 'n8n-nodes-langchain.agent',
-      'assistant': 'n8n-nodes-langchain.agent',
-      'dall-e': 'n8n-nodes-langchain.openai',
-      'dalle': 'n8n-nodes-langchain.openai',
-      'image generation': 'n8n-nodes-langchain.openai',
-      'generate image': 'n8n-nodes-langchain.openai',
-      'stable diffusion': 'n8n-nodes-base.stabilityAi',
-      'stability': 'n8n-nodes-base.stabilityAi',
-      'whisper': 'n8n-nodes-langchain.openai',
-      'transcribe': 'n8n-nodes-langchain.openai',
-      'transcription': 'n8n-nodes-langchain.openai',
-      'voice': 'n8n-nodes-base.elevenLabs',
-      'text to speech': 'n8n-nodes-base.elevenLabs',
-      'elevenlabs': 'n8n-nodes-base.elevenLabs',
-      'replicate': 'n8n-nodes-base.replicate',
-      'content generation': 'n8n-nodes-langchain.openai',
-      'generate content': 'n8n-nodes-langchain.openai',
-      'write': 'n8n-nodes-langchain.openai',
-      'summarize': 'n8n-nodes-langchain.openai',
-      'translate': 'n8n-nodes-langchain.openai'
-    };
+    // AI-specific keywords - now using MANAGED AI approach
+    const aiKeywords = [
+      'openai', 'gpt', 'gpt-4', 'chatgpt', 'claude', 'anthropic',
+      'gemini', 'google ai', 'ai agent', 'chatbot', 'assistant',
+      'dall-e', 'dalle', 'image generation', 'generate image',
+      'stable diffusion', 'stability', 'whisper', 'transcribe',
+      'transcription', 'voice', 'text to speech', 'elevenlabs',
+      'replicate', 'content generation', 'generate content',
+      'write', 'summarize', 'translate', 'ai content', 'ai'
+    ];
     
     // Check if step mentions AI keywords
     const stepText = `${step.service || ''} ${step.action || ''} ${step.prompt || ''}`.toLowerCase();
-    for (const [keyword, type] of Object.entries(aiNodeMap)) {
-      if (stepText.includes(keyword)) {
-        nodeType = type;
-        console.log(`[Workflow Generator] ✨ Matched AI keyword "${keyword}" -> ${nodeType}`);
-        
+    const isAINode = aiKeywords.some(keyword => stepText.includes(keyword));
+    
+    if (isAINode) {
+      // Use MANAGED AI via HTTP Request node - no user credentials needed!
+      console.log(`[Workflow Generator] 🔥 Using Managed AI (Fireworks) for: ${step.action}`);
+      
+      return {
+        id: this.generateNodeId(),
+        name: step.action || `Generate AI Content`,
+        type: 'n8n-nodes-base.httpRequest',
+        position: [x, y],
+        parameters: this.getManagedAINodeParameters(step),
+        credentials: {}
+      };
+    }
+    
+    // Common service node type mapping (prevent wrong nodes like emailReadImap)
+    const serviceNodeMap: Record<string, { type: string, defaultParams?: any }> = {
+      'salesforce': { 
+        type: 'n8n-nodes-base.salesforce',
+        defaultParams: {
+          resource: 'lead',
+          operation: 'getAll',
+          returnAll: false,
+          limit: 10
+        }
+      },
+      'email': { 
+        type: 'n8n-nodes-base.emailSend',
+        defaultParams: {
+          fromEmail: 'noreply@example.com',
+          toEmail: '={{ $json.email }}',
+          subject: '={{ $json.subject }}',
+          text: '={{ $json.body }}'
+        }
+      },
+      'gmail': { 
+        type: 'n8n-nodes-base.gmail',
+        defaultParams: {
+          resource: 'message',
+          operation: 'send',
+          to: '={{ $json.email }}',
+          subject: '={{ $json.subject }}',
+          message: '={{ $json.body }}'
+        }
+      },
+      'slack': { 
+        type: 'n8n-nodes-base.slack',
+        defaultParams: {
+          resource: 'message',
+          operation: 'post',
+          select: 'channel',
+          channelId: '#general',
+          text: '={{ $json.message }}'
+        }
+      }
+    };
+    
+    // Check for service-specific node types
+    const serviceLower = (step.service || '').toLowerCase();
+    const actionLower = (step.action || '').toLowerCase();
+    
+    // Special case: email sending (prevent emailReadImap!)
+    if (actionLower.includes('send') && (serviceLower.includes('email') || actionLower.includes('email'))) {
+      console.log(`[Workflow Generator] Using emailSend for: ${step.action}`);
+      return {
+        id: this.generateNodeId(),
+        name: step.action || 'Send Email',
+        type: 'n8n-nodes-base.emailSend',
+        position: [x, y],
+        parameters: serviceNodeMap['email'].defaultParams,
+        credentials: {}
+      };
+    }
+    
+    // Check service mapping
+    for (const [service, config] of Object.entries(serviceNodeMap)) {
+      if (serviceLower.includes(service)) {
+        console.log(`[Workflow Generator] Matched service "${service}" -> ${config.type}`);
         return {
           id: this.generateNodeId(),
-          name: step.action || step.service || `AI ${index + 1}`,
-          type: nodeType,
+          name: step.action || step.service,
+          type: config.type,
           position: [x, y],
-          parameters: this.getAINodeParameters(nodeType, step),
+          parameters: { ...config.defaultParams, ...step.config },
           credentials: {}
         };
       }
@@ -245,7 +322,60 @@ export class WorkflowGenerator {
   }
 
   /**
+   * Generate HTTP Request node parameters for Managed AI
+   * Calls YOUR backend API instead of requiring user credentials
+   */
+  private getManagedAINodeParameters(step: any): any {
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+    
+    // Determine if this is image generation or text generation
+    const isImageGen = step.action?.toLowerCase().includes('image') || 
+                       step.prompt?.toLowerCase().includes('image') ||
+                       step.action?.toLowerCase().includes('dall');
+    
+    if (isImageGen) {
+      // Image generation via managed AI
+      return {
+        method: 'POST',
+        url: `${backendUrl}/api/managed-ai/image`,
+        authentication: 'none',
+        sendBody: true,
+        specifyBody: 'json',
+        jsonBody: JSON.stringify({
+          userId: '={{ $json.userId }}',
+          workflowId: '={{ $workflow.id }}',
+          prompt: step.prompt || '={{ $json.prompt }}',
+          model: 'accounts/fireworks/models/stable-diffusion-xl-1024-v1-0'
+        }, null, 2),
+        options: {
+          timeout: 60000 // 60s for image generation
+        }
+      };
+    } else {
+      // Text/content generation via managed AI
+      return {
+        method: 'POST',
+        url: `${backendUrl}/api/managed-ai/generate-content`,
+        authentication: 'none',
+        sendBody: true,
+        specifyBody: 'json',
+        jsonBody: JSON.stringify({
+          userId: '={{ $json.userId }}',
+          workflowId: '={{ $workflow.id }}',
+          prompt: step.prompt || step.config?.prompt || '={{ $json.prompt }}',
+          context: step.config?.context || '={{ $json.context }}',
+          model: 'accounts/fireworks/models/llama-v3p1-70b-instruct'
+        }, null, 2),
+        options: {
+          timeout: 30000 // 30s for text generation
+        }
+      };
+    }
+  }
+
+  /**
    * Get default parameters for AI nodes based on type
+   * @deprecated - Now using getManagedAINodeParameters for managed AI
    */
   private getAINodeParameters(nodeType: string, step: any): any {
     // OpenAI node - text generation

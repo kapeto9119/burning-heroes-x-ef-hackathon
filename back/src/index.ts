@@ -23,6 +23,8 @@ import { createOAuthRouter } from './routes/oauth';
 import { createCredentialsRouter } from './routes/credentials';
 import { VapiService } from './services/vapi-service';
 import billingRouter from './routes/billing';
+import { createManagedAIRouter } from './routes/managed-ai';
+import { pool } from './db';
 
 // Validate required environment variables
 const requiredEnvVars = ['OPENAI_API_KEY', 'JWT_SECRET'];
@@ -139,6 +141,7 @@ app.get('/', (req: Request, res: Response) => {
       oauth: '/api/oauth',
       credentials: '/api/credentials',
       billing: '/api/billing',
+      managedAi: '/api/managed-ai',
       health: '/health'
     }
   });
@@ -161,6 +164,7 @@ app.use('/api/voice', createVoiceRouter(vapiService));
 app.use('/api/oauth', createOAuthRouter(oauthService, credentialRepository, authService));
 app.use('/api/credentials', createCredentialsRouter(credentialRepository, credentialValidator, authService));
 app.use('/api/billing', billingRouter);
+app.use('/api/managed-ai', createManagedAIRouter(pool));
 
 // Deploy routes (only if n8n is configured)
 if (n8nApiClient) {
@@ -235,6 +239,13 @@ app.listen(PORT, () => {
   console.log('📋 Workflows:');
   console.log(`   - GET  http://localhost:${PORT}/api/workflows`);
   console.log(`   - POST http://localhost:${PORT}/api/workflows`);
+  console.log('');
+  console.log('🤖 Managed AI (Fireworks):');
+  console.log(`   - POST http://localhost:${PORT}/api/managed-ai/chat`);
+  console.log(`   - POST http://localhost:${PORT}/api/managed-ai/image`);
+  console.log(`   - POST http://localhost:${PORT}/api/managed-ai/generate-content`);
+  console.log(`   - GET  http://localhost:${PORT}/api/managed-ai/quota/:userId`);
+  console.log(`   - GET  http://localhost:${PORT}/api/managed-ai/models`);
   console.log('');
   if (n8nApiClient) {
     console.log('🚀 Deployment (n8n):');

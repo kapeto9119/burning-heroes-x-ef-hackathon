@@ -226,58 +226,66 @@ ACTIONS:
   "fields": {}
 }
 
-AI & CONTENT GENERATION NODES:
-8. OpenAI Text (n8n-nodes-langchain.openai):
+AI & CONTENT GENERATION (Use Managed AI - HTTP Request):
+8. Managed AI Text Generation (n8n-nodes-base.httpRequest):
 {
-  "resource": "text",
-  "operation": "message",
-  "model": "gpt-4o",
-  "messages": {
-    "values": [{"role": "user", "content": "Generate content about..."}]
-  },
-  "options": {"temperature": 0.7, "maxTokens": 1000}
+  "method": "POST",
+  "url": "https://your-backend.com/api/managed-ai/generate-content",
+  "sendBody": true,
+  "specifyBody": "json",
+  "jsonBody": "{\\"userId\\": \\"={{$json.userId}}\\", \\"workflowId\\": \\"={{$workflow.id}}\\", \\"prompt\\": \\"Generate content about...\\"}"
 }
 
-9. OpenAI Image (n8n-nodes-langchain.openai):
+9. Managed AI Image Generation (n8n-nodes-base.httpRequest):
 {
-  "resource": "image",
-  "operation": "generate",
-  "model": "dall-e-3",
-  "prompt": "A beautiful sunset over mountains",
-  "size": "1024x1024"
+  "method": "POST",
+  "url": "https://your-backend.com/api/managed-ai/image",
+  "sendBody": true,
+  "specifyBody": "json",
+  "jsonBody": "{\\"userId\\": \\"={{$json.userId}}\\", \\"workflowId\\": \\"={{$workflow.id}}\\", \\"prompt\\": \\"A beautiful sunset over mountains\\"}"
 }
 
-10. AI Agent (n8n-nodes-langchain.agent):
+10. Salesforce (n8n-nodes-base.salesforce):
+For fetching leads:
 {
-  "promptType": "define",
-  "text": "You are a helpful assistant that...",
-  "hasOutputParser": false
+  "resource": "lead",
+  "operation": "getAll",
+  "returnAll": false,
+  "limit": 10,
+  "options": {}
 }
 
-11. Claude (n8n-nodes-langchain.lmChatAnthropic):
+For webhook trigger - use Webhook node with Salesforce webhook URL
+
+11. Email Send (n8n-nodes-base.emailSend) - NOT emailReadImap!:
 {
-  "model": "claude-3-5-sonnet-20241022",
-  "options": {"temperature": 0.7, "maxTokens": 1024}
+  "fromEmail": "sender@example.com",
+  "toEmail": "={{$json.email}}",
+  "subject": "Email subject",
+  "text": "={{$json.emailBody}}"
 }
 
-12. Stability AI (n8n-nodes-base.stabilityAi):
-{
-  "resource": "image",
-  "operation": "generate",
-  "engine": "stable-diffusion-xl-1024-v1-0",
-  "text": "image description"
-}
+CRITICAL RULES:
+1. ONLY include services/nodes that the user EXPLICITLY mentioned
+2. DO NOT add extra services (e.g., don't add Slack if user didn't mention it)
+3. DO NOT hallucinate steps - only include what was requested
+4. For Salesforce data fetching, use "manual" trigger + Salesforce node as first action
+5. For AI content generation, use the Managed AI HTTP Request format shown above
 
 Respond with a JSON object containing:
 {
   "workflowName": "descriptive name",
-  "trigger": { "type": "webhook|schedule|manual", "config": {} },
+  "trigger": { "type": "manual|webhook|schedule", "config": {} },
   "steps": [
-    { "action": "send_slack_message", "service": "Slack", "config": { "resource": "message", "operation": "post", "select": "channel", "channelId": "#general", "text": "message" } }
+    { "action": "fetch_leads_from_salesforce", "service": "salesforce", "config": {...} },
+    { "action": "generate_email_content", "service": "ai", "prompt": "...", "config": {...} },
+    { "action": "send_email", "service": "email", "config": {...} }
   ],
-  "requiredCredentials": ["slack", "email"],
+  "requiredCredentials": ["salesforce", "email"],
   "estimatedComplexity": "simple|medium|complex"
-}`;
+}
+
+Remember: Only include steps the user actually requested!`;
 
       const completion = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -354,24 +362,26 @@ ${contextLines}
 
 Latest user message: "${userMessage}"
 
+CRITICAL: Only return YES if the user is giving EXPLICIT CONFIRMATION or IMPERATIVE COMMAND to build.
+
 Analyze if the user is:
-1. Explicitly asking to create/build/generate a workflow (e.g., "do the workflow", "build it", "create it", "make the workflow")
-2. Giving confirmation to proceed (e.g., "do it", "let's go", "proceed", "yes", "ok")
-3. Has provided enough info (trigger + action + services mentioned in conversation)
-4. Expressing frustration or urgency to build (e.g., "just do it", "bro", "come on")
+1. Giving an EXPLICIT command to build NOW (e.g., "do it", "build it now", "create it", "let's do it", "go ahead")
+2. Giving confirmation after being asked (e.g., "yes", "ok", "sure", "proceed", "go")
+3. Expressing urgency to build immediately (e.g., "just build it", "make it now")
 
 Respond with ONLY "YES" or "NO".
 
-YES if: 
-- User says "do it", "build", "create", "make", "generate"
-- User has mentioned trigger (webhook/schedule/etc) AND action (send/email/etc) AND service (Slack/Gmail/etc)
-- User is confirming or showing readiness
-- More than 3 messages in conversation and user has given requirements
+YES ONLY if:
+- User explicitly says: "do it", "build it", "create it now", "make it", "let's go", "proceed", "yes do it"
+- User confirms after assistant asks "should I build this?"
+- User is clearly commanding the build to happen right now
 
-NO if: 
-- User is asking "what can I do?" or general questions
-- User hasn't mentioned any specific services yet
-- First message in conversation
+NO if:
+- User is just DESCRIBING what they want (even if detailed)
+- User is asking questions or exploring options  
+- First time user mentions their workflow idea
+- Assistant hasn't yet asked for confirmation to build
+- User says "I want to create..." (describing, not commanding)
 
 Response:`;
 
