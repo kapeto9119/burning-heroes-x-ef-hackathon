@@ -5,10 +5,11 @@ import { motion } from 'framer-motion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Background } from '@/components/layout/Background';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, Trash2, Clock, CheckCircle, XCircle, Loader2, Maximize2, Eye, RotateCcw, Webhook, Copy, Radio } from 'lucide-react';
+import { Play, Pause, Trash2, Clock, CheckCircle, XCircle, Loader2, Maximize2, Eye, RotateCcw, Webhook, Copy, Radio, BarChart3, List } from 'lucide-react';
 import { getWorkflows, activateWorkflow, getWorkflowExecutions, executeWorkflow } from '@/app/actions/workflows';
 import { useRouter } from 'next/navigation';
 import { WorkflowCanvas } from '@/components/workflow/WorkflowCanvas';
+import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
 
 export default function WorkflowsPage() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function WorkflowsPage() {
   const [previewExecutions, setPreviewExecutions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingPreviewExecutions, setIsLoadingPreviewExecutions] = useState(false);
+  const [activeTab, setActiveTab] = useState<'workflows' | 'analytics'>('workflows');
 
   useEffect(() => {
     loadWorkflows();
@@ -98,14 +100,59 @@ export default function WorkflowsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-4xl font-bold mb-2">Workflows</h1>
-                <p className="text-muted-foreground">Manage your deployed workflows</p>
+                <p className="text-muted-foreground">Manage your deployed workflows and analytics</p>
               </div>
               <Button onClick={() => router.push('/editor')}>
                 Create New Workflow
               </Button>
             </div>
 
-            {isLoading ? (
+            {/* Tabs */}
+            <div className="flex items-center gap-2 border-b border-border">
+              <button
+                onClick={() => setActiveTab('workflows')}
+                className={`px-4 py-2 font-medium transition-colors relative ${
+                  activeTab === 'workflows'
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <List className="w-4 h-4" />
+                  Workflows
+                </div>
+                {activeTab === 'workflows' && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                  />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('analytics')}
+                className={`px-4 py-2 font-medium transition-colors relative ${
+                  activeTab === 'analytics'
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  Analytics
+                </div>
+                {activeTab === 'analytics' && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                  />
+                )}
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === 'analytics' ? (
+              <AnalyticsDashboard />
+            ) : isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>

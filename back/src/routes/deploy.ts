@@ -3,25 +3,18 @@ import { N8nApiClient } from '../services/n8n-api-client';
 import { AuthService } from '../services/auth-service';
 import { createAuthMiddleware } from '../middleware/auth';
 import { N8nWorkflow, ApiResponse, DeploymentResponse } from '../types';
-
-// In-memory deployment tracking (replace with database in production)
-interface DeploymentRecord {
-  workflowId: string;
-  n8nWorkflowId: string;
-  userId: string;
-  webhookUrl?: string;
-  status: 'active' | 'inactive';
-  deployedAt: Date;
-}
-
-const deployments: Map<string, DeploymentRecord> = new Map();
+import { DeploymentRepository, ExecutionRepository } from '../repositories/deployment-repository';
+import { Pool } from 'pg';
 
 export function createDeployRouter(
   n8nClient: N8nApiClient,
-  authService: AuthService
+  authService: AuthService,
+  dbPool: Pool
 ): Router {
   const router = Router();
   const authMiddleware = createAuthMiddleware(authService);
+  const deploymentRepo = new DeploymentRepository(dbPool);
+  const executionRepo = new ExecutionRepository(dbPool);
 
   /**
    * POST /api/deploy
@@ -91,30 +84,29 @@ export function createDeployRouter(
         ? n8nClient.getWebhookUrl(webhookNode.parameters.path as string)
         : undefined;
 
-      // Store deployment record
-      const deploymentRecord: DeploymentRecord = {
-        workflowId: workflow.id || `wf_${Date.now()}`,
+      // Store deployment record in database
+      const workflowId = workflow.id || `wf_${Date.now()}`;
+      await deploymentRepo.create({
+        workflowId,
         n8nWorkflowId,
         userId,
         webhookUrl,
         status: 'inactive', // Starts inactive, user activates manually
         deployedAt: new Date()
-      };
-
-      deployments.set(deploymentRecord.workflowId, deploymentRecord);
+      });
 
       const response: DeploymentResponse = {
         n8nWorkflowId,
         webhookUrl,
         status: 'inactive',
-        deployedAt: deploymentRecord.deployedAt
+        deployedAt: new Date()
       };
 
       res.json({
         success: true,
         data: {
           ...response,
-          workflowId: deploymentRecord.workflowId // Include for activation
+          workflowId // Include for activation
         },
         message: 'Workflow deployed successfully. Activate it to start running.'
       } as ApiResponse<DeploymentResponse>);
@@ -138,7 +130,7 @@ export function createDeployRouter(
       const { data } = req.body;
       const userId = req.user!.userId;
 
-      const deployment = deployments.get(workflowId);
+      const deployment = await deploymentRepo.findByWorkflowId(workflowId);
 
       if (!deployment) {
         return res.status(404).json({
@@ -158,6 +150,9 @@ export function createDeployRouter(
       console.log(`[Execute] User ${userId} executing workflow ${workflowId}`);
 
       const result = await n8nClient.executeWorkflow(deployment.n8nWorkflowId, data);
+      
+      // Update execution stats
+      await deploymentRepo.updateExecutionStats(workflowId, true, false);
 
       res.json({
         success: true,
@@ -184,7 +179,7 @@ export function createDeployRouter(
       const userId = req.user!.userId;
       const limit = parseInt(req.query.limit as string) || 10;
 
-      const deployment = deployments.get(workflowId);
+      const deployment = await deploymentRepo.findByWorkflowId(workflowId);
 
       if (!deployment) {
         return res.status(404).json({
@@ -226,7 +221,7 @@ export function createDeployRouter(
       const { workflowId } = req.params;
       const userId = req.user!.userId;
 
-      const deployment = deployments.get(workflowId);
+      const deployment = await deploymentRepo.findByWorkflowId(workflowId);
 
       if (!deployment) {
         return res.status(404).json({
@@ -248,8 +243,8 @@ export function createDeployRouter(
       // Delete from n8n
       await n8nClient.deleteWorkflow(deployment.n8nWorkflowId);
 
-      // Remove from deployments
-      deployments.delete(workflowId);
+      // Remove from database
+      await deploymentRepo.delete(workflowId);
 
       res.json({
         success: true,
@@ -273,8 +268,7 @@ export function createDeployRouter(
     try {
       const userId = req.user!.userId;
 
-      const userDeployments = Array.from(deployments.values())
-        .filter(d => d.userId === userId);
+      const userDeployments = await deploymentRepo.findByUserId(userId);
 
       res.json({
         success: true,
@@ -299,7 +293,7 @@ export function createDeployRouter(
       const { workflowId } = req.params;
       const userId = req.user!.userId;
 
-      const deployment = deployments.get(workflowId);
+      const deployment = await deploymentRepo.findByWorkflowId(workflowId);
 
       if (!deployment) {
         return res.status(404).json({
@@ -322,8 +316,7 @@ export function createDeployRouter(
       await n8nClient.activateWorkflow(deployment.n8nWorkflowId);
 
       // Update deployment status
-      deployment.status = 'active';
-      deployments.set(workflowId, deployment);
+      await deploymentRepo.updateStatus(workflowId, 'active');
 
       res.json({
         success: true,
@@ -353,7 +346,7 @@ export function createDeployRouter(
       const { workflowId } = req.params;
       const userId = req.user!.userId;
 
-      const deployment = deployments.get(workflowId);
+      const deployment = await deploymentRepo.findByWorkflowId(workflowId);
 
       if (!deployment) {
         return res.status(404).json({
@@ -376,8 +369,7 @@ export function createDeployRouter(
       await n8nClient.deactivateWorkflow(deployment.n8nWorkflowId);
 
       // Update deployment status
-      deployment.status = 'inactive';
-      deployments.set(workflowId, deployment);
+      await deploymentRepo.updateStatus(workflowId, 'inactive');
 
       res.json({
         success: true,
@@ -394,6 +386,94 @@ export function createDeployRouter(
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to deactivate workflow'
+      } as ApiResponse);
+    }
+  });
+
+  /**
+   * GET /api/deploy/user/stats
+   * Get deployment statistics for current user
+   */
+  router.get('/user/stats', authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!.userId;
+      const stats = await deploymentRepo.getStats(userId);
+
+      res.json({
+        success: true,
+        data: stats
+      } as ApiResponse);
+    } catch (error: any) {
+      console.error('[User Stats] Error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get statistics'
+      } as ApiResponse);
+    }
+  });
+
+  /**
+   * GET /api/deploy/:workflowId/stats
+   * Get statistics for a specific workflow
+   */
+  router.get('/:workflowId/stats', authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const { workflowId } = req.params;
+      const userId = req.user!.userId;
+      const days = parseInt(req.query.days as string) || 7;
+
+      const deployment = await deploymentRepo.findByWorkflowId(workflowId);
+
+      if (!deployment) {
+        return res.status(404).json({
+          success: false,
+          error: 'Workflow not deployed'
+        } as ApiResponse);
+      }
+
+      // Verify ownership
+      if (deployment.userId !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Unauthorized'
+        } as ApiResponse);
+      }
+
+      const stats = await executionRepo.getWorkflowStats(workflowId, days);
+
+      res.json({
+        success: true,
+        data: stats
+      } as ApiResponse);
+    } catch (error: any) {
+      console.error('[Workflow Stats] Error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get workflow statistics'
+      } as ApiResponse);
+    }
+  });
+
+  /**
+   * GET /api/deploy/user/errors
+   * Get recent errors for current user
+   */
+  router.get('/user/errors', authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!.userId;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      const errors = await executionRepo.getRecentErrors(userId, limit);
+
+      res.json({
+        success: true,
+        data: errors
+      } as ApiResponse);
+    } catch (error: any) {
+      console.error('[Recent Errors] Error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get recent errors'
       } as ApiResponse);
     }
   });

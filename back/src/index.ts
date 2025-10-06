@@ -186,7 +186,7 @@ app.use("/api/managed-ai", createManagedAIRouter(pool));
 
 // Deploy routes (only if n8n is configured)
 if (n8nApiClient) {
-  app.use("/api/deploy", createDeployRouter(n8nApiClient, authService));
+  app.use("/api/deploy", createDeployRouter(n8nApiClient, authService, pool));
 } else {
   app.use("/api/deploy", (req: Request, res: Response) => {
     res.status(503).json({

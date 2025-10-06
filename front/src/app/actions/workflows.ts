@@ -5,6 +5,22 @@ import { ensureAuth } from './auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+export interface WorkflowStats {
+  totalExecutions: number;
+  successCount: number;
+  errorCount: number;
+  successRate: number;
+  avgDurationMs: number;
+}
+
+export interface UserStats {
+  totalDeployments: number;
+  activeDeployments: number;
+  totalExecutions: number;
+  totalErrors: number;
+  successRate: number;
+}
+
 export interface WorkflowNode {
   id: string;
   name: string;
@@ -132,6 +148,66 @@ export async function executeWorkflow(workflowId: string, data: any = {}) {
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ data }),
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get user statistics (total deployments, executions, success rate)
+ */
+export async function getUserStats() {
+  try {
+    const token = await ensureAuth();
+
+    const response = await fetch(`${API_URL}/api/deploy/user/stats`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get workflow-specific statistics
+ */
+export async function getWorkflowStats(workflowId: string, days: number = 7) {
+  try {
+    const token = await ensureAuth();
+
+    const response = await fetch(`${API_URL}/api/deploy/${workflowId}/stats?days=${days}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get recent errors for user
+ */
+export async function getRecentErrors(limit: number = 10) {
+  try {
+    const token = await ensureAuth();
+
+    const response = await fetch(`${API_URL}/api/deploy/user/errors?limit=${limit}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
 
     const result = await response.json();
