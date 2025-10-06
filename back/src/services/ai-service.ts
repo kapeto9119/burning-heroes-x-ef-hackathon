@@ -1,6 +1,10 @@
 import OpenAI from "openai";
 import { ChatMessage } from "../types";
-import { analyzeSlots, generateBundledQuestion, looksLikeBuildCommand } from './slots';
+import {
+  analyzeSlots,
+  generateBundledQuestion,
+  looksLikeBuildCommand,
+} from "./slots";
 
 export class AIService {
   private openai: OpenAI;
@@ -38,9 +42,13 @@ Be decisive, concise, and build-first.`;
     conversationHistory: ChatMessage[] = []
   ): Promise<string> {
     try {
+      // Quick greeting filter — prevents accidental builds from "Hey", "Hi", etc.
+      if (/^(hi|hey|hello|yo)\b/i.test(userMessage.trim())) {
+        return "👋 Hi there! What would you like to automate today?";
+      }
       // Check question budget - have we already asked a question?
       const hasAskedQuestion = this.hasAskedQuestion(conversationHistory);
-      
+
       // Analyze conversation to extract what we already know
       const conversationContext = this.analyzeConversationContext(
         conversationHistory,
@@ -53,7 +61,11 @@ Be decisive, concise, and build-first.`;
 CURRENT CONVERSATION STATE:
 ${conversationContext}
 
-${hasAskedQuestion ? '⚠️ QUESTION BUDGET EXCEEDED: You already asked a question. DO NOT ask another. Build with defaults instead.' : ''}
+${
+  hasAskedQuestion
+    ? "⚠️ QUESTION BUDGET EXCEEDED: You already asked a question. DO NOT ask another. Build with defaults instead."
+    : ""
+}
 
 CRITICAL: Before asking ANY question, check if the information is already provided above. DO NOT re-ask for information that's already known.`;
 
@@ -88,9 +100,10 @@ CRITICAL: Before asking ANY question, check if the information is already provid
    */
   private hasAskedQuestion(history: ChatMessage[]): boolean {
     const lastTwo = history.slice(-2);
-    return lastTwo.some(m => 
-      m.role === 'assistant' && 
-      /\?|clarify|choose|pick|which|what|how|need to know/i.test(m.content)
+    return lastTwo.some(
+      (m) =>
+        m.role === "assistant" &&
+        /\?|clarify|choose|pick|which|what|how|need to know/i.test(m.content)
     );
   }
 
@@ -393,26 +406,30 @@ Remember: Only include steps the user actually requested!`;
   /**
    * Helper: Make a JSON-structured completion call
    */
-  async jsonComplete(systemPrompt: string, userPrompt: string, temperature: number = 0.2): Promise<any> {
+  async jsonComplete(
+    systemPrompt: string,
+    userPrompt: string,
+    temperature: number = 0.2
+  ): Promise<any> {
     try {
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: "gpt-4o-mini",
         temperature,
-        response_format: { type: 'json_object' },
+        response_format: { type: "json_object" },
         messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ]
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
       });
 
       const content = completion.choices[0]?.message?.content;
       if (!content) {
-        throw new Error('No response from AI');
+        throw new Error("No response from AI");
       }
 
       return JSON.parse(content);
     } catch (error) {
-      console.error('JSON completion error:', error);
+      console.error("JSON completion error:", error);
       throw error;
     }
   }
@@ -449,22 +466,25 @@ Return JSON: { "improvements": ["suggestion 1", "suggestion 2", "suggestion 3"] 
     try {
       // Use slot-based analysis first
       const historyText = conversationHistory
-        .filter(m => m.role === 'user')
-        .map(m => m.content);
-      
+        .filter((m) => m.role === "user")
+        .map((m) => m.content);
+
       const analysis = analyzeSlots(userMessage, historyText);
-      
+
       // Check if message looks like build command (only if we have complete slots or draft)
       if (looksLikeBuildCommand(userMessage, analysis.canBuild)) {
-        console.log('[Intent Detection] ✅ Build command detected:', userMessage.substring(0, 30));
+        console.log(
+          "[Intent Detection] ✅ Build command detected:",
+          userMessage.substring(0, 30)
+        );
         return true;
       }
-      
+
       if (analysis.canBuild) {
-        console.log(
-          "[Intent Detection] ✅ Slots complete, building workflow",
-          { services: analysis.slots.services, actions: analysis.slots.actions }
-        );
+        console.log("[Intent Detection] ✅ Slots complete, building workflow", {
+          services: analysis.slots.services,
+          actions: analysis.slots.actions,
+        });
         return true;
       }
 
@@ -555,9 +575,9 @@ Response:`;
   ): boolean {
     // Use new slot-based approach
     const historyText = conversationHistory
-      .filter(m => m.role === 'user')
-      .map(m => m.content);
-    
+      .filter((m) => m.role === "user")
+      .map((m) => m.content);
+
     const analysis = analyzeSlots(currentMessage, historyText);
     return analysis.canBuild;
   }
@@ -574,50 +594,71 @@ Response:`;
       const userMessages = conversationHistory
         .filter((m) => m.role === "user")
         .map((m) => m.content);
-      
-      const lastMessage = userMessages[userMessages.length - 1] || '';
+
+      const lastMessage = userMessages[userMessages.length - 1] || "";
       const analysis = analyzeSlots(lastMessage, userMessages.slice(0, -1));
-      
+
       // Build a natural language description from slots
       const parts: string[] = [];
-      
+
       // Trigger
-      if (analysis.slots.trigger === 'schedule' && analysis.slots.scheduleSpec) {
+      if (
+        analysis.slots.trigger === "schedule" &&
+        analysis.slots.scheduleSpec
+      ) {
         parts.push(`Run on schedule (${analysis.slots.scheduleSpec})`);
-      } else if (analysis.slots.trigger === 'webhook') {
-        parts.push('Trigger via webhook');
+      } else if (analysis.slots.trigger === "webhook") {
+        parts.push("Trigger via webhook");
       } else {
-        parts.push('Manual trigger');
+        parts.push("Manual trigger");
       }
-      
+
       // Actions with services
-      if (analysis.slots.actions.includes('fetch leads') && analysis.slots.services.includes('hubspot')) {
-        parts.push('fetch leads from HubSpot');
-      } else if (analysis.slots.actions.includes('fetch leads') && analysis.slots.services.includes('salesforce')) {
-        parts.push('fetch leads from Salesforce');
+      if (
+        analysis.slots.actions.includes("fetch leads") &&
+        analysis.slots.services.includes("hubspot")
+      ) {
+        parts.push("fetch leads from HubSpot");
+      } else if (
+        analysis.slots.actions.includes("fetch leads") &&
+        analysis.slots.services.includes("salesforce")
+      ) {
+        parts.push("fetch leads from Salesforce");
       }
-      
-      if (analysis.slots.actions.includes('generate content') && analysis.slots.services.some(s => ['openai', 'claude', 'googleAI'].includes(s))) {
-        const contentType = analysis.slots.contentHint || 'personalized content';
+
+      if (
+        analysis.slots.actions.includes("generate content") &&
+        analysis.slots.services.some((s) =>
+          ["openai", "claude", "googleAI"].includes(s)
+        )
+      ) {
+        const contentType =
+          analysis.slots.contentHint || "personalized content";
         parts.push(`generate AI ${contentType}`);
       }
-      
-      if (analysis.slots.actions.includes('send email')) {
-        const emailService = analysis.slots.services.find(s => ['gmail', 'email', 'sendgrid'].includes(s)) || 'email';
-        const recipient = analysis.slots.recipient || 'each lead';
+
+      if (analysis.slots.actions.includes("send email")) {
+        const emailService =
+          analysis.slots.services.find((s) =>
+            ["gmail", "email", "sendgrid"].includes(s)
+          ) || "email";
+        const recipient = analysis.slots.recipient || "each lead";
         parts.push(`send ${emailService} to ${recipient}`);
       }
-      
-      if (analysis.slots.actions.includes('post slack')) {
-        const channel = analysis.slots.channel || '#general';
+
+      if (analysis.slots.actions.includes("post slack")) {
+        const channel = analysis.slots.channel || "#general";
         parts.push(`post Slack message to ${channel}`);
       }
-      
+
       // Build final description
-      const description = parts.join(', then ');
-      console.log('[Requirements Extraction] Generated description:', description);
-      
-      return description || userMessages.join(' ');
+      const description = parts.join(", then ");
+      console.log(
+        "[Requirements Extraction] Generated description:",
+        description
+      );
+
+      return description || userMessages.join(" ");
     } catch (error) {
       console.error("Requirements extraction error:", error);
       // Fallback: use last user message
