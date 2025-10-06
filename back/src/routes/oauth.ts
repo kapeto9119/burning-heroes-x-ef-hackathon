@@ -72,20 +72,32 @@ export function createOAuthRouter(
       }
 
       if (!code || !state) {
+        console.error(`[OAuth Callback] Missing parameters - code: ${!!code}, state: ${!!state}`);
         return res.status(400).json({
           success: false,
           error: 'Missing code or state parameter'
         });
       }
 
-      console.log(`[OAuth Callback] Received callback for ${service}`);
+      console.log(`[OAuth Callback] Received callback for ${service} with code and state`);
 
       // Exchange code for tokens
-      const { tokens, stateData } = await oauthService.exchangeCodeForTokens(
-        service,
-        code as string,
-        state as string
-      );
+      let tokens, stateData;
+      try {
+        const result = await oauthService.exchangeCodeForTokens(
+          service,
+          code as string,
+          state as string
+        );
+        tokens = result.tokens;
+        stateData = result.stateData;
+      } catch (exchangeError: any) {
+        console.error(`[OAuth Callback] Token exchange failed:`, exchangeError);
+        return res.status(400).json({
+          success: false,
+          error: exchangeError.message || 'No token provided'
+        });
+      }
 
       // Extract token data
       const {
