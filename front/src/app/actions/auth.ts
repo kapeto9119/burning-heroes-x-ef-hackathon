@@ -4,16 +4,7 @@ import { cookies } from 'next/headers';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-// Mock user for demo - auto-login without DB
-const DEMO_USER = {
-  id: 'demo_user_123',
-  email: 'demo@example.com',
-  name: 'Demo User',
-  createdAt: new Date().toISOString(),
-  credentials: {},
-};
-
-const DEMO_TOKEN = 'demo_token_for_hackathon_' + Date.now();
+// Removed demo user - now using real authentication
 
 export interface User {
   id: string;
@@ -92,40 +83,33 @@ export async function getMe() {
     const cookieStore = await cookies();
     const token = cookieStore.get('auth_token')?.value;
 
-    // For demo: auto-login if no token
     if (!token) {
-      // Auto-create demo session
-      cookieStore.set('auth_token', DEMO_TOKEN, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7,
-      });
-      return { success: true, user: DEMO_USER };
+      return { success: false, error: 'Not authenticated' };
     }
 
-    // Return demo user for any token (no backend call needed for demo)
-    return { success: true, user: DEMO_USER };
+    const response = await fetch(`${API_URL}/api/auth/me`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+    return data;
   } catch (error: any) {
     return { success: false, error: error.message };
   }
 }
 
-// Auto-login helper for demo
+// Get auth token from cookie
 export async function ensureAuth() {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
   
   if (!token) {
-    cookieStore.set('auth_token', DEMO_TOKEN, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    throw new Error('Not authenticated. Please login.');
   }
   
-  return DEMO_TOKEN;
+  return token;
 }
 
 export async function addCredentials(service: string, credentials: Record<string, any>) {

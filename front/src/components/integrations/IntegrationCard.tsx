@@ -40,7 +40,7 @@ export function IntegrationCard({
       <div className="absolute inset-0 bg-gradient-to-r opacity-0 group-hover:opacity-100 transition-opacity rounded-xl blur-xl"
            style={{ background: `linear-gradient(to right, ${color}, ${color}40)` }} />
       
-      <div className="relative bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 hover:border-white/40 transition-all">
+      <div className="relative bg-white dark:bg-white/10 backdrop-blur-md border border-gray-300 dark:border-white/20 rounded-xl p-6 hover:border-gray-400 dark:hover:border-white/40 transition-all shadow-sm dark:shadow-none">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -51,8 +51,8 @@ export function IntegrationCard({
               {icon}
             </div>
             <div>
-              <h3 className="font-semibold text-white">{name}</h3>
-              <p className="text-xs text-white/60 capitalize">{category}</p>
+              <h3 className="font-semibold text-black dark:text-white">{name}</h3>
+              <p className="text-xs text-gray-600 dark:text-white/60 capitalize">{category}</p>
             </div>
           </div>
           
@@ -65,13 +65,13 @@ export function IntegrationCard({
         </div>
 
         {/* Description */}
-        <p className="text-sm text-white/70 mb-4 line-clamp-2">
+        <p className="text-sm text-gray-700 dark:text-white/70 mb-4 line-clamp-2">
           {description}
         </p>
 
         {/* Auth Type Badge */}
         <div className="mb-4">
-          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-white/10 text-white/80">
+          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-200 text-gray-800 dark:bg-white/10 dark:text-white/80">
             {authType === 'oauth2' ? '🔐 OAuth' : '🔑 API Key'}
           </span>
         </div>
@@ -93,7 +93,7 @@ export function IntegrationCard({
                 <Button
                   onClick={onConfigure}
                   variant="outline"
-                  className="flex-1 bg-white/5 border-white/20 hover:bg-white/10"
+                  className="flex-1 bg-gray-100 border-gray-300 hover:bg-gray-200 dark:bg-white/5 dark:border-white/20 dark:hover:bg-white/10"
                 >
                   <Settings className="w-4 h-4 mr-2" />
                   Configure
@@ -103,7 +103,7 @@ export function IntegrationCard({
                 <Button
                   onClick={onDisconnect}
                   variant="outline"
-                  className="bg-red-500/10 border-red-500/20 hover:bg-red-500/20 text-red-400"
+                  className="bg-red-100 border-red-300 hover:bg-red-200 text-red-600 dark:bg-red-500/10 dark:border-red-500/20 dark:hover:bg-red-500/20 dark:text-red-400"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>

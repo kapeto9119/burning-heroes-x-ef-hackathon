@@ -24,13 +24,23 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
       
       const workflowRecords = await workflowRepo.findByUser(userId);
       
-      // Convert to N8nWorkflow format
-      const workflows = workflowRecords.map(record => record.workflow_data);
+      // Convert to format expected by frontend (includes metadata + workflow_data)
+      const workflows = workflowRecords.map(record => ({
+        id: record.id,
+        name: record.name,
+        description: record.description,
+        nodes: record.workflow_data.nodes || [],
+        connections: record.workflow_data.connections || {},
+        active: record.is_active,
+        settings: record.workflow_data.settings || {},
+        created_at: record.created_at,
+        updated_at: record.updated_at
+      }));
 
       res.json({
         success: true,
         data: workflows
-      } as ApiResponse<N8nWorkflow[]>);
+      } as ApiResponse<any[]>);
 
     } catch (error) {
       console.error('[Workflows] List error:', error);
@@ -58,10 +68,23 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
         } as ApiResponse);
       }
 
+      // Return consistent format with metadata
+      const workflow = {
+        id: record.id,
+        name: record.name,
+        description: record.description,
+        nodes: record.workflow_data.nodes || [],
+        connections: record.workflow_data.connections || {},
+        active: record.is_active,
+        settings: record.workflow_data.settings || {},
+        created_at: record.created_at,
+        updated_at: record.updated_at
+      };
+
       res.json({
         success: true,
-        data: record.workflow_data
-      } as ApiResponse<N8nWorkflow>);
+        data: workflow
+      } as ApiResponse<any>);
 
     } catch (error) {
       console.error('[Workflows] Get error:', error);
@@ -248,12 +271,22 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
       }
 
       const records = await workflowRepo.search(userId, query);
-      const workflows = records.map(record => record.workflow_data);
+      const workflows = records.map(record => ({
+        id: record.id,
+        name: record.name,
+        description: record.description,
+        nodes: record.workflow_data.nodes || [],
+        connections: record.workflow_data.connections || {},
+        active: record.is_active,
+        settings: record.workflow_data.settings || {},
+        created_at: record.created_at,
+        updated_at: record.updated_at
+      }));
 
       res.json({
         success: true,
         data: workflows
-      } as ApiResponse<N8nWorkflow[]>);
+      } as ApiResponse<any[]>);
 
     } catch (error) {
       console.error('[Workflows] Search error:', error);

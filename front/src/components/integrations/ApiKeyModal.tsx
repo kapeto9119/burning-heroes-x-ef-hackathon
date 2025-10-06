@@ -73,10 +73,10 @@ export function ApiKeyModal({ isOpen, onClose, service, onSubmit }: ApiKeyModalP
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-gradient-to-br from-gray-900 to-black border border-white/20 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden"
+              className="bg-white dark:bg-gradient-to-br dark:from-gray-900 dark:to-black border border-gray-300 dark:border-white/20 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden"
             >
               {/* Header */}
-              <div className="p-6 border-b border-white/10">
+              <div className="p-6 border-b border-gray-200 dark:border-white/10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div 
@@ -86,13 +86,13 @@ export function ApiKeyModal({ isOpen, onClose, service, onSubmit }: ApiKeyModalP
                       {service.icon}
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-white">Connect {service.name}</h2>
-                      <p className="text-sm text-white/60">Enter your API credentials</p>
+                      <h2 className="text-xl font-bold text-black dark:text-white">Connect {service.name}</h2>
+                      <p className="text-sm text-gray-600 dark:text-white/60">Enter your API credentials</p>
                     </div>
                   </div>
                   <button
                     onClick={onClose}
-                    className="text-white/60 hover:text-white transition-colors"
+                    className="text-gray-500 hover:text-black dark:text-white/60 dark:hover:text-white transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -106,7 +106,7 @@ export function ApiKeyModal({ isOpen, onClose, service, onSubmit }: ApiKeyModalP
                     href={service.setupGuideUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 mb-4"
+                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mb-4"
                   >
                     <ExternalLink className="w-4 h-4" />
                     View setup guide
@@ -116,12 +116,12 @@ export function ApiKeyModal({ isOpen, onClose, service, onSubmit }: ApiKeyModalP
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {service.fields.map((field) => (
                     <div key={field.name}>
-                      <label className="block text-sm font-medium text-white/90 mb-2">
+                      <label className="block text-sm font-medium text-black dark:text-white/90 mb-2">
                         {field.label}
-                        {field.required && <span className="text-red-400 ml-1">*</span>}
+                        {field.required && <span className="text-red-500 dark:text-red-400 ml-1">*</span>}
                       </label>
                       {field.description && (
-                        <p className="text-xs text-white/60 mb-2">{field.description}</p>
+                        <p className="text-xs text-gray-600 dark:text-white/60 mb-2">{field.description}</p>
                       )}
                       <input
                         type={field.type}
@@ -129,13 +129,13 @@ export function ApiKeyModal({ isOpen, onClose, service, onSubmit }: ApiKeyModalP
                         onChange={(e) => handleChange(field.name, e.target.value)}
                         placeholder={field.placeholder}
                         required={field.required}
-                        className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent"
+                        className="w-full px-4 py-2 bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-lg text-black dark:text-white placeholder-gray-400 dark:placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent"
                       />
                     </div>
                   ))}
 
                   {error && (
-                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                    <div className="p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400 text-sm">
                       {error}
                     </div>
                   )}
@@ -145,7 +145,7 @@ export function ApiKeyModal({ isOpen, onClose, service, onSubmit }: ApiKeyModalP
                       type="button"
                       onClick={onClose}
                       variant="outline"
-                      className="flex-1 bg-white/5 border-white/20 hover:bg-white/10"
+                      className="flex-1 bg-gray-100 border-gray-300 hover:bg-gray-200 dark:bg-white/5 dark:border-white/20 dark:hover:bg-white/10"
                       disabled={isSubmitting}
                     >
                       Cancel

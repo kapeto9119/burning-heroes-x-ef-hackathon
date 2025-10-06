@@ -17,6 +17,7 @@ import {
   Moon,
   Sun,
   LogIn,
+  Plug,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { AuthModal } from "@/components/auth/AuthModal";
@@ -161,6 +162,18 @@ export function Navbar() {
                           <Workflow className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                           <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                             Workflows
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            router.push("/integrations");
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
+                        >
+                          <Plug className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            Integrations
                           </span>
                         </button>
                         <button

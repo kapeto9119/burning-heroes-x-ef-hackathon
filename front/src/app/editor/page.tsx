@@ -359,6 +359,20 @@ export default function EditorPage() {
       return;
     }
 
+    // Check if token exists
+    const token = localStorage.getItem('token');
+    if (!token) {
+      const errorMessage = {
+        id: Date.now().toString(),
+        text: "Your session has expired. Please login again.",
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      setShowAuthModal(true);
+      return;
+    }
+
     setDeploymentStatus("deploying");
     const deployMessage = {
       id: Date.now().toString(),

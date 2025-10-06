@@ -71,7 +71,7 @@ export default function IntegrationsPage() {
   useEffect(() => {
     const fetchConnected = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('auth_token');
         if (!token) return;
 
         const credsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/credentials`, {
@@ -96,7 +96,7 @@ export default function IntegrationsPage() {
 
   // Handle OAuth connection
   const handleOAuthConnect = (serviceId: string) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     if (!token) {
       toast.error('Authentication required', 'Please login first');
       return;
@@ -120,7 +120,7 @@ export default function IntegrationsPage() {
   const handleApiKeySubmit = async (data: Record<string, string>) => {
     if (!selectedService) return;
 
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     if (!token) {
       throw new Error('Please login first');
     }
@@ -159,7 +159,7 @@ export default function IntegrationsPage() {
       return;
     }
 
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     if (!token) return;
 
     try {
@@ -228,10 +228,10 @@ export default function IntegrationsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="text-5xl font-bold text-white mb-4">
+          <h1 className="text-5xl font-bold text-black dark:text-white mb-4">
             Integrations
           </h1>
-          <p className="text-xl text-white/70 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-700 dark:text-white/70 max-w-2xl mx-auto">
             Connect your favorite tools and services. {integrations.length} integrations available.
           </p>
         </motion.div>
@@ -240,13 +240,13 @@ export default function IntegrationsPage() {
         <div className="mb-8 space-y-4">
           {/* Search */}
           <div className="relative max-w-md mx-auto">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-white/40" />
             <input
               type="text"
               placeholder="Search integrations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              className="w-full pl-12 pr-4 py-3 bg-gray-100 dark:bg-white/10 backdrop-blur-md border border-gray-300 dark:border-white/20 rounded-xl text-black dark:text-white placeholder-gray-400 dark:placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
             />
           </div>
 
@@ -258,8 +258,8 @@ export default function IntegrationsPage() {
                 onClick={() => setSelectedCategory(category.id)}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
                   selectedCategory === category.id
-                    ? 'bg-white text-black'
-                    : 'bg-white/10 text-white hover:bg-white/20'
+                    ? 'bg-blue-600 text-white dark:bg-white dark:text-black'
+                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-white/10 dark:text-white dark:hover:bg-white/20'
                 }`}
               >
                 <span className="mr-2">{category.icon}</span>
@@ -272,12 +272,12 @@ export default function IntegrationsPage() {
         {/* Stats */}
         <div className="flex justify-center gap-8 mb-12">
           <div className="text-center">
-            <div className="text-3xl font-bold text-white">{connectedServices.size}</div>
-            <div className="text-sm text-white/60">Connected</div>
+            <div className="text-3xl font-bold text-black dark:text-white">{connectedServices.size}</div>
+            <div className="text-sm text-gray-600 dark:text-white/60">Connected</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-white">{integrations.length}</div>
-            <div className="text-sm text-white/60">Available</div>
+            <div className="text-3xl font-bold text-black dark:text-white">{integrations.length}</div>
+            <div className="text-sm text-gray-600 dark:text-white/60">Available</div>
           </div>
         </div>
 
@@ -304,9 +304,9 @@ export default function IntegrationsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-20"
           >
-            <Sparkles className="w-16 h-16 text-white/20 mx-auto mb-4" />
-            <p className="text-white/60 text-lg">No integrations found</p>
-            <p className="text-white/40 text-sm mt-2">Try adjusting your search or filters</p>
+            <Sparkles className="w-16 h-16 text-gray-300 dark:text-white/20 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-white/60 text-lg">No integrations found</p>
+            <p className="text-gray-500 dark:text-white/40 text-sm mt-2">Try adjusting your search or filters</p>
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

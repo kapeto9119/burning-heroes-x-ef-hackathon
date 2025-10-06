@@ -23,6 +23,8 @@ export default function PlatformPage() {
     updateWorkflow,
     deleteWorkflow,
     duplicateWorkflow,
+    isLoading,
+    error,
   } = useWorkflow();
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -113,7 +115,29 @@ export default function PlatformPage() {
                   <p className="text-xs text-muted-foreground mt-1">{workflows.length} workflows</p>
                 </div>
                 <div className="flex-1 overflow-y-auto p-2">
-                  {workflows.map((workflow) => (
+                  {isLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center space-y-2">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                        <p className="text-sm text-muted-foreground">Loading workflows...</p>
+                      </div>
+                    </div>
+                  ) : error ? (
+                    <div className="flex items-center justify-center h-full p-4">
+                      <div className="text-center space-y-2">
+                        <p className="text-sm text-destructive">{error}</p>
+                        <p className="text-xs text-muted-foreground">Please try refreshing the page</p>
+                      </div>
+                    </div>
+                  ) : workflows.length === 0 ? (
+                    <div className="flex items-center justify-center h-full p-4">
+                      <div className="text-center space-y-2">
+                        <Sparkles className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">No workflows yet</p>
+                        <p className="text-xs text-muted-foreground">Create your first workflow to get started</p>
+                      </div>
+                    </div>
+                  ) : workflows.map((workflow) => (
                     <motion.div
                       key={workflow.id}
                       className={cn(
@@ -179,6 +203,39 @@ export default function PlatformPage() {
 
               {/* Right Panel - Workflow Details */}
               <div className="flex flex-col h-full backdrop-blur-xl bg-background/40 rounded-2xl border border-border shadow-2xl overflow-hidden">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center space-y-2">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                      <p className="text-sm text-muted-foreground">Loading workflow details...</p>
+                    </div>
+                  </div>
+                ) : !selectedWorkflow ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center space-y-4 p-8">
+                      <Sparkles className="w-16 h-16 text-muted-foreground mx-auto" />
+                      <div>
+                        <h3 className="font-medium text-foreground mb-2">No Workflow Selected</h3>
+                        <p className="text-sm text-muted-foreground max-w-md">
+                          {workflows.length === 0 
+                            ? 'Create your first workflow to get started with automation'
+                            : 'Select a workflow from the list to view its details'}
+                        </p>
+                      </div>
+                      {workflows.length === 0 && (
+                        <Button 
+                          size="sm" 
+                          className="rounded-lg bg-black text-white hover:bg-gray-800"
+                          onClick={() => setShowNewWorkflowDialog(true)}
+                        >
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Create First Workflow
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <>
                 <div className="p-4 border-b border-border">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex-1">
@@ -289,6 +346,8 @@ export default function PlatformPage() {
                     </div>
                   </motion.div>
                 </div>
+                </>
+                )}
               </div>
             </div>
           </div>
