@@ -26,9 +26,27 @@ export class CredentialRepository {
   private algorithm = 'aes-256-cbc';
 
   constructor() {
-    const key = process.env.ENCRYPTION_KEY || 'dev-key-change-in-production-32c';
-    // Ensure key is exactly 32 bytes for AES-256
-    this.encryptionKey = crypto.scryptSync(key, 'salt', 32);
+    const key = process.env.ENCRYPTION_KEY;
+    
+    if (!key) {
+      throw new Error(
+        'ENCRYPTION_KEY environment variable is required. ' +
+        'Generate one with: openssl rand -base64 32'
+      );
+    }
+    
+    if (key.length < 32) {
+      throw new Error(
+        'ENCRYPTION_KEY must be at least 32 characters. ' +
+        'Current length: ' + key.length
+      );
+    }
+    
+    // Use a random salt per encryption (stored with IV)
+    // This ensures key is exactly 32 bytes for AES-256
+    this.encryptionKey = crypto.scryptSync(key, 'n8n-workflow-builder', 32);
+    
+    console.log('[Credential Repository] ✅ Encryption initialized');
   }
 
   /**

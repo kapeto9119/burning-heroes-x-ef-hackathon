@@ -10,11 +10,17 @@ import { N8nMCPClient } from './services/n8n-mcp-client';
 import { N8nApiClient } from './services/n8n-api-client';
 import { AuthService } from './services/auth-service';
 import { WorkflowGenerator } from './services/workflow-generator';
+import { OAuthService } from './services/oauth-service';
+import { CredentialValidator } from './services/credential-validator';
+import { CredentialRepository } from './repositories/credential-repository';
+import { TokenRefreshService } from './services/token-refresh-service';
 import { createChatRouter } from './routes/chat';
 import { createWorkflowsRouter } from './routes/workflows';
 import { createAuthRouter } from './routes/auth';
 import { createDeployRouter } from './routes/deploy';
 import { createVoiceRouter } from './routes/voice';
+import { createOAuthRouter } from './routes/oauth';
+import { createCredentialsRouter } from './routes/credentials';
 import { VapiService } from './services/vapi-service';
 
 // Validate required environment variables
@@ -53,6 +59,9 @@ const aiService = new AIService(process.env.OPENAI_API_KEY!);
 const authService = new AuthService(process.env.JWT_SECRET!);
 const mcpClient = new N8nMCPClient();
 const workflowGenerator = new WorkflowGenerator(mcpClient, aiService);
+const oauthService = new OAuthService();
+const credentialValidator = new CredentialValidator();
+const credentialRepository = new CredentialRepository();
 
 // Initialize n8n API client if configured
 let n8nApiClient: N8nApiClient | null = null;
@@ -79,6 +88,16 @@ if (process.env.N8N_API_URL && process.env.N8N_API_KEY) {
 // Initialize Vapi service with n8n API client
 const vapiService = new VapiService(workflowGenerator, n8nApiClient);
 
+// Initialize token refresh service
+const tokenRefreshService = new TokenRefreshService(
+  credentialRepository,
+  oauthService,
+  n8nApiClient
+);
+
+// Start token refresh background job
+tokenRefreshService.start();
+
 console.log('✅ Services initialized');
 
 // Routes
@@ -98,6 +117,8 @@ app.get('/', (req: Request, res: Response) => {
       workflows: '/api/workflows',
       deploy: '/api/deploy',
       voice: '/api/voice',
+      oauth: '/api/oauth',
+      credentials: '/api/credentials',
       health: '/health'
     }
   });
@@ -117,6 +138,8 @@ app.use('/api/auth', createAuthRouter(authService));
 app.use('/api/chat', createChatRouter(aiService, mcpClient, workflowGenerator));
 app.use('/api/workflows', createWorkflowsRouter(mcpClient));
 app.use('/api/voice', createVoiceRouter(vapiService));
+app.use('/api/oauth', createOAuthRouter(oauthService, credentialRepository, authService));
+app.use('/api/credentials', createCredentialsRouter(credentialRepository, credentialValidator, authService));
 
 // Deploy routes (only if n8n is configured)
 if (n8nApiClient) {
@@ -175,6 +198,19 @@ app.listen(PORT, () => {
   console.log(`   - POST http://localhost:${PORT}/api/voice/functions`);
   console.log(`   - GET  http://localhost:${PORT}/api/voice/assistant-config`);
   console.log('');
+  console.log('🔐 OAuth (20 Integrations):');
+  console.log(`   - GET  http://localhost:${PORT}/api/oauth/:service/connect`);
+  console.log(`   - GET  http://localhost:${PORT}/api/oauth/:service/callback`);
+  console.log(`   - POST http://localhost:${PORT}/api/oauth/:service/refresh`);
+  console.log(`   - DEL  http://localhost:${PORT}/api/oauth/:service/disconnect`);
+  console.log('');
+  console.log('🔑 Credentials (API Keys):');
+  console.log(`   - GET  http://localhost:${PORT}/api/credentials`);
+  console.log(`   - POST http://localhost:${PORT}/api/credentials`);
+  console.log(`   - PUT  http://localhost:${PORT}/api/credentials/:id`);
+  console.log(`   - DEL  http://localhost:${PORT}/api/credentials/:id`);
+  console.log(`   - GET  http://localhost:${PORT}/api/credentials/services`);
+  console.log('');
   console.log('📋 Workflows:');
   console.log(`   - GET  http://localhost:${PORT}/api/workflows`);
   console.log(`   - POST http://localhost:${PORT}/api/workflows`);
@@ -193,10 +229,12 @@ app.listen(PORT, () => {
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully...');
+  tokenRefreshService.stop();
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
   console.log('\nSIGINT received, shutting down gracefully...');
+  tokenRefreshService.stop();
   process.exit(0);
 });
