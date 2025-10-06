@@ -146,10 +146,26 @@ export default function EditorPage() {
   const [showCredentialModal, setShowCredentialModal] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
   const hasRespondedRef = useRef(false);
+  const voiceAutoStartRef = useRef(false);
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight: 60,
     maxHeight: 200,
   });
+
+  // Check URL params for voice mode
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('voice') === 'true' && !voiceAutoStartRef.current) {
+      setVoiceMode(true);
+      voiceAutoStartRef.current = true;
+      // Auto-start voice call after a brief delay
+      setTimeout(() => {
+        if (!isConnected) {
+          startCall();
+        }
+      }, 500);
+    }
+  }, []);
 
   // Vapi voice AI integration
   const {
@@ -178,6 +194,29 @@ export default function EditorPage() {
       handleDeploy();
     },
   });
+
+  // Sync voice transcripts to messages (unified conversation)
+  useEffect(() => {
+    if (transcripts.length > 0) {
+      const lastTranscript = transcripts[transcripts.length - 1];
+      
+      // Check if this transcript is already in messages
+      const alreadyExists = messages.some(msg => 
+        msg.text === lastTranscript.text && 
+        msg.timestamp.getTime() === lastTranscript.timestamp.getTime()
+      );
+
+      if (!alreadyExists) {
+        const newMessage = {
+          id: `voice_${Date.now()}`,
+          text: lastTranscript.text,
+          isUser: lastTranscript.role === 'user',
+          timestamp: lastTranscript.timestamp,
+        };
+        setMessages(prev => [...prev, newMessage]);
+      }
+    }
+  }, [transcripts]);
 
   // Auto-send first message to chat API
   useEffect(() => {
@@ -524,11 +563,8 @@ export default function EditorPage() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                  {voiceMode ? (
-                    <VoiceTranscript transcripts={transcripts} />
-                  ) : (
-                    <>
-                      {messages.map((message) => (
+                  {/* Unified messages - show same conversation in both modes */}
+                  {messages.map((message) => (
                         <motion.div
                           key={message.id}
                           initial={{ opacity: 0, y: 10 }}
@@ -595,8 +631,6 @@ export default function EditorPage() {
                           </div>
                         </div>
                       )}
-                    </>
-                  )}
                 </div>
 
                 {/* Input Area */}

@@ -131,6 +131,11 @@ export default function Home() {
     textareaRef.current?.focus();
   };
 
+  const handleVoiceMode = () => {
+    // Navigate to editor in voice mode
+    router.push("/editor?voice=true");
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-background text-foreground">
       {/* Background */}
@@ -219,6 +224,7 @@ export default function Home() {
                   <div className="relative">
                     <motion.button
                       type="button"
+                      onClick={handleVoiceMode}
                       whileTap={{ scale: 0.94 }}
                       onMouseEnter={() => setShowMicTooltip(true)}
                       onMouseLeave={() => setShowMicTooltip(false)}
@@ -235,7 +241,7 @@ export default function Home() {
                           exit={{ opacity: 0, y: 10 }}
                           className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black text-white text-xs rounded-lg whitespace-nowrap shadow-lg"
                         >
-                          Keep ⌘ to dictate
+                          Start voice mode
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
                             <div className="w-2 h-2 bg-black rotate-45"></div>
                           </div>
