@@ -119,6 +119,26 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Add cursor pointer to all interactive elements */
+  button,
+  a,
+  [role="button"],
+  [role="link"],
+  [onclick],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  label[for],
+  select {
+    @apply cursor-pointer;
+  }
+  
+  /* Disabled elements should not have pointer cursor */
+  button:disabled,
+  [disabled] {
+    @apply cursor-not-allowed;
+  }
 }
 
 @layer utilities {

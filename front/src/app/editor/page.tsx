@@ -532,7 +532,7 @@ export default function EditorPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-background text-foreground">
-      <div className="absolute inset-0 w-full h-full">
+      <div className="fixed inset-0 w-full h-full">
         <Background />
       </div>
 

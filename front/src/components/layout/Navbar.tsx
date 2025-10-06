@@ -72,7 +72,7 @@ export function Navbar() {
           <div className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-full shadow-lg px-6 flex items-center justify-between">
             <Link
               href="/"
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
             >
               <Image
                 src="/logo.jpg"
@@ -93,7 +93,7 @@ export function Navbar() {
                   onClick={toggleTheme}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                   aria-label="Toggle dark mode"
                 >
                   {theme === "dark" ? (
@@ -110,7 +110,7 @@ export function Navbar() {
                   onClick={() => setShowAuthModal(true)}
                   whileHover={{ scale: 1.05, backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-4 py-1.5 rounded-full bg-black/90 dark:bg-white/90 text-white dark:text-black text-sm font-medium transition-colors"
+                  className="px-4 py-1.5 rounded-full bg-black/90 dark:bg-white/90 text-white dark:text-black text-sm font-medium transition-colors cursor-pointer"
                 >
                   Login
                 </motion.button>
@@ -118,7 +118,7 @@ export function Navbar() {
                 <div className="relative" ref={profileMenuRef}>
                   <button
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
-                    className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                   >
                     <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 border-2 border-black dark:border-gray-300 flex items-center justify-center">
                       <User className="w-4 h-4 text-black dark:text-gray-100" />
@@ -145,7 +145,7 @@ export function Navbar() {
                             setShowProfileMenu(false);
                             router.push("/");
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left cursor-pointer"
                         >
                           <Home className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                           <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -157,7 +157,7 @@ export function Navbar() {
                             setShowProfileMenu(false);
                             router.push("/workflows");
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left cursor-pointer"
                         >
                           <Workflow className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                           <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -169,7 +169,7 @@ export function Navbar() {
                             setShowProfileMenu(false);
                             router.push("/integrations");
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left cursor-pointer"
                         >
                           <Plug className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                           <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -181,7 +181,7 @@ export function Navbar() {
                             setShowProfileMenu(false);
                             router.push("/settings");
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left cursor-pointer"
                         >
                           <Settings className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                           <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -191,7 +191,7 @@ export function Navbar() {
                         <div className="my-1 border-t border-gray-200 dark:border-gray-700" />
                         <button
                           onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left cursor-pointer"
                         >
                           <LogOut className="w-4 h-4 text-red-600 dark:text-red-400" />
                           <span className="text-sm font-medium text-red-600 dark:text-red-400">

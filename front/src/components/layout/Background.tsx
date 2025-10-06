@@ -246,6 +246,6 @@ export function Background() {
   }, []);
 
   return (
-    <div ref={containerRef} className="absolute inset-0 w-full h-full" />
+    <div ref={containerRef} className="fixed inset-0 w-full h-full" />
   );
 }
