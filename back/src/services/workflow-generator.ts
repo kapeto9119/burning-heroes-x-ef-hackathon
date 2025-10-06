@@ -28,11 +28,13 @@ export class WorkflowGenerator {
       console.log('[Workflow Generator] Starting generation for:', description);
       
       // Step 1: Search for relevant templates (with real examples from 2,500+ templates)
-      const templates = await this.mcpClient.searchTemplates(description, 5);
+      const templatesResult = await this.mcpClient.searchTemplates(description, 5);
+      const templates = Array.isArray(templatesResult) ? templatesResult : [];
       console.log(`[Workflow Generator] Found ${templates.length} relevant templates`);
       
       // Step 2: Search for relevant nodes (with real-world configuration examples)
-      const nodes = await this.mcpClient.searchNodes(description, true);
+      const nodesResult = await this.mcpClient.searchNodes(description, true);
+      const nodes = Array.isArray(nodesResult) ? nodesResult : [];
       console.log(`[Workflow Generator] Found ${nodes.length} relevant nodes`);
       
       // Step 3: Use AI to generate workflow structure using template examples

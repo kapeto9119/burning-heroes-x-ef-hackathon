@@ -100,12 +100,18 @@ export class N8nMCPClient {
         const textContent = result.content.find(c => c.type === 'text');
         if (textContent && 'text' in textContent) {
           const parsed = JSON.parse(textContent.text);
-          console.log(`[MCP Client] Found ${parsed.length} nodes`);
-          return this.mapToSearchResults(parsed);
+          const count = Array.isArray(parsed) ? parsed.length : (parsed.nodes?.length || 1);
+          console.log(`[MCP Client] Found ${count} nodes`);
+          console.log(`[MCP Client] Data type:`, typeof parsed, Array.isArray(parsed) ? 'array' : 'object');
+          console.log(`[MCP Client] Raw data structure:`, JSON.stringify(parsed).substring(0, 200));
+          const results = this.mapToSearchResults(parsed);
+          console.log(`[MCP Client] Mapped to ${results.length} search results`);
+          return results;
         }
       }
 
-      return [];
+      console.warn('[MCP Client] No valid content in MCP response');
+      return this.getMockSearchResults(query, includeExamples);
     } catch (error) {
       console.error('[MCP Client] Search error:', error);
       return this.getMockSearchResults(query, includeExamples);
@@ -170,14 +176,59 @@ export class N8nMCPClient {
   /**
    * Map MCP response to our search result format
    */
-  private mapToSearchResults(mcpData: any[]): MCPSearchResult[] {
-    return mcpData.map(node => ({
-      nodeName: node.displayName || node.name,
-      nodeType: node.name,
-      description: node.description || '',
-      category: node.category || 'Other',
-      examples: node.examples || undefined
-    }));
+  private mapToSearchResults(mcpData: any): MCPSearchResult[] {
+    // Handle different response formats
+    if (!mcpData) {
+      console.warn('[MCP Client] No data received');
+      return [];
+    }
+
+    // MCP format: { query: "...", results: [...] }
+    if (mcpData.results && Array.isArray(mcpData.results)) {
+      return mcpData.results.map((node: any) => ({
+        nodeName: node.displayName || node.name,
+        nodeType: node.workflowNodeType || node.nodeType,
+        description: node.description || '',
+        category: node.category || 'Other',
+        examples: node.examples || undefined
+      }));
+    }
+
+    // If it's already an array, use it
+    if (Array.isArray(mcpData)) {
+      return mcpData.map(node => ({
+        nodeName: node.displayName || node.name,
+        nodeType: node.workflowNodeType || node.nodeType || node.name,
+        description: node.description || '',
+        category: node.category || 'Other',
+        examples: node.examples || undefined
+      }));
+    }
+
+    // If it's an object with a nodes array
+    if (mcpData.nodes && Array.isArray(mcpData.nodes)) {
+      return mcpData.nodes.map((node: any) => ({
+        nodeName: node.displayName || node.name,
+        nodeType: node.workflowNodeType || node.nodeType || node.name,
+        description: node.description || '',
+        category: node.category || 'Other',
+        examples: node.examples || undefined
+      }));
+    }
+
+    // If it's a single node object
+    if (mcpData.name || mcpData.displayName) {
+      return [{
+        nodeName: mcpData.displayName || mcpData.name,
+        nodeType: mcpData.workflowNodeType || mcpData.nodeType || mcpData.name,
+        description: mcpData.description || '',
+        category: mcpData.category || 'Other',
+        examples: mcpData.examples || undefined
+      }];
+    }
+
+    console.warn('[MCP Client] Unexpected data format:', typeof mcpData);
+    return [];
   }
 
   /**

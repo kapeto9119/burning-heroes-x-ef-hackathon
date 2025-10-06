@@ -1,6 +1,9 @@
+// Load environment variables FIRST (before any other imports)
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import { AIService } from './services/ai-service';
 import { N8nMCPClient } from './services/n8n-mcp-client';
@@ -13,9 +16,6 @@ import { createAuthRouter } from './routes/auth';
 import { createDeployRouter } from './routes/deploy';
 import { createVoiceRouter } from './routes/voice';
 import { VapiService } from './services/vapi-service';
-
-// Load environment variables
-dotenv.config();
 
 // Validate required environment variables
 const requiredEnvVars = ['OPENAI_API_KEY', 'JWT_SECRET'];

@@ -4,12 +4,18 @@ import { Pool, PoolClient } from 'pg';
  * PostgreSQL connection pool
  * Manages database connections efficiently
  */
+
+// Debug: Check password type
+const dbPassword = process.env.DB_PASSWORD;
+console.log('[Database] Password type:', typeof dbPassword);
+console.log('[Database] Password length:', dbPassword?.length);
+
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
   database: process.env.DB_NAME || 'workflow_builder',
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD,
+  password: dbPassword ? String(dbPassword) : undefined,
   
   // Connection pool settings
   max: 20,                      // Maximum number of clients
