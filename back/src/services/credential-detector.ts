@@ -26,8 +26,76 @@ export interface CredentialField {
 export class CredentialDetector {
   private mcpClient: N8nMCPClient;
 
+  // Map n8n node types to their required credential types
+  private nodeTypeToCredentialMap: Record<string, string> = {
+    // Communication
+    'n8n-nodes-base.slack': 'slackApi',
+    'n8n-nodes-base.discord': 'discordApi',
+    'n8n-nodes-base.telegram': 'telegramApi',
+    'n8n-nodes-base.twilio': 'twilioApi',
+    'n8n-nodes-base.sendGrid': 'sendGridApi',
+    'n8n-nodes-base.emailSend': 'smtp',
+    
+    // Productivity
+    'n8n-nodes-base.notion': 'notionApi',
+    'n8n-nodes-base.googleSheets': 'googleSheetsOAuth2',
+    'n8n-nodes-base.googleDrive': 'googleDriveOAuth2',
+    'n8n-nodes-base.airtable': 'airtableApi',
+    'n8n-nodes-base.trello': 'trelloApi',
+    
+    // Database
+    'n8n-nodes-base.postgres': 'postgres',
+    'n8n-nodes-base.mySql': 'mysqlDb',
+    'n8n-nodes-base.mongoDb': 'mongoDb',
+    
+    // Marketing
+    'n8n-nodes-base.mailchimp': 'mailchimpOAuth2',
+    'n8n-nodes-base.hubspot': 'hubspotOAuth2',
+    'n8n-nodes-base.twitter': 'twitterOAuth2',
+    
+    // Development
+    'n8n-nodes-base.github': 'githubOAuth2',
+    'n8n-nodes-base.gitlab': 'gitlabOAuth2',
+    
+    // CRM
+    'n8n-nodes-base.salesforce': 'salesforceOAuth2',
+    'n8n-nodes-base.pipedrive': 'pipedriveApi',
+    
+    // AI
+    'n8n-nodes-base.openAi': 'openAiApi',
+  };
+
   // Map N8N credential types to user-friendly service names and field definitions
   private credentialFieldMap: Record<string, { service: string; fields: CredentialField[] }> = {
+    'salesforceOAuth2': {
+      service: 'Salesforce',
+      fields: [
+        {
+          name: 'clientId',
+          type: 'string',
+          required: true,
+          description: 'Salesforce OAuth Client ID'
+        },
+        {
+          name: 'clientSecret',
+          type: 'password',
+          required: true,
+          description: 'Salesforce OAuth Client Secret'
+        },
+        {
+          name: 'accessToken',
+          type: 'oauth',
+          required: true,
+          description: 'OAuth Access Token'
+        },
+        {
+          name: 'refreshToken',
+          type: 'oauth',
+          required: true,
+          description: 'OAuth Refresh Token'
+        }
+      ]
+    },
     'slackApi': {
       service: 'Slack',
       fields: [
@@ -183,6 +251,320 @@ export class CredentialDetector {
           description: 'Password'
         }
       ]
+    },
+    // Additional integrations
+    'discordApi': {
+      service: 'Discord',
+      fields: [
+        {
+          name: 'botToken',
+          type: 'password',
+          required: true,
+          description: 'Discord Bot Token'
+        }
+      ]
+    },
+    'telegramApi': {
+      service: 'Telegram',
+      fields: [
+        {
+          name: 'accessToken',
+          type: 'password',
+          required: true,
+          description: 'Telegram Bot Token'
+        }
+      ]
+    },
+    'twilioApi': {
+      service: 'Twilio',
+      fields: [
+        {
+          name: 'accountSid',
+          type: 'string',
+          required: true,
+          description: 'Twilio Account SID'
+        },
+        {
+          name: 'authToken',
+          type: 'password',
+          required: true,
+          description: 'Twilio Auth Token'
+        }
+      ]
+    },
+    'sendGridApi': {
+      service: 'SendGrid',
+      fields: [
+        {
+          name: 'apiKey',
+          type: 'password',
+          required: true,
+          description: 'SendGrid API Key'
+        }
+      ]
+    },
+    'notionApi': {
+      service: 'Notion',
+      fields: [
+        {
+          name: 'apiKey',
+          type: 'password',
+          required: true,
+          description: 'Notion Integration Token'
+        }
+      ]
+    },
+    'googleDriveOAuth2': {
+      service: 'Google Drive',
+      fields: [
+        {
+          name: 'clientId',
+          type: 'string',
+          required: true,
+          description: 'Google OAuth Client ID'
+        },
+        {
+          name: 'clientSecret',
+          type: 'password',
+          required: true,
+          description: 'Google OAuth Client Secret'
+        },
+        {
+          name: 'accessToken',
+          type: 'oauth',
+          required: true,
+          description: 'OAuth Access Token'
+        },
+        {
+          name: 'refreshToken',
+          type: 'oauth',
+          required: true,
+          description: 'OAuth Refresh Token'
+        }
+      ]
+    },
+    'airtableApi': {
+      service: 'Airtable',
+      fields: [
+        {
+          name: 'apiKey',
+          type: 'password',
+          required: true,
+          description: 'Airtable API Key'
+        }
+      ]
+    },
+    'trelloApi': {
+      service: 'Trello',
+      fields: [
+        {
+          name: 'apiKey',
+          type: 'password',
+          required: true,
+          description: 'Trello API Key'
+        },
+        {
+          name: 'apiToken',
+          type: 'password',
+          required: true,
+          description: 'Trello API Token'
+        }
+      ]
+    },
+    'mysqlDb': {
+      service: 'MySQL',
+      fields: [
+        {
+          name: 'host',
+          type: 'string',
+          required: true,
+          description: 'Database host'
+        },
+        {
+          name: 'port',
+          type: 'number',
+          required: true,
+          description: 'Database port'
+        },
+        {
+          name: 'database',
+          type: 'string',
+          required: true,
+          description: 'Database name'
+        },
+        {
+          name: 'user',
+          type: 'string',
+          required: true,
+          description: 'Database user'
+        },
+        {
+          name: 'password',
+          type: 'password',
+          required: true,
+          description: 'Database password'
+        }
+      ]
+    },
+    'mongoDb': {
+      service: 'MongoDB',
+      fields: [
+        {
+          name: 'connectionString',
+          type: 'password',
+          required: true,
+          description: 'MongoDB connection string'
+        }
+      ]
+    },
+    'mailchimpOAuth2': {
+      service: 'Mailchimp',
+      fields: [
+        {
+          name: 'clientId',
+          type: 'string',
+          required: true,
+          description: 'Mailchimp OAuth Client ID'
+        },
+        {
+          name: 'clientSecret',
+          type: 'password',
+          required: true,
+          description: 'Mailchimp OAuth Client Secret'
+        },
+        {
+          name: 'accessToken',
+          type: 'oauth',
+          required: true,
+          description: 'OAuth Access Token'
+        }
+      ]
+    },
+    'hubspotOAuth2': {
+      service: 'HubSpot',
+      fields: [
+        {
+          name: 'clientId',
+          type: 'string',
+          required: true,
+          description: 'HubSpot OAuth Client ID'
+        },
+        {
+          name: 'clientSecret',
+          type: 'password',
+          required: true,
+          description: 'HubSpot OAuth Client Secret'
+        },
+        {
+          name: 'accessToken',
+          type: 'oauth',
+          required: true,
+          description: 'OAuth Access Token'
+        },
+        {
+          name: 'refreshToken',
+          type: 'oauth',
+          required: true,
+          description: 'OAuth Refresh Token'
+        }
+      ]
+    },
+    'twitterOAuth2': {
+      service: 'Twitter',
+      fields: [
+        {
+          name: 'clientId',
+          type: 'string',
+          required: true,
+          description: 'Twitter OAuth Client ID'
+        },
+        {
+          name: 'clientSecret',
+          type: 'password',
+          required: true,
+          description: 'Twitter OAuth Client Secret'
+        },
+        {
+          name: 'accessToken',
+          type: 'oauth',
+          required: true,
+          description: 'OAuth Access Token'
+        }
+      ]
+    },
+    'githubOAuth2': {
+      service: 'GitHub',
+      fields: [
+        {
+          name: 'clientId',
+          type: 'string',
+          required: true,
+          description: 'GitHub OAuth Client ID'
+        },
+        {
+          name: 'clientSecret',
+          type: 'password',
+          required: true,
+          description: 'GitHub OAuth Client Secret'
+        },
+        {
+          name: 'accessToken',
+          type: 'oauth',
+          required: true,
+          description: 'OAuth Access Token'
+        }
+      ]
+    },
+    'gitlabOAuth2': {
+      service: 'GitLab',
+      fields: [
+        {
+          name: 'clientId',
+          type: 'string',
+          required: true,
+          description: 'GitLab OAuth Client ID'
+        },
+        {
+          name: 'clientSecret',
+          type: 'password',
+          required: true,
+          description: 'GitLab OAuth Client Secret'
+        },
+        {
+          name: 'accessToken',
+          type: 'oauth',
+          required: true,
+          description: 'OAuth Access Token'
+        },
+        {
+          name: 'refreshToken',
+          type: 'oauth',
+          required: true,
+          description: 'OAuth Refresh Token'
+        }
+      ]
+    },
+    'pipedriveApi': {
+      service: 'Pipedrive',
+      fields: [
+        {
+          name: 'apiToken',
+          type: 'password',
+          required: true,
+          description: 'Pipedrive API Token'
+        }
+      ]
+    },
+    'openAiApi': {
+      service: 'OpenAI',
+      fields: [
+        {
+          name: 'apiKey',
+          type: 'password',
+          required: true,
+          description: 'OpenAI API Key'
+        }
+      ]
     }
   };
 
@@ -201,48 +583,75 @@ export class CredentialDetector {
 
     for (const node of workflow.nodes) {
       try {
+        console.log(`[Credential Detector] Analyzing node: ${node.name} (${node.type})`);
+        
         // Query MCP for node details including credential requirements
         const nodeDetails = await this.mcpClient.getNodeDetails(node.type);
 
+        console.log(`[Credential Detector] Node details received:`, nodeDetails ? {
+          name: nodeDetails.name,
+          type: nodeDetails.type,
+          hasCredentials: !!nodeDetails.credentials,
+          credentialsCount: nodeDetails.credentials?.length || 0,
+          credentials: nodeDetails.credentials
+        } : 'null');
+
+        // Try to get credentials from MCP first
+        let credentialTypes: string[] = [];
+        
         if (nodeDetails && nodeDetails.credentials && nodeDetails.credentials.length > 0) {
-          for (const credentialType of nodeDetails.credentials) {
-            // Skip if we've already added this credential type
-            if (seenCredentials.has(credentialType)) {
-              continue;
-            }
+          console.log(`[Credential Detector] MCP returned ${nodeDetails.credentials.length} credential(s) for ${node.type}`);
+          credentialTypes = nodeDetails.credentials;
+        } else {
+          // Fallback to static mapping since MCP doesn't return credentials
+          const mappedCredential = this.nodeTypeToCredentialMap[node.type];
+          if (mappedCredential) {
+            console.log(`[Credential Detector] Using fallback mapping for ${node.type} → ${mappedCredential}`);
+            credentialTypes = [mappedCredential];
+          } else {
+            console.log(`[Credential Detector] No credentials found or mapped for ${node.type}`);
+          }
+        }
 
-            const credentialInfo = this.credentialFieldMap[credentialType];
-            
-            if (credentialInfo) {
-              requirements.push({
-                service: credentialInfo.service,
-                n8nCredentialType: credentialType,
-                required: true,
-                fields: credentialInfo.fields,
-                nodeType: node.type
-              });
+        // Process credential types
+        for (const credentialType of credentialTypes) {
+          // Skip if we've already added this credential type
+          if (seenCredentials.has(credentialType)) {
+            console.log(`[Credential Detector] Skipping duplicate credential: ${credentialType}`);
+            continue;
+          }
 
-              seenCredentials.add(credentialType);
-              console.log(`[Credential Detector] Found requirement: ${credentialInfo.service} (${credentialType})`);
-            } else {
-              // Unknown credential type - add with generic fields
-              console.warn(`[Credential Detector] Unknown credential type: ${credentialType}`);
-              requirements.push({
-                service: this.extractServiceName(node.type),
-                n8nCredentialType: credentialType,
-                required: true,
-                fields: [
-                  {
-                    name: 'apiKey',
-                    type: 'password',
-                    required: true,
-                    description: 'API Key or Token'
-                  }
-                ],
-                nodeType: node.type
-              });
-              seenCredentials.add(credentialType);
-            }
+          const credentialInfo = this.credentialFieldMap[credentialType];
+          
+          if (credentialInfo) {
+            requirements.push({
+              service: credentialInfo.service,
+              n8nCredentialType: credentialType,
+              required: true,
+              fields: credentialInfo.fields,
+              nodeType: node.type
+            });
+
+            seenCredentials.add(credentialType);
+            console.log(`[Credential Detector] ✅ Found requirement: ${credentialInfo.service} (${credentialType})`);
+          } else {
+            // Unknown credential type - add with generic fields
+            console.warn(`[Credential Detector] ⚠️  Unknown credential type: ${credentialType} for node ${node.type}`);
+            requirements.push({
+              service: this.extractServiceName(node.type),
+              n8nCredentialType: credentialType,
+              required: true,
+              fields: [
+                {
+                  name: 'apiKey',
+                  type: 'password',
+                  required: true,
+                  description: 'API Key or Token'
+                }
+              ],
+              nodeType: node.type
+            });
+            seenCredentials.add(credentialType);
           }
         }
       } catch (error) {

@@ -252,14 +252,22 @@ export class N8nMCPClient {
         }
       });
 
+      console.log(`[MCP Client] Raw result for ${nodeType}:`, JSON.stringify(result, null, 2));
+
       if (result.content && Array.isArray(result.content)) {
         const textContent = result.content.find(c => c.type === 'text');
         if (textContent && 'text' in textContent) {
           const parsed = JSON.parse(textContent.text);
-          return this.mapToNodeDetails(parsed);
+          console.log(`[MCP Client] Parsed data for ${nodeType}:`, JSON.stringify(parsed, null, 2));
+          
+          const mapped = this.mapToNodeDetails(parsed);
+          console.log(`[MCP Client] Mapped node details for ${nodeType}:`, JSON.stringify(mapped, null, 2));
+          
+          return mapped;
         }
       }
 
+      console.warn(`[MCP Client] No valid content found for ${nodeType}`);
       return null;
     } catch (error) {
       console.error('[MCP Client] Node details error:', error);

@@ -208,13 +208,20 @@ export class WorkflowGenerator {
     
     // AI-specific keywords - now using MANAGED AI approach
     const aiKeywords = [
+      // Text AI
       'openai', 'gpt', 'gpt-4', 'chatgpt', 'claude', 'anthropic',
       'gemini', 'google ai', 'ai agent', 'chatbot', 'assistant',
+      'content generation', 'generate content', 'ai content',
+      'write', 'summarize', 'translate', 'ai',
+      // Image AI
       'dall-e', 'dalle', 'image generation', 'generate image',
-      'stable diffusion', 'stability', 'whisper', 'transcribe',
-      'transcription', 'voice', 'text to speech', 'elevenlabs',
-      'replicate', 'content generation', 'generate content',
-      'write', 'summarize', 'translate', 'ai content', 'ai'
+      'stable diffusion', 'stability', 'stability ai',
+      'create image', 'ai image', 'picture generation',
+      // Audio AI
+      'whisper', 'transcribe', 'transcription', 'voice',
+      'text to speech', 'elevenlabs', 'audio generation',
+      // Other AI
+      'replicate', 'fireworks', 'ai model'
     ];
     
     // Check if step mentions AI keywords
@@ -283,6 +290,52 @@ export class WorkflowGenerator {
           select: 'channel',
           channelId: '#general',
           text: '={{ $json.message }}'
+        }
+      },
+      'twitter': {
+        type: 'n8n-nodes-base.twitter',
+        defaultParams: {
+          resource: 'tweet',
+          operation: 'create',
+          text: '={{ $json.content }}'
+        }
+      },
+      'x': {  // Alias for Twitter
+        type: 'n8n-nodes-base.twitter',
+        defaultParams: {
+          resource: 'tweet',
+          operation: 'create',
+          text: '={{ $json.content }}'
+        }
+      },
+      'instagram': {
+        type: 'n8n-nodes-base.httpRequest',  // Instagram via Graph API
+        defaultParams: {
+          method: 'POST',
+          url: 'https://graph.instagram.com/me/media',
+          authentication: 'genericCredentialType',
+          sendBody: true,
+          bodyParameters: {
+            parameters: [
+              { name: 'image_url', value: '={{ $json.imageUrl }}' },
+              { name: 'caption', value: '={{ $json.caption }}' }
+            ]
+          }
+        }
+      },
+      'facebook': {
+        type: 'n8n-nodes-base.httpRequest',  // Facebook via Graph API
+        defaultParams: {
+          method: 'POST',
+          url: 'https://graph.facebook.com/me/feed',
+          authentication: 'genericCredentialType',
+          sendBody: true,
+          bodyParameters: {
+            parameters: [
+              { name: 'message', value: '={{ $json.message }}' },
+              { name: 'link', value: '={{ $json.link }}' }
+            ]
+          }
         }
       }
     };
