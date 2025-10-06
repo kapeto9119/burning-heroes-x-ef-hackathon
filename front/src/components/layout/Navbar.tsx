@@ -107,9 +107,9 @@ export function Navbar() {
               {!isAuthenticated ? (
                 <motion.button
                   onClick={() => setShowAuthModal(true)}
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.05, backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-4 py-1.5 rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition-opacity text-sm font-medium"
+                  className="px-4 py-1.5 rounded-full bg-black/90 dark:bg-white/90 text-white dark:text-black text-sm font-medium transition-colors"
                 >
                   Login
                 </motion.button>
