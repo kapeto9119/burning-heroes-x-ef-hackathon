@@ -124,9 +124,14 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Load workflows on mount
+  // Load workflows on mount (with a small delay to ensure auth is loaded)
   useEffect(() => {
-    fetchWorkflows();
+    // Wait a bit for localStorage to be available and auth to initialize
+    const timer = setTimeout(() => {
+      fetchWorkflows();
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const addToast = (message: string, type: Toast['type'], onConfirm?: () => void) => {
