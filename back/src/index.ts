@@ -49,7 +49,7 @@ console.log('🚀 Initializing services...');
 
 const aiService = new AIService(process.env.OPENAI_API_KEY!);
 const authService = new AuthService(process.env.JWT_SECRET!);
-const mcpClient = new N8nMCPClient(process.env.N8N_MCP_URL);
+const mcpClient = new N8nMCPClient();
 const workflowGenerator = new WorkflowGenerator(mcpClient, aiService);
 
 // Initialize n8n API client if configured
