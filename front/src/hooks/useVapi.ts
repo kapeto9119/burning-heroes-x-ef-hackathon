@@ -81,28 +81,57 @@ export function useVapi({
         setIsSpeaking(false);
       });
 
-      // Transcripts
-      client.on('message', (message: VapiMessageEvent) => {
-        console.log('[Vapi] Message:', message);
-
-        if (message.type === 'transcript' && message.transcript) {
+      // Transcripts - use speech-update event for better control
+      client.on('speech-update', (update: any) => {
+        console.log('[Vapi] Speech update:', update);
+        
+        // Only add final transcripts (when user/assistant finishes speaking)
+        if (update.status === 'complete' && update.transcript) {
           const transcript: VapiTranscript = {
-            role: message.role || 'user',
-            text: message.transcript,
+            role: update.role || 'user',
+            text: update.transcript,
             timestamp: new Date(),
           };
           setTranscripts(prev => [...prev, transcript]);
-
-          // Update speaking state
-          if (message.role === 'assistant') {
-            setIsSpeaking(true);
-            setTimeout(() => setIsSpeaking(false), 2000);
-          }
         }
+      });
+
+      // Also listen to message events for function calls
+      client.on('message', (message: VapiMessageEvent) => {
+        console.log('[Vapi] Message:', message);
 
         // Handle function calls
         if (message.type === 'function-call' && message.functionCall) {
           handleFunctionCall(message.functionCall);
+        }
+
+        // Fallback: If speech-update doesn't work, use message transcripts
+        if (message.type === 'transcript' && message.transcript) {
+          // Check if it's a final transcript (not partial)
+          const isFinal = (message as any).isFinal !== false;
+          
+          if (isFinal) {
+            const transcript: VapiTranscript = {
+              role: message.role || 'user',
+              text: message.transcript,
+              timestamp: new Date(),
+            };
+            
+            // Avoid duplicates from speech-update
+            setTranscripts(prev => {
+              const lastTranscript = prev[prev.length - 1];
+              if (lastTranscript?.text === transcript.text) {
+                return prev; // Skip duplicate
+              }
+              return [...prev, transcript];
+            });
+
+            // Update speaking state
+            if (message.role === 'assistant') {
+              setIsSpeaking(true);
+              setTimeout(() => setIsSpeaking(false), 2000);
+            }
+          }
         }
       });
 
