@@ -107,7 +107,7 @@ export default function IntegrationsPage() {
 
     // Small delay for toast to show
     setTimeout(() => {
-      window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/oauth/${serviceId}/connect?redirect=${encodeURIComponent(window.location.href)}`;
+      window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/oauth/${serviceId}/connect?token=${token}&redirect=${encodeURIComponent(window.location.href)}`;
     }, 500);
   };
 

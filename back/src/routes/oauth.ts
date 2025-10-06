@@ -17,11 +17,30 @@ export function createOAuthRouter(
    * GET /api/oauth/:service/connect
    * Initiate OAuth flow for a service
    */
-  router.get('/:service/connect', authMiddleware, async (req: Request, res: Response) => {
+  router.get('/:service/connect', async (req: Request, res: Response) => {
     try {
       const { service } = req.params;
-      const userId = req.user!.userId;
+      const token = req.query.token as string;
       const redirectUrl = req.query.redirect as string;
+
+      // Verify token from query parameter (since this is a redirect, not an API call)
+      if (!token) {
+        return res.status(401).json({
+          success: false,
+          error: 'Authentication token required'
+        });
+      }
+
+      let userId: string;
+      try {
+        const decoded = await authService.verifyToken(token);
+        userId = decoded.userId;
+      } catch (error) {
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid or expired token'
+        });
+      }
 
       const integration = INTEGRATIONS[service];
       if (!integration) {
