@@ -68,7 +68,6 @@ export function useVapi({
     }
 
     try {
-      setCallStatus({ status: 'connecting' });
       
       // Set up event listeners
       const client = vapiClientRef.current;
@@ -115,7 +114,7 @@ export function useVapi({
       });
 
       // Listen to ALL message events with detailed logging
-      client.on('message', (message: any) => {
+      client.on('message', async (message: any) => {
         console.log('[Vapi] 📨 RAW MESSAGE:', JSON.stringify(message, null, 2));
         console.log('[Vapi] Message type:', message.type);
         console.log('[Vapi] Message keys:', Object.keys(message));
@@ -135,10 +134,44 @@ export function useVapi({
           }
         }
 
-        // Handle function calls being initiated
-        if (message.type === 'function-call' && message.functionCall) {
-          console.log('[Vapi] 🔧 Function call initiated:', message.functionCall);
-          // The result will come in function-call-result event
+        // Handle tool-calls (better way - directly from Vapi)
+        if (message.type === 'tool-calls' && (message as any).toolCalls) {
+          console.log('[Vapi] 🔧 Tool calls received:', (message as any).toolCalls);
+          
+          const toolCalls = (message as any).toolCalls;
+          for (const toolCall of toolCalls) {
+            if (toolCall.function?.name === 'generateWorkflow') {
+              console.log('[Vapi] 🎯 Generate workflow tool call!', toolCall.function.arguments);
+              
+              // Extract parameters from the tool call
+              const params = toolCall.function.arguments?.parameters || toolCall.function.arguments;
+              
+              // Call our backend directly to generate the workflow
+              try {
+                const response = await fetch('http://localhost:3001/api/chat/generate-workflow', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    description: params.description,
+                    trigger: params.trigger,
+                    services: params.services,
+                    schedule: params.schedule
+                  })
+                });
+                
+                const data = await response.json();
+                console.log('[Vapi] 🎉 Workflow generated!', data);
+                
+                if (data.success && data.data?.workflow) {
+                  if (onWorkflowGenerated) {
+                    onWorkflowGenerated(data.data.workflow);
+                  }
+                }
+              } catch (error) {
+                console.error('[Vapi] Failed to generate workflow:', error);
+              }
+            }
+          }
         }
 
         // Log all other message types

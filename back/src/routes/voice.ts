@@ -26,13 +26,19 @@ export function createVoiceRouter(vapiService: VapiService): Router {
         const userId = req.headers['x-user-id'] as string || 'demo_user_123';
         const callId = webhookData.call?.id || 'unknown';
 
+        console.log('[Voice API] 🔧 Processing function call:', message.functionCall.name);
+
         const result = await vapiService.handleFunctionCall(
           message.functionCall,
           callId,
           userId
         );
 
+        console.log('[Voice API] ✅ Function result:', JSON.stringify(result, null, 2));
+
         // Return result to Vapi
+        // Note: Vapi will only show "Success" to the client, not the full result
+        // The workflow data is in result.result.workflow
         return res.json(result);
       }
 
@@ -53,31 +59,37 @@ export function createVoiceRouter(vapiService: VapiService): Router {
       res.status(500).json({
         success: false,
         error: 'Function execution failed'
-      } as ApiResponse);
+      });
     }
   });
 
   /**
    * GET /api/voice/session/:callId
-   * Get current voice session status
+   * Get voice session status and workflow
    */
-  router.get('/session/:callId', async (req: Request, res: Response) => {
+  router.get('/session/:callId', (req: Request, res: Response) => {
     try {
       const { callId } = req.params;
       const session = vapiService.getSession(callId);
-
+      
       if (!session) {
         return res.status(404).json({
           success: false,
           error: 'Session not found'
-        } as ApiResponse);
+        });
       }
+
+      console.log('[Voice API] Session requested:', callId);
+      console.log('[Voice API] Session has workflow:', !!session.currentWorkflow);
 
       res.json({
         success: true,
-        data: session
-      } as ApiResponse);
-
+        data: {
+          ...session,
+          // Include the workflow if it exists
+          workflow: session.currentWorkflow || null
+        }
+      });
     } catch (error) {
       console.error('[Voice API] Session error:', error);
       res.status(500).json({
