@@ -6,7 +6,7 @@
 export interface IntegrationConfig {
   id: string;
   name: string;
-  category: 'communication' | 'productivity' | 'database' | 'marketing' | 'development' | 'crm' | 'storage';
+  category: 'communication' | 'productivity' | 'database' | 'marketing' | 'development' | 'crm' | 'storage' | 'ai';
   authType: 'oauth2' | 'apiKey' | 'basic' | 'custom';
   n8nCredentialType: string;
   n8nNodeType: string;
@@ -582,6 +582,204 @@ export const INTEGRATIONS: Record<string, IntegrationConfig> = {
       color: '#1A1A1A',
       description: 'Manage deals, contacts, and sales pipeline'
     }
+  },
+
+  // ============================================
+  // AI & CONTENT GENERATION (7)
+  // ============================================
+  fireworks: {
+    id: 'fireworks',
+    name: 'Fireworks AI',
+    category: 'ai',
+    authType: 'apiKey',
+    n8nCredentialType: 'openAiApi', // Uses OpenAI-compatible API
+    n8nNodeType: 'n8n-nodes-langchain.openai',
+    apiKey: {
+      fields: [
+        {
+          name: 'apiKey',
+          label: 'API Key',
+          type: 'password',
+          required: true,
+          placeholder: 'fw_...',
+          description: 'Get from https://fireworks.ai/api-keys'
+        }
+      ]
+    },
+    validation: {
+      url: 'https://api.fireworks.ai/inference/v1/models',
+      method: 'GET'
+    },
+    ui: {
+      icon: '🔥',
+      color: '#FF6B35',
+      description: 'Llama 3.1, Mixtral - 70-87% cheaper than OpenAI!',
+      setupGuideUrl: 'https://docs.fireworks.ai/'
+    }
+  },
+
+  openai: {
+    id: 'openai',
+    name: 'OpenAI',
+    category: 'ai',
+    authType: 'apiKey',
+    n8nCredentialType: 'openAiApi',
+    n8nNodeType: 'n8n-nodes-langchain.openai',
+    apiKey: {
+      fields: [
+        {
+          name: 'apiKey',
+          label: 'API Key',
+          type: 'password',
+          required: true,
+          placeholder: 'sk-...',
+          description: 'Get from https://platform.openai.com/api-keys'
+        }
+      ]
+    },
+    validation: {
+      url: 'https://api.openai.com/v1/models',
+      method: 'GET'
+    },
+    ui: {
+      icon: '🤖',
+      color: '#10A37F',
+      description: 'GPT models, DALL-E image generation, Whisper transcription',
+      setupGuideUrl: 'https://platform.openai.com/docs/quickstart'
+    }
+  },
+
+  anthropic: {
+    id: 'anthropic',
+    name: 'Anthropic',
+    category: 'ai',
+    authType: 'apiKey',
+    n8nCredentialType: 'anthropicApi',
+    n8nNodeType: 'n8n-nodes-langchain.lmChatAnthropic',
+    apiKey: {
+      fields: [
+        {
+          name: 'apiKey',
+          label: 'API Key',
+          type: 'password',
+          required: true,
+          placeholder: 'sk-ant-...',
+          description: 'Get from https://console.anthropic.com/'
+        }
+      ]
+    },
+    ui: {
+      icon: '🧠',
+      color: '#D4A373',
+      description: 'Claude models for advanced reasoning and long context',
+      setupGuideUrl: 'https://docs.anthropic.com/claude/docs'
+    }
+  },
+
+  googleAI: {
+    id: 'googleAI',
+    name: 'Google AI',
+    category: 'ai',
+    authType: 'apiKey',
+    n8nCredentialType: 'googlePalmApi',
+    n8nNodeType: 'n8n-nodes-langchain.lmChatGooglePalm',
+    apiKey: {
+      fields: [
+        {
+          name: 'apiKey',
+          label: 'API Key',
+          type: 'password',
+          required: true,
+          description: 'Get from https://makersuite.google.com/app/apikey'
+        }
+      ]
+    },
+    ui: {
+      icon: '🔮',
+      color: '#4285F4',
+      description: 'Gemini models for multimodal AI (text, images, video)',
+      setupGuideUrl: 'https://ai.google.dev/'
+    }
+  },
+
+  stabilityAI: {
+    id: 'stabilityAI',
+    name: 'Stability AI',
+    category: 'ai',
+    authType: 'apiKey',
+    n8nCredentialType: 'stabilityAiApi',
+    n8nNodeType: 'n8n-nodes-base.stabilityAi',
+    apiKey: {
+      fields: [
+        {
+          name: 'apiKey',
+          label: 'API Key',
+          type: 'password',
+          required: true,
+          placeholder: 'sk-...',
+          description: 'Get from https://platform.stability.ai/'
+        }
+      ]
+    },
+    ui: {
+      icon: '🎨',
+      color: '#7C3AED',
+      description: 'Stable Diffusion for AI image generation',
+      setupGuideUrl: 'https://platform.stability.ai/docs'
+    }
+  },
+
+  elevenlabs: {
+    id: 'elevenlabs',
+    name: 'ElevenLabs',
+    category: 'ai',
+    authType: 'apiKey',
+    n8nCredentialType: 'elevenLabsApi',
+    n8nNodeType: 'n8n-nodes-base.elevenLabs',
+    apiKey: {
+      fields: [
+        {
+          name: 'apiKey',
+          label: 'API Key',
+          type: 'password',
+          required: true,
+          description: 'Get from https://elevenlabs.io/app/settings/api-keys'
+        }
+      ]
+    },
+    ui: {
+      icon: '🎙️',
+      color: '#000000',
+      description: 'Realistic voice synthesis and voice cloning',
+      setupGuideUrl: 'https://elevenlabs.io/docs'
+    }
+  },
+
+  replicate: {
+    id: 'replicate',
+    name: 'Replicate',
+    category: 'ai',
+    authType: 'apiKey',
+    n8nCredentialType: 'replicateApi',
+    n8nNodeType: 'n8n-nodes-base.replicate',
+    apiKey: {
+      fields: [
+        {
+          name: 'apiKey',
+          label: 'API Token',
+          type: 'password',
+          required: true,
+          placeholder: 'r8_...',
+          description: 'Get from https://replicate.com/account/api-tokens'
+        }
+      ]
+    },
+    ui: {
+      icon: '🔄',
+      color: '#0F172A',
+      description: 'Run various AI models (Stable Diffusion, LLaMA, Flux, etc.)',
+      setupGuideUrl: 'https://replicate.com/docs'
+    }
   }
 };
 
@@ -603,6 +801,7 @@ export function getApiKeyIntegrations(): IntegrationConfig[] {
 }
 
 export const INTEGRATION_CATEGORIES = [
+  { id: 'ai', name: 'AI & Content', icon: '🤖' },
   { id: 'communication', name: 'Communication', icon: '💬' },
   { id: 'productivity', name: 'Productivity', icon: '📊' },
   { id: 'database', name: 'Database', icon: '🗄️' },

@@ -22,6 +22,7 @@ import { createVoiceRouter } from './routes/voice';
 import { createOAuthRouter } from './routes/oauth';
 import { createCredentialsRouter } from './routes/credentials';
 import { VapiService } from './services/vapi-service';
+import billingRouter from './routes/billing';
 
 // Validate required environment variables
 const requiredEnvVars = ['OPENAI_API_KEY', 'JWT_SECRET'];
@@ -119,6 +120,7 @@ app.get('/', (req: Request, res: Response) => {
       voice: '/api/voice',
       oauth: '/api/oauth',
       credentials: '/api/credentials',
+      billing: '/api/billing',
       health: '/health'
     }
   });
@@ -140,6 +142,7 @@ app.use('/api/workflows', createWorkflowsRouter(mcpClient));
 app.use('/api/voice', createVoiceRouter(vapiService));
 app.use('/api/oauth', createOAuthRouter(oauthService, credentialRepository, authService));
 app.use('/api/credentials', createCredentialsRouter(credentialRepository, credentialValidator, authService));
+app.use('/api/billing', billingRouter);
 
 // Deploy routes (only if n8n is configured)
 if (n8nApiClient) {

@@ -162,11 +162,63 @@ export class WorkflowGenerator {
   /**
    * Create an action node based on step definition
    * Now uses MCP to dynamically find the correct node type
+   * Enhanced with AI-specific node recognition
    */
   private async createActionNode(step: any, index: number, x: number, y: number): Promise<N8nNode> {
     let nodeType = 'n8n-nodes-base.httpRequest'; // Default fallback
     
-    // Try to find the correct node type using MCP search
+    // AI-specific node mapping (check first for performance)
+    const aiNodeMap: Record<string, string> = {
+      'openai': 'n8n-nodes-langchain.openai',
+      'gpt': 'n8n-nodes-langchain.openai',
+      'gpt-4': 'n8n-nodes-langchain.openai',
+      'chatgpt': 'n8n-nodes-langchain.openai',
+      'claude': 'n8n-nodes-langchain.lmChatAnthropic',
+      'anthropic': 'n8n-nodes-langchain.lmChatAnthropic',
+      'gemini': 'n8n-nodes-langchain.lmChatGooglePalm',
+      'google ai': 'n8n-nodes-langchain.lmChatGooglePalm',
+      'ai agent': 'n8n-nodes-langchain.agent',
+      'chatbot': 'n8n-nodes-langchain.agent',
+      'assistant': 'n8n-nodes-langchain.agent',
+      'dall-e': 'n8n-nodes-langchain.openai',
+      'dalle': 'n8n-nodes-langchain.openai',
+      'image generation': 'n8n-nodes-langchain.openai',
+      'generate image': 'n8n-nodes-langchain.openai',
+      'stable diffusion': 'n8n-nodes-base.stabilityAi',
+      'stability': 'n8n-nodes-base.stabilityAi',
+      'whisper': 'n8n-nodes-langchain.openai',
+      'transcribe': 'n8n-nodes-langchain.openai',
+      'transcription': 'n8n-nodes-langchain.openai',
+      'voice': 'n8n-nodes-base.elevenLabs',
+      'text to speech': 'n8n-nodes-base.elevenLabs',
+      'elevenlabs': 'n8n-nodes-base.elevenLabs',
+      'replicate': 'n8n-nodes-base.replicate',
+      'content generation': 'n8n-nodes-langchain.openai',
+      'generate content': 'n8n-nodes-langchain.openai',
+      'write': 'n8n-nodes-langchain.openai',
+      'summarize': 'n8n-nodes-langchain.openai',
+      'translate': 'n8n-nodes-langchain.openai'
+    };
+    
+    // Check if step mentions AI keywords
+    const stepText = `${step.service || ''} ${step.action || ''} ${step.prompt || ''}`.toLowerCase();
+    for (const [keyword, type] of Object.entries(aiNodeMap)) {
+      if (stepText.includes(keyword)) {
+        nodeType = type;
+        console.log(`[Workflow Generator] ✨ Matched AI keyword "${keyword}" -> ${nodeType}`);
+        
+        return {
+          id: this.generateNodeId(),
+          name: step.action || step.service || `AI ${index + 1}`,
+          type: nodeType,
+          position: [x, y],
+          parameters: this.getAINodeParameters(nodeType, step),
+          credentials: {}
+        };
+      }
+    }
+    
+    // Fallback: Try to find the correct node type using MCP search
     if (step.service) {
       try {
         const searchResults = await this.mcpClient.searchNodes(step.service, false);
@@ -190,6 +242,134 @@ export class WorkflowGenerator {
       parameters: step.config || {},
       credentials: {}
     };
+  }
+
+  /**
+   * Get default parameters for AI nodes based on type
+   */
+  private getAINodeParameters(nodeType: string, step: any): any {
+    // OpenAI node - text generation
+    if (nodeType === 'n8n-nodes-langchain.openai') {
+      // Check if it's image generation
+      const isImage = step.action?.toLowerCase().includes('image') || 
+                     step.action?.toLowerCase().includes('dall') ||
+                     step.prompt?.toLowerCase().includes('image');
+      
+      if (isImage) {
+        return {
+          resource: 'image',
+          operation: 'generate',
+          model: 'dall-e-3',
+          prompt: step.prompt || '={{ $json.prompt }}',
+          size: '1024x1024',
+          quality: 'standard',
+          responseFormat: 'url'
+        };
+      }
+      
+      // Check if it's transcription
+      const isTranscription = step.action?.toLowerCase().includes('transcribe') ||
+                             step.action?.toLowerCase().includes('whisper');
+      
+      if (isTranscription) {
+        return {
+          resource: 'audio',
+          operation: 'transcribe',
+          model: 'whisper-1',
+          binaryPropertyName: 'data',
+          options: {}
+        };
+      }
+      
+      // Default: text generation
+      return {
+        resource: 'text',
+        operation: 'message',
+        model: 'gpt-4o',
+        messages: {
+          values: [
+            {
+              role: 'user',
+              content: step.prompt || '={{ $json.prompt }}'
+            }
+          ]
+        },
+        options: {
+          temperature: 0.7,
+          maxTokens: 1000
+        }
+      };
+    }
+    
+    // AI Agent node
+    if (nodeType === 'n8n-nodes-langchain.agent') {
+      return {
+        promptType: 'define',
+        text: step.prompt || 'You are a helpful AI assistant. Respond to user queries accurately and concisely.',
+        hasOutputParser: false,
+        options: {}
+      };
+    }
+    
+    // Anthropic Claude
+    if (nodeType === 'n8n-nodes-langchain.lmChatAnthropic') {
+      return {
+        model: 'claude-3-5-sonnet-20241022',
+        options: {
+          temperature: 0.7,
+          maxTokens: 1024
+        }
+      };
+    }
+    
+    // Google Gemini
+    if (nodeType === 'n8n-nodes-langchain.lmChatGooglePalm') {
+      return {
+        modelName: 'gemini-pro',
+        options: {
+          temperature: 0.7,
+          maxOutputTokens: 1024
+        }
+      };
+    }
+    
+    // Stability AI
+    if (nodeType === 'n8n-nodes-base.stabilityAi') {
+      return {
+        resource: 'image',
+        operation: 'generate',
+        engine: 'stable-diffusion-xl-1024-v1-0',
+        text: step.prompt || '={{ $json.prompt }}',
+        options: {
+          samples: 1,
+          steps: 30
+        }
+      };
+    }
+    
+    // ElevenLabs
+    if (nodeType === 'n8n-nodes-base.elevenLabs') {
+      return {
+        resource: 'audio',
+        operation: 'generate',
+        voiceId: 'EXAVITQu4vr4xnSDxMaL', // Default voice
+        text: step.prompt || '={{ $json.text }}',
+        options: {}
+      };
+    }
+    
+    // Replicate
+    if (nodeType === 'n8n-nodes-base.replicate') {
+      return {
+        resource: 'prediction',
+        operation: 'create',
+        modelVersion: step.config?.modelVersion || '',
+        input: step.config?.input || {}
+      };
+    }
+    
+    // Fallback to step config
+    return step.config || {};
   }
 
   /**

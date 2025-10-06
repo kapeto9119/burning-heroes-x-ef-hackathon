@@ -101,6 +101,12 @@ CRITICAL: Before asking ANY question, check if the information is already provid
     if (userMessages.match(/slack/i)) services.push('Slack');
     if (userMessages.match(/sendgrid/i)) services.push('SendGrid');
     if (userMessages.match(/sheets|google sheets/i)) services.push('Google Sheets');
+    if (userMessages.match(/openai|gpt|chatgpt|gpt-4/i)) services.push('OpenAI');
+    if (userMessages.match(/claude|anthropic/i)) services.push('Claude');
+    if (userMessages.match(/gemini|google ai/i)) services.push('Google AI');
+    if (userMessages.match(/dall-e|dalle|image generation/i)) services.push('DALL-E');
+    if (userMessages.match(/stable diffusion|stability/i)) services.push('Stability AI');
+    if (userMessages.match(/elevenlabs|voice|text to speech/i)) services.push('ElevenLabs');
     if (services.length > 0) {
       context.push(`✓ Services: ${services.join(', ')}`);
     }
@@ -218,6 +224,48 @@ ACTIONS:
   "application": "app-id",
   "table": "table-name",
   "fields": {}
+}
+
+AI & CONTENT GENERATION NODES:
+8. OpenAI Text (n8n-nodes-langchain.openai):
+{
+  "resource": "text",
+  "operation": "message",
+  "model": "gpt-4o",
+  "messages": {
+    "values": [{"role": "user", "content": "Generate content about..."}]
+  },
+  "options": {"temperature": 0.7, "maxTokens": 1000}
+}
+
+9. OpenAI Image (n8n-nodes-langchain.openai):
+{
+  "resource": "image",
+  "operation": "generate",
+  "model": "dall-e-3",
+  "prompt": "A beautiful sunset over mountains",
+  "size": "1024x1024"
+}
+
+10. AI Agent (n8n-nodes-langchain.agent):
+{
+  "promptType": "define",
+  "text": "You are a helpful assistant that...",
+  "hasOutputParser": false
+}
+
+11. Claude (n8n-nodes-langchain.lmChatAnthropic):
+{
+  "model": "claude-3-5-sonnet-20241022",
+  "options": {"temperature": 0.7, "maxTokens": 1024}
+}
+
+12. Stability AI (n8n-nodes-base.stabilityAi):
+{
+  "resource": "image",
+  "operation": "generate",
+  "engine": "stable-diffusion-xl-1024-v1-0",
+  "text": "image description"
 }
 
 Respond with a JSON object containing:

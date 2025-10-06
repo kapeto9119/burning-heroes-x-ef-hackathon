@@ -179,6 +179,18 @@ export function Navbar() {
                         <button
                           onClick={() => {
                             setShowProfileMenu(false);
+                            router.push("/billing");
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left cursor-pointer"
+                        >
+                          <CreditCard className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            Billing & Usage
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowProfileMenu(false);
                             router.push("/settings");
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left cursor-pointer"
