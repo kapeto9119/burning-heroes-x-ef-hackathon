@@ -163,7 +163,7 @@ export default function Home() {
                 className="inline-block"
               >
                 <h1 className="text-4xl font-light tracking-tight text-foreground/90 pb-1">
-                  what do you wanna automate today?
+                  What would you like to automate today?
                 </h1>
                 <motion.div
                   className="h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"
