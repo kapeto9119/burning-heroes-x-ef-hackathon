@@ -23,7 +23,7 @@ export class StripeService {
 
   constructor(apiKey: string, pool: Pool) {
     this.stripe = new Stripe(apiKey, {
-      apiVersion: '2024-12-18.acacia'
+      apiVersion: '2025-09-30.clover'
     });
     this.pool = pool;
   }
@@ -209,8 +209,8 @@ export class StripeService {
         subscription.id,
         plan.executions_per_month,
         plan.active_workflows_limit,
-        subscription.current_period_start,
-        subscription.current_period_end,
+        (subscription as any).current_period_start || Math.floor(Date.now() / 1000),
+        (subscription as any).current_period_end || Math.floor(Date.now() / 1000),
         userId
       ]
     );
@@ -248,8 +248,8 @@ export class StripeService {
       WHERE user_id = $5`,
       [
         subscription.status,
-        subscription.current_period_start,
-        subscription.current_period_end,
+        (subscription as any).current_period_start || Math.floor(Date.now() / 1000),
+        (subscription as any).current_period_end || Math.floor(Date.now() / 1000),
         subscription.cancel_at_period_end,
         userId
       ]
@@ -296,7 +296,7 @@ export class StripeService {
    */
   private async handleInvoicePaid(invoice: Stripe.Invoice) {
     const customerId = invoice.customer as string;
-    const subscriptionId = invoice.subscription as string;
+    const subscriptionId = (invoice as any).subscription as string;
 
     const result = await this.pool.query(
       `SELECT user_id, plan_tier FROM user_subscriptions 
@@ -317,11 +317,11 @@ export class StripeService {
       [
         userId,
         invoice.id,
-        invoice.charge,
+        (invoice as any).charge,
         (invoice.amount_paid / 100).toFixed(2),
         planTier,
-        invoice.period_start,
-        invoice.period_end,
+        (invoice as any).period_start || Math.floor(Date.now() / 1000),
+        (invoice as any).period_end || Math.floor(Date.now() / 1000),
         invoice.hosted_invoice_url
       ]
     );
