@@ -540,22 +540,29 @@ export default function EditorPage() {
         <Navbar />
 
         <motion.div
-          className="w-full h-[calc(100vh-120px)] relative z-10 px-6 py-6"
+          className="w-full h-[calc(100vh-120px)] relative z-10 px-6 py-6 flex items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4 }}
         >
-          <div className="container mx-auto h-full max-w-7xl">
+          <div className="container mx-auto h-[90%] max-w-[1600px]">
             <div className="grid grid-cols-2 gap-6 h-full">
               {/* Left Column - Chat/Voice */}
               <div className="flex flex-col h-full backdrop-blur-xl bg-background/40 rounded-2xl border border-border shadow-2xl overflow-hidden">
                 {/* Mode Toggle Header */}
                 <div className="flex items-center justify-between p-4 border-b border-border">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">
-                      {voiceMode ? "Voice Assistant" : "Chat"}
-                    </h3>
-                    {voiceMode && <VoiceVisualizer isListening={isListening} isSpeaking={isSpeaking} />}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-semibold">
+                        {voiceMode ? "Voice Assistant" : "Chat"}
+                      </h2>
+                      {voiceMode && <VoiceVisualizer isListening={isListening} isSpeaking={isSpeaking} />}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {voiceMode 
+                        ? "Speak naturally to create workflows" 
+                        : `${messages.length} ${messages.length === 1 ? 'message' : 'messages'}`}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button

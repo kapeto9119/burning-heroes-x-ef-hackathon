@@ -110,12 +110,12 @@ export default function PlatformPage() {
         <Navbar />
 
         <motion.div 
-          className="w-full h-[calc(100vh-120px)] relative z-10 px-6 py-6"
+          className="w-full h-[calc(100vh-120px)] relative z-10 px-6 py-6 flex items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4 }}
         >
-          <div className="container mx-auto h-full max-w-7xl">
+          <div className="container mx-auto h-[90%] max-w-[1600px]">
             <div className="grid grid-cols-[280px_1fr] gap-6 h-full">
               {/* Left Sidebar - Workflow List */}
               <div className="flex flex-col h-full backdrop-blur-xl bg-background/40 rounded-2xl border border-border shadow-2xl overflow-hidden">
