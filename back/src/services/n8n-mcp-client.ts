@@ -86,6 +86,12 @@ export class N8nMCPClient {
     }
 
     try {
+      // Validate query is not empty
+      if (!query || query.trim() === '') {
+        console.warn('[MCP Client] Empty query provided, using mock data');
+        return this.getMockSearchResults('', includeExamples);
+      }
+
       console.log(`[MCP Client] Searching nodes: "${query}" (includeExamples: ${includeExamples})`);
       
       const result = await this.client!.callTool({
@@ -99,14 +105,20 @@ export class N8nMCPClient {
       if (result.content && Array.isArray(result.content)) {
         const textContent = result.content.find(c => c.type === 'text');
         if (textContent && 'text' in textContent) {
-          const parsed = JSON.parse(textContent.text);
-          const count = Array.isArray(parsed) ? parsed.length : (parsed.nodes?.length || 1);
-          console.log(`[MCP Client] Found ${count} nodes`);
-          console.log(`[MCP Client] Data type:`, typeof parsed, Array.isArray(parsed) ? 'array' : 'object');
-          console.log(`[MCP Client] Raw data structure:`, JSON.stringify(parsed).substring(0, 200));
-          const results = this.mapToSearchResults(parsed);
-          console.log(`[MCP Client] Mapped to ${results.length} search results`);
-          return results;
+          try {
+            const parsed = JSON.parse(textContent.text);
+            const count = Array.isArray(parsed) ? parsed.length : (parsed.nodes?.length || 1);
+            console.log(`[MCP Client] Found ${count} nodes`);
+            console.log(`[MCP Client] Data type:`, typeof parsed, Array.isArray(parsed) ? 'array' : 'object');
+            console.log(`[MCP Client] Raw data structure:`, JSON.stringify(parsed).substring(0, 200));
+            const results = this.mapToSearchResults(parsed);
+            console.log(`[MCP Client] Mapped to ${results.length} search results`);
+            return results;
+          } catch (parseError) {
+            console.error('[MCP Client] JSON parse error:', parseError);
+            console.error('[MCP Client] Raw text:', textContent.text.substring(0, 500));
+            return this.getMockSearchResults(query, includeExamples);
+          }
         }
       }
 

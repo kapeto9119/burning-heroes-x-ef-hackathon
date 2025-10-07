@@ -33,15 +33,15 @@ export class PlatformKnowledgeService {
   /** Force refresh from MCP */
   async refresh(): Promise<void> {
     try {
-      // Empty query returns a broad set; fall back to popular keywords to diversify
-      const [all, comms, data, ai] = await Promise.all([
-        this.mcpClient.searchNodes("", false),
+      // Use popular keywords to diversify (empty query not supported by MCP)
+      const [comms, data, ai, core] = await Promise.all([
         this.mcpClient.searchNodes("Slack email SMS", false),
         this.mcpClient.searchNodes("Postgres Sheets Database", false),
         this.mcpClient.searchNodes("OpenAI Claude Gemini", false),
+        this.mcpClient.searchNodes("Webhook HTTP Request", false),
       ]);
 
-      const merged = [...all, ...comms, ...data, ...ai];
+      const merged = [...comms, ...data, ...ai, ...core];
       const byType = new Map<string, ConnectorSummary>();
       for (const n of merged) {
         const key = n.nodeType || n.nodeName;
