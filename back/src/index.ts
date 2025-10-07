@@ -30,6 +30,7 @@ import billingRouter from "./routes/billing";
 import { createManagedAIRouter } from "./routes/managed-ai";
 import { pool } from "./db";
 import { createPlatformRouter } from "./routes/platform";
+import { createTestDataRouter } from "./routes/test-data";
 
 // Validate required environment variables
 const requiredEnvVars = ["OPENAI_API_KEY", "JWT_SECRET"];
@@ -199,6 +200,7 @@ app.use("/api/billing", billingRouter);
 app.use("/api/managed-ai", createManagedAIRouter(pool));
 app.use("/api/platform", createPlatformRouter(platformKnowledge));
 app.use("/api/n8n-webhooks", createN8nWebhookRouter(pool));
+app.use("/api/test-data", createTestDataRouter(aiService));
 
 // Deploy routes (only if n8n is configured)
 if (n8nApiClient) {

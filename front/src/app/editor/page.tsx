@@ -11,6 +11,9 @@ import {
   ArrowRight,
   Mic,
   MessageSquare,
+  Save,
+  Rocket,
+  Eye,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -25,12 +28,14 @@ import {
   CredentialSetupModal,
   CredentialRequirement,
 } from "@/components/CredentialSetupModal";
+import { InlineCredentialModal } from "@/components/InlineCredentialModal";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { generateWorkflow, sendChatMessage } from "@/app/actions/chat";
 import {
   deployWorkflow,
   activateWorkflow,
   saveWorkflow,
+  checkWorkflowCredentials,
 } from "@/app/actions/workflows";
 import { WorkflowCanvas } from "@/components/workflow/WorkflowCanvas";
 import { VoiceButton } from "@/components/voice/VoiceButton";
@@ -150,6 +155,10 @@ export default function EditorPage() {
   >([]);
   const [showCredentialModal, setShowCredentialModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showInlineCredentialModal, setShowInlineCredentialModal] = useState(false);
+  const [missingCredentials, setMissingCredentials] = useState<any[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
   const hasRespondedRef = useRef(false);
   const voiceAutoStartRef = useRef(false);
@@ -179,13 +188,9 @@ export default function EditorPage() {
   // Prefer context token; fall back to centralized client token util
   const getAuthToken = () => contextToken || getClientToken();
 
-  // Auth guard - redirect to home if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      console.log("[Editor] User not authenticated, showing auth modal");
-      setShowAuthModal(true);
-    }
-  }, [isLoading, isAuthenticated]);
+  // Auth guard - show preview mode if not authenticated
+  // No longer blocking unauthenticated users - they get preview mode
+  const isPreviewMode = !isAuthenticated;
 
   // Vapi voice AI integration
   const {
@@ -365,19 +370,72 @@ export default function EditorPage() {
     }
   };
 
-  const handleDeployClick = () => {
-    // Check if user is authenticated (use isAuthenticated instead of user to avoid race condition)
+  const handleSaveClick = async () => {
+    if (!workflow) return;
+    
+    // Check if user is authenticated
     if (!isAuthenticated) {
       setShowAuthModal(true);
       return;
     }
 
-    // Check if credentials are needed
-    if (credentialRequirements.length > 0) {
-      setShowCredentialModal(true);
-    } else {
-      handleDeploy();
+    setIsSaving(true);
+    try {
+      const token = getAuthToken();
+      const result = await saveWorkflow(workflow, token || undefined);
+      
+      if (result.success) {
+        setSaveSuccess(true);
+        const successMessage = {
+          id: Date.now().toString(),
+          text: `✅ Workflow saved successfully! You can find it in your workflows list.`,
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, successMessage]);
+        
+        // Hide success indicator after 3 seconds
+        setTimeout(() => setSaveSuccess(false), 3000);
+      } else {
+        throw new Error(result.error || 'Failed to save workflow');
+      }
+    } catch (error: any) {
+      const errorMessage = {
+        id: Date.now().toString(),
+        text: `❌ Failed to save workflow: ${error.message}`,
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const handleDeployClick = async () => {
+    if (!workflow) return;
+    
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    // Check for missing credentials
+    const token = getAuthToken();
+    const credCheck = await checkWorkflowCredentials(workflow, token || undefined);
+    
+    if (credCheck.success && credCheck.data) {
+      if (!credCheck.data.hasAllCredentials && credCheck.data.missingCredentials.length > 0) {
+        // Show inline credential modal
+        setMissingCredentials(credCheck.data.missingCredentials);
+        setShowInlineCredentialModal(true);
+        return;
+      }
+    }
+    
+    // All credentials present, deploy directly
+    handleDeploy();
   };
 
   const handleCredentialsComplete = () => {
@@ -778,31 +836,70 @@ export default function EditorPage() {
               <div className="flex flex-col h-full backdrop-blur-xl bg-background/40 rounded-2xl border border-border shadow-2xl overflow-hidden">
                 <div className="p-4 border-b border-border flex items-center justify-between">
                   <div>
-                    <h2 className="text-lg font-semibold">Workflow Graph</h2>
+                    <h2 className="text-lg font-semibold">
+                      {isPreviewMode ? "Workflow Preview" : "Workflow Graph"}
+                    </h2>
                     <p className="text-sm text-muted-foreground">
                       {workflow
-                        ? `${workflow.nodes?.length || 0} nodes`
+                        ? `${workflow.nodes?.length || 0} nodes${isPreviewMode ? " • Preview Mode" : ""}`
                         : "Your automation nodes will appear here"}
                     </p>
                   </div>
                   {workflow && deploymentStatus !== "success" && (
-                    <Button
-                      onClick={handleDeployClick}
-                      disabled={deploymentStatus === "deploying"}
-                      className="bg-primary text-primary-foreground"
-                    >
-                      {deploymentStatus === "deploying" ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Deploying...
-                        </>
+                    <div className="flex items-center gap-2">
+                      {isPreviewMode ? (
+                        <Button
+                          onClick={() => setShowAuthModal(true)}
+                          className="bg-primary text-primary-foreground"
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Login to Save & Deploy
+                        </Button>
                       ) : (
                         <>
-                          <Sparkles className="w-4 h-4 mr-2" />
-                          {user ? "Deploy Workflow" : "Login to Deploy"}
+                          <Button
+                            onClick={handleSaveClick}
+                            disabled={isSaving || saveSuccess}
+                            variant="outline"
+                            className="border-primary text-primary hover:bg-primary/10"
+                          >
+                            {isSaving ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Saving...
+                              </>
+                            ) : saveSuccess ? (
+                              <>
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Saved!
+                              </>
+                            ) : (
+                              <>
+                                <Save className="w-4 h-4 mr-2" />
+                                Save
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            onClick={handleDeployClick}
+                            disabled={deploymentStatus === "deploying"}
+                            className="bg-primary text-primary-foreground"
+                          >
+                            {deploymentStatus === "deploying" ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Deploying...
+                              </>
+                            ) : (
+                              <>
+                                <Rocket className="w-4 h-4 mr-2" />
+                                Deploy
+                              </>
+                            )}
+                          </Button>
                         </>
                       )}
-                    </Button>
+                    </div>
                   )}
                   {deploymentStatus === "success" && (
                     <motion.div
@@ -908,6 +1005,23 @@ export default function EditorPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Inline Credential Modal for Deployment */}
+      {showInlineCredentialModal && missingCredentials.length > 0 && (
+        <InlineCredentialModal
+          missingCredentials={missingCredentials}
+          onComplete={() => {
+            setShowInlineCredentialModal(false);
+            setMissingCredentials([]);
+            // Proceed with deployment
+            handleDeploy();
+          }}
+          onCancel={() => {
+            setShowInlineCredentialModal(false);
+            setMissingCredentials([]);
+          }}
+        />
+      )}
 
       {/* Credential Setup Modal */}
       {showCredentialModal && credentialRequirements.length > 0 && (
