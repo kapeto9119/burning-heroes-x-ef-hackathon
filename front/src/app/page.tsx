@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { SendIcon, Sparkles, Command, Mic } from "lucide-react";
+import { SendIcon, Sparkles, Command, Mic, Zap, Shield, Clock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -95,6 +95,7 @@ export default function Home() {
   const { setMessages } = useWorkflow();
   const [value, setValue] = useState("");
   const [showMicTooltip, setShowMicTooltip] = useState(false);
+  const [email, setEmail] = useState("");
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight: 60,
     maxHeight: 200,
@@ -134,6 +135,15 @@ export default function Home() {
   const handleVoiceMode = () => {
     // Navigate to editor in voice mode
     router.push("/editor?voice=true");
+  };
+
+  const handleEmailSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email.trim()) {
+      // Handle email submission
+      console.log("Email submitted:", email);
+      setEmail("");
+    }
   };
 
   return (
@@ -289,12 +299,122 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Footer */}
-        <div className="absolute bottom-6 left-0 right-0 text-center">
-          <p className="text-sm text-muted-foreground">
-            Made with love by the C4 Hackathon Team &lt;3
-          </p>
+
+        {/* Why Choose Us Section */}
+        <div className="w-full max-w-6xl mx-auto px-6 py-24">
+          <motion.div
+            className="text-center space-y-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="space-y-3">
+              <h2 className="text-3xl font-light tracking-tight text-foreground/90">
+                Why building with Mozart?
+              </h2>
+              <motion.div
+                className="h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent mx-auto max-w-md"
+                initial={{ width: 0, opacity: 0 }}
+                whileInView={{ width: "100%", opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3, duration: 0.8 }}
+              />
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8 mt-12">
+              {[
+                {
+                  icon: <Zap className="w-8 h-8" />,
+                  title: "Lightning Fast",
+                  description:
+                    "Build workflows in minutes, not hours. Our AI understands your needs instantly.",
+                },
+                {
+                  icon: <Shield className="w-8 h-8" />,
+                  title: "Secure & Reliable",
+                  description:
+                    "Enterprise-grade security with 99.9% uptime. Your data is always protected.",
+                },
+                {
+                  icon: <Clock className="w-8 h-8" />,
+                  title: "Save Time",
+                  description:
+                    "Automate repetitive tasks and focus on what matters. Increase productivity by 10x.",
+                },
+              ].map((feature, index) => (
+                <motion.div
+                  key={feature.title}
+                  className="p-6 rounded-2xl backdrop-blur-xl bg-background/40 border border-border hover:border-primary/50 transition-all group"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <div className="text-primary mb-4 group-hover:scale-110 transition-transform">
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-xl font-medium mb-2 text-foreground/90">
+                    {feature.title}
+                  </h3>
+                  <p className="text-muted-foreground text-sm">
+                    {feature.description}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         </div>
+
+        {/* Ready to Get Started Section */}
+        <div className="w-full max-w-4xl mx-auto px-6 py-24">
+          <motion.div
+            className="text-center space-y-8 p-12 rounded-3xl backdrop-blur-xl bg-background/40 border border-border"
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="space-y-3">
+              <h2 className="text-3xl font-light tracking-tight text-foreground/90">
+                Ready to get started?
+              </h2>
+              <motion.div
+                className="h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent mx-auto max-w-md"
+                initial={{ width: 0, opacity: 0 }}
+                whileInView={{ width: "100%", opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3, duration: 0.8 }}
+              />
+            </div>
+
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Join thousands of teams already automating their workflows with AI.
+            </p>
+
+            <motion.button
+              onClick={() => router.push("/editor")}
+              className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-lg text-base font-medium shadow-lg hover:shadow-xl transition-all"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Start Free Trial
+              <ArrowRight className="w-5 h-5" />
+            </motion.button>
+          </motion.div>
+        </div>
+
+        {/* Footer */}
+        <footer className="w-full border-t border-border mt-24">
+          <div className="max-w-6xl mx-auto px-6 py-8">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">
+                ©Mozart Inc. All rights reserved
+              </p>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
