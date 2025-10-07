@@ -39,11 +39,20 @@ echo -e "${BLUE}📝 Committing changes...${NC}"
 git add .
 git commit -m "$COMMIT_MSG" || echo "Nothing to commit"
 
+echo -e "${BLUE}🔄 Switching to main branch...${NC}"
+git checkout main
+
 echo -e "${BLUE}🔄 Pulling latest changes...${NC}"
-git pull origin main --rebase
+git pull origin main
+
+echo -e "${BLUE}🔄 Merging development...${NC}"
+git merge development
 
 echo -e "${BLUE}🔄 Pushing to main...${NC}"
 git push origin main
+
+echo -e "${BLUE}🔄 Switching back to development...${NC}"
+git checkout development
 
 echo -e "${GREEN}✅ Deployment complete!${NC}"
 echo -e "${GREEN}🎉 Railway will auto-deploy from main branch${NC}"
