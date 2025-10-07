@@ -37,7 +37,10 @@ cd ..
 # Git operations
 echo -e "${BLUE}📝 Committing changes...${NC}"
 git add .
-git commit -m "$COMMIT_MSG"
+git commit -m "$COMMIT_MSG" || echo "Nothing to commit"
+
+echo -e "${BLUE}🔄 Pulling latest changes...${NC}"
+git pull origin main --rebase
 
 echo -e "${BLUE}🔄 Pushing to main...${NC}"
 git push origin main
