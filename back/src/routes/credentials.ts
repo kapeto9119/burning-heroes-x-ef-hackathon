@@ -93,20 +93,40 @@ export function createCredentialsRouter(
         });
       }
 
-      // Store credential
-      const credential = await credentialRepository.create(
-        userId,
-        service,
-        integration.n8nCredentialType,
-        credentialData,
-        credentialName || `${integration.name} Account`
+      // Check if credential already exists with the same name
+      const defaultName = credentialName || `${integration.name} Account`;
+      const existingCredentials = await credentialRepository.findByUser(userId, false);
+      const existingCredential = existingCredentials.find(
+        c => c.service === service && c.credential_name === defaultName
       );
+
+      let credential;
+      if (existingCredential) {
+        // Update existing credential
+        console.log(`[Credentials] Updating existing ${service} credential ${existingCredential.id}`);
+        await credentialRepository.update(existingCredential.id, credentialData);
+        await credentialRepository.markValid(existingCredential.id);
+        credential = await credentialRepository.findById(existingCredential.id);
+        
+        if (!credential) {
+          throw new Error('Failed to retrieve updated credential');
+        }
+      } else {
+        // Create new credential
+        credential = await credentialRepository.create(
+          userId,
+          service,
+          integration.n8nCredentialType,
+          credentialData,
+          defaultName
+        );
+      }
 
       console.log(`[Credentials] ✅ Stored ${service} credentials for user ${userId}`);
 
       res.json({
         success: true,
-        message: `${integration.name} credentials added successfully`,
+        message: `${integration.name} credentials ${existingCredential ? 'updated' : 'added'} successfully`,
         data: {
           id: credential.id,
           service: credential.service,
