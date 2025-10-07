@@ -251,9 +251,11 @@ if (n8nApiClient) {
   
   // Update deploy router to use executionMonitor
   // We need to re-register the deploy router with executionMonitor
-  app._router.stack = app._router.stack.filter((layer: any) => {
-    return !(layer.regexp && layer.regexp.test('/api/deploy'));
-  });
+  if (app._router && app._router.stack) {
+    app._router.stack = app._router.stack.filter((layer: any) => {
+      return !(layer.regexp && layer.regexp.test('/api/deploy'));
+    });
+  }
   app.use("/api/deploy", createDeployRouter(n8nApiClient, authService, pool, executionMonitor));
 }
 
