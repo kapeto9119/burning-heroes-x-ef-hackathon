@@ -5,11 +5,12 @@ import { motion } from 'framer-motion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Background } from '@/components/layout/Background';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, Trash2, Clock, CheckCircle, XCircle, Loader2, Maximize2, Eye, RotateCcw, Webhook, Copy, Radio, BarChart3, List, Download, Timer } from 'lucide-react';
+import { Play, Pause, Trash2, Clock, CheckCircle, XCircle, Loader2, Maximize2, Eye, RotateCcw, Webhook, Copy, Radio, BarChart3, List, Download, Timer, Zap } from 'lucide-react';
 import { getWorkflows, activateWorkflow, getWorkflowExecutions, executeWorkflow } from '@/app/actions/workflows';
 import { useRouter } from 'next/navigation';
 import { WorkflowCanvas } from '@/components/workflow/WorkflowCanvas';
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
+import { NodeDataInspector } from '@/components/execution/NodeDataInspector';
 import { getTimeUntilNextRun, cronToHuman } from '@/lib/schedule-utils';
 import { useWebSocket } from '@/hooks/useWebSocket';
 
@@ -301,6 +302,17 @@ export default function WorkflowsPage() {
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/workflows/${workflow.workflowId || workflow.id}/test`);
+                          }}
+                        >
+                          <Zap className="w-4 h-4 mr-1" />
+                          Test
+                        </Button>
+                        <Button
+                          size="sm"
                           className="bg-green-600 hover:bg-green-700 text-white"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -308,7 +320,7 @@ export default function WorkflowsPage() {
                           }}
                         >
                           <Play className="w-4 h-4 mr-1" />
-                          Run Now
+                          Run
                         </Button>
                         <Button
                           size="sm"
@@ -318,7 +330,7 @@ export default function WorkflowsPage() {
                             handleViewExecutions(workflow);
                           }}
                         >
-                          View Executions
+                          View Logs
                         </Button>
                         <Button
                           size="sm"
@@ -513,13 +525,14 @@ export default function WorkflowsPage() {
                 workflow={previewWorkflow} 
                 isGenerating={false}
                 latestExecution={previewExecutions.length > 0 ? previewExecutions[0] : undefined}
+                enableRealTimeUpdates={true}
               />
             </div>
             
-            {/* Execution Log Panel */}
-            <div className="border-t border-border bg-accent/20">
+            {/* Execution Data Panel */}
+            <div className="border-t border-border bg-accent/20 max-h-[300px] overflow-y-auto">
               <div className="px-6 py-3">
-                <h3 className="text-sm font-semibold mb-3">Execution Log</h3>
+                <h3 className="text-sm font-semibold mb-3">Node Execution Data</h3>
                 {isLoadingPreviewExecutions ? (
                   <div className="flex items-center justify-center py-4">
                     <Loader2 className="w-5 h-5 animate-spin text-primary" />
@@ -529,35 +542,10 @@ export default function WorkflowsPage() {
                     No executions yet. Click "View Logs" to load recent executions.
                   </div>
                 ) : (
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {previewExecutions.slice(0, 5).map((execution: any) => (
-                      <div key={execution.id} className="flex items-start gap-3 text-sm py-1">
-                        <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1" style={{
-                          backgroundColor: execution.status === 'success' ? '#22c55e' :
-                                         execution.status === 'error' ? '#ef4444' : '#3b82f6'
-                        }} />
-                        <span className="text-xs text-muted-foreground min-w-[60px]">
-                          {new Date(execution.startedAt).toLocaleTimeString()}
-                        </span>
-                        <div className="flex-1">
-                          <div className="font-medium capitalize">{execution.status}</div>
-                          {execution.nodeExecutions && execution.nodeExecutions.length > 0 && (
-                            <div className="text-xs text-muted-foreground mt-0.5">
-                              {execution.nodeExecutions.map((node: any, idx: number) => (
-                                <span key={idx}>
-                                  {node.nodeName}: {node.status}
-                                  {idx < execution.nodeExecutions.length - 1 && ' • '}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                          {execution.error && (
-                            <div className="text-xs text-red-500 mt-0.5">{execution.error}</div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <NodeDataInspector
+                    execution={previewExecutions[0]}
+                    workflowNodes={previewWorkflow.nodes || []}
+                  />
                 )}
               </div>
             </div>

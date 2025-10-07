@@ -399,6 +399,53 @@ Example for "Send personalized emails to HubSpot leads":
   "requiredCredentials": ["hubspot", "smtp"]
 }
 
+CONTROL FLOW NODES (for loops, conditionals, iteration):
+12. Loop Over Items / Split in Batches (n8n-nodes-base.splitInBatches):
+Use when user mentions: "for each", "loop through", "iterate", "batch process", "one by one"
+{
+  "batchSize": 1,
+  "options": {}
+}
+Note: This node processes items in batches and can loop back to process all items.
+
+13. IF Node (n8n-nodes-base.if):
+Use when user mentions: "if", "only when", "conditional", "check if"
+{
+  "conditions": {
+    "boolean": [],
+    "number": [],
+    "string": [
+      {
+        "value1": "={{$json.status}}",
+        "operation": "equal",
+        "value2": "active"
+      }
+    ]
+  },
+  "combineOperation": "all"
+}
+
+14. Switch Node (n8n-nodes-base.switch):
+Use when user mentions: "switch", "multiple conditions", "different cases", "route based on"
+{
+  "mode": "rules",
+  "rules": {
+    "rules": [
+      {
+        "operation": "equal",
+        "value1": "={{$json.type}}",
+        "value2": "urgent"
+      }
+    ]
+  },
+  "fallbackOutput": 3
+}
+
+CONTROL FLOW EXAMPLES:
+- "Loop through each lead and send email" → Use splitInBatches before email step
+- "Only send if status is active" → Use IF node to check condition
+- "Route to different channels based on priority" → Use Switch node
+
 CRITICAL RULES:
 1. ONLY include services/nodes that the user EXPLICITLY mentioned
 2. DO NOT add extra services (e.g., don't add Slack if user didn't mention it)
@@ -406,6 +453,8 @@ CRITICAL RULES:
 4. For Salesforce data fetching, use "manual" trigger + Salesforce node as first action
 5. For AI content generation, use the Managed AI HTTP Request format shown above
 6. For email sending with AI content, ALWAYS use TWO steps: AI generation + emailSend
+7. When user mentions iteration/loops ("for each", "loop"), add a splitInBatches node
+8. When user mentions conditions ("if", "only when"), add an IF or Switch node
 7. NEVER try to send emails via HTTP request to /api/managed-ai/generate-content alone
 
 Respond with a JSON object containing:

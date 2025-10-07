@@ -7,11 +7,14 @@ import { DeploymentRepository, ExecutionRepository } from '../repositories/deplo
 import { CredentialRepository } from '../repositories/credential-repository';
 import { Pool } from 'pg';
 import { NotificationClient } from '../services/notification-client';
+import { getIntegration } from '../config/integrations';
+import { ExecutionMonitor } from '../services/execution-monitor';
 
 export function createDeployRouter(
   n8nClient: N8nApiClient,
   authService: AuthService,
-  dbPool: Pool
+  dbPool: Pool,
+  executionMonitor?: ExecutionMonitor
 ): Router {
   const router = Router();
   const authMiddleware = createAuthMiddleware(authService);
@@ -145,6 +148,46 @@ export function createDeployRouter(
   });
 
   /**
+   * POST /api/deploy/check-credentials
+   * Check if user has required credentials for a workflow (without deploying)
+   */
+  router.post('/check-credentials', authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const { workflow }: { workflow: N8nWorkflow } = req.body;
+      const userId = req.user!.userId;
+
+      if (!workflow || !workflow.nodes || workflow.nodes.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid workflow'
+        } as ApiResponse);
+      }
+
+      // Get user credentials from repository
+      const userCredentials = await credentialRepo.findByUser(userId);
+      
+      // Check if user has all required credentials
+      const credentialCheck = await checkRequiredCredentials(workflow, userCredentials, credentialRepo, userId);
+      
+      res.json({
+        success: true,
+        data: {
+          hasAllCredentials: credentialCheck.valid,
+          missingCredentials: credentialCheck.missing,
+          message: credentialCheck.message
+        }
+      } as ApiResponse);
+
+    } catch (error: any) {
+      console.error('[Check Credentials] Error:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to check credentials'
+      } as ApiResponse);
+    }
+  });
+
+  /**
    * POST /api/deploy/:workflowId/execute
    * Execute a deployed workflow
    */
@@ -180,6 +223,14 @@ export function createDeployRouter(
       }
 
       const result = await n8nClient.executeWorkflow(deployment.n8nWorkflowId, data);
+      
+      // Start monitoring execution for real-time node updates
+      if (executionMonitor && result.id) {
+        console.log(`[Execute] 🔍 Starting execution monitor for ${result.id}`);
+        executionMonitor.startMonitoring(result.id, workflowId, userId).catch(err => {
+          console.error('[Execute] Failed to start execution monitor:', err);
+        });
+      }
       
       // Update execution stats
       await deploymentRepo.updateExecutionStats(workflowId, true, false);
@@ -530,46 +581,53 @@ async function checkRequiredCredentials(
   userCredentials: any[],
   credentialRepo: CredentialRepository,
   userId: string
-): Promise<{ valid: boolean; missing: Array<{ nodeName: string; service: string; nodeType: string }>; message: string }> {
+): Promise<{ valid: boolean; missing: Array<{ nodeName: string; service: string; nodeType: string; n8nCredentialType: string; fields: any[] }>; message: string }> {
   const nodeServiceMapping: Record<string, string> = {
     'n8n-nodes-base.slack': 'slack',
     'n8n-nodes-base.gmail': 'gmail',
     'n8n-nodes-base.emailSend': 'smtp',
     'n8n-nodes-base.httpRequest': 'http',
     'n8n-nodes-base.postgres': 'postgres',
-    'n8n-nodes-base.googleSheets': 'googleSheets',
+    'n8n-nodes-base.googleSheets': 'googlesheets',
     'n8n-nodes-base.hubspot': 'hubspot',
-    'n8n-nodes-base.sendGrid': 'sendgrid'
+    'n8n-nodes-base.sendGrid': 'sendgrid',
+    'n8n-nodes-base.telegram': 'telegram',
+    'n8n-nodes-base.twilio': 'twilio'
   };
 
-  const serviceDisplayNames: Record<string, string> = {
-    slack: 'Slack',
-    gmail: 'Gmail',
-    smtp: 'Email (SMTP)',
-    http: 'HTTP Authentication',
-    postgres: 'PostgreSQL',
-    googleSheets: 'Google Sheets',
-    hubspot: 'HubSpot',
-    sendgrid: 'SendGrid'
-  };
-
-  const missing: Array<{ nodeName: string; service: string; nodeType: string }> = [];
+  const missing: Array<{ nodeName: string; service: string; nodeType: string; n8nCredentialType: string; fields: any[] }> = [];
 
   // Create a map of services user has credentials for
   const userServices = new Set(userCredentials.map(cred => cred.service));
 
   workflow.nodes.forEach(node => {
-    const service = nodeServiceMapping[node.type];
+    const serviceId = nodeServiceMapping[node.type];
     
     // If this node type requires credentials
-    if (service) {
+    if (serviceId) {
       // Check if user has credentials for this service
-      if (!userServices.has(service)) {
-        missing.push({
-          nodeName: node.name,
-          service: serviceDisplayNames[service] || service,
-          nodeType: node.type
-        });
+      if (!userServices.has(serviceId)) {
+        const integration = getIntegration(serviceId);
+        
+        if (integration) {
+          // Get field definitions from integration config
+          const fields = integration.apiKey?.fields.map(field => ({
+            name: field.name,
+            type: field.type === 'password' ? 'password' : field.type === 'number' ? 'number' : 'string',
+            required: field.required,
+            description: field.label,
+            placeholder: field.placeholder
+          })) || [];
+
+          missing.push({
+            nodeName: node.name,
+            service: integration.name,
+            nodeType: node.type,
+            n8nCredentialType: integration.n8nCredentialType,
+            fields,
+            required: true
+          } as any);
+        }
       }
     }
   });
@@ -582,7 +640,7 @@ async function checkRequiredCredentials(
   const serviceList = [...new Set(missing.map(m => m.service))].join(', ');
   const nodeList = missing.map(m => `• ${m.nodeName} (requires ${m.service})`).join('\n');
   
-  const message = `Please add credentials for the following services before deploying:\n\n${nodeList}\n\nGo to Settings > Credentials to add ${serviceList} credentials.`;
+  const message = `Please add credentials for the following services before deploying:\n\n${nodeList}\n\nAuthenticate with ${serviceList} to continue.`;
 
   return {
     valid: false,

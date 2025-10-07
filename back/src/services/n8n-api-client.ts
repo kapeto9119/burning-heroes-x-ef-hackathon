@@ -134,6 +134,19 @@ export class N8nApiClient {
   }
 
   /**
+   * Get a single execution by ID with full details
+   */
+  async getExecution(executionId: string): Promise<any> {
+    try {
+      const response = await this.axiosInstance.get(`/executions/${executionId}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('[n8n API] Failed to get execution:', error.response?.data || error.message);
+      throw new Error(`Failed to get execution: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  /**
    * Get workflow executions
    */
   async getExecutions(workflowId: string, limit: number = 10): Promise<ExecutionResult[]> {

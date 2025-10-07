@@ -61,6 +61,28 @@ export async function saveWorkflow(workflow: N8nWorkflow, token?: string) {
   }
 }
 
+export async function checkWorkflowCredentials(workflow: N8nWorkflow, token?: string) {
+  try {
+    if (!token) {
+      return { success: false, error: 'Authentication token required' };
+    }
+
+    const response = await fetch(`${API_URL}/api/deploy/check-credentials`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ workflow }),
+    });
+
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 export async function deployWorkflow(workflow: N8nWorkflow, token?: string) {
   try {
     if (!token) {

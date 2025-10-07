@@ -26,17 +26,15 @@ export class WorkflowGenerator {
    */
   async generateFromDescription(description: string): Promise<WorkflowGenerationResult> {
     try {
-      console.log('[Workflow Generator] Starting generation for:', description);
+      console.log('[Workflow Generator] 🚀 Generating workflow for:', description);
       
       // Step 1: Search for relevant templates (with real examples from 2,500+ templates)
       const templatesResult = await this.mcpClient.searchTemplates(description, 5);
       const templates = Array.isArray(templatesResult) ? templatesResult : [];
-      console.log(`[Workflow Generator] Found ${templates.length} relevant templates`);
       
       // Step 2: Search for relevant nodes (with real-world configuration examples)
       const nodesResult = await this.mcpClient.searchNodes(description, true);
       const nodes = Array.isArray(nodesResult) ? nodesResult : [];
-      console.log(`[Workflow Generator] Found ${nodes.length} relevant nodes`);
       
       // Step 3: Use AI to generate workflow structure using template examples
       const workflowPlan = await this.aiService.generateWorkflowFromDescription(
@@ -53,16 +51,9 @@ export class WorkflowGenerator {
       // Step 6: Lint and fix common issues
       const lintResult = lintWorkflow(workflow);
       workflow = lintResult.workflow;
-      if (lintResult.fixes.length > 0) {
-        console.log('[Workflow Generator] Applied fixes:', lintResult.fixes);
-      }
-      if (lintResult.warnings.length > 0) {
-        console.warn('[Workflow Generator] Warnings:', lintResult.warnings);
-      }
 
       // Step 6: Detect credential requirements
       const credentialRequirements = await this.credentialDetector.detectRequiredCredentials(workflow);
-      console.log(`[Workflow Generator] Detected ${credentialRequirements.length} credential requirements`);
 
       // Step 7: Validate the workflow
       const validation = await this.mcpClient.validateWorkflow(workflow);
@@ -143,11 +134,7 @@ export class WorkflowGenerator {
       }
     };
 
-    // Debug logging
-    console.log('[Workflow Generator] Created workflow with:');
-    console.log('  - Nodes:', nodes.map(n => `${n.name} (${n.id})`).join(', '));
-    console.log('  - Connections:', JSON.stringify(connections, null, 2));
-
+    console.log('[Workflow Generator] ✅ Created workflow with', nodes.length, 'nodes');
     return workflow;
   }
 
@@ -174,7 +161,6 @@ export class WorkflowGenerator {
     if (isFetchAction) {
       // This is actually a data-fetching action, not a trigger
       // Use manual trigger and let the first action node handle the data fetching
-      console.log('[Workflow Generator] Using manual trigger for data-fetching workflow');
       return {
         id: this.generateNodeId(),
         name: 'Manual Trigger',
@@ -230,7 +216,6 @@ export class WorkflowGenerator {
     
     if (isAINode) {
       // Use MANAGED AI via HTTP Request node - no user credentials needed!
-      console.log(`[Workflow Generator] 🔥 Using Managed AI (Fireworks) for: ${step.action}`);
       
       return {
         id: this.generateNodeId(),
@@ -240,6 +225,65 @@ export class WorkflowGenerator {
         parameters: this.getManagedAINodeParameters(step),
         credentials: {}
       };
+    }
+    
+    // Control flow nodes
+    const controlFlowKeywords = {
+      'loop': ['loop', 'for each', 'iterate', 'batch', 'one by one'],
+      'if': ['if', 'only when', 'conditional', 'check if', 'when'],
+      'switch': ['switch', 'multiple conditions', 'different cases', 'route based on']
+    };
+    
+    // Check if this is a control flow node
+    for (const [flowType, keywords] of Object.entries(controlFlowKeywords)) {
+      if (keywords.some(keyword => stepText.includes(keyword))) {
+        console.log(`[Workflow Generator] 🔀 Control flow: ${flowType}`);
+        
+        if (flowType === 'loop') {
+          return {
+            id: this.generateNodeId(),
+            name: step.action || 'Loop Over Items',
+            type: 'n8n-nodes-base.splitInBatches',
+            position: [x, y],
+            parameters: {
+              batchSize: step.config?.batchSize || 1,
+              options: {}
+            },
+            credentials: {}
+          };
+        } else if (flowType === 'if') {
+          return {
+            id: this.generateNodeId(),
+            name: step.action || 'IF',
+            type: 'n8n-nodes-base.if',
+            position: [x, y],
+            parameters: step.config || {
+              conditions: {
+                boolean: [],
+                number: [],
+                string: []
+              },
+              combineOperation: 'all'
+            },
+            credentials: {}
+          };
+        } else if (flowType === 'switch') {
+          return {
+            id: this.generateNodeId(),
+            name: step.action || 'Switch',
+            type: 'n8n-nodes-base.switch',
+            position: [x, y],
+            parameters: step.config || {
+              mode: 'rules',
+              rules: {
+                rules: []
+              },
+              fallbackOutput: 3
+            },
+            credentials: {}
+          };
+        }
+      }
     }
     
     // Common service node type mapping (prevent wrong nodes like emailReadImap)
@@ -346,7 +390,6 @@ export class WorkflowGenerator {
     
     // Special case: email sending (prevent emailReadImap!)
     if (actionLower.includes('send') && (serviceLower.includes('email') || actionLower.includes('email'))) {
-      console.log(`[Workflow Generator] Using emailSend for: ${step.action}`);
       return {
         id: this.generateNodeId(),
         name: step.action || 'Send Email',
@@ -360,7 +403,6 @@ export class WorkflowGenerator {
     // Check service mapping
     for (const [service, config] of Object.entries(serviceNodeMap)) {
       if (serviceLower.includes(service)) {
-        console.log(`[Workflow Generator] Matched service "${service}" -> ${config.type}`);
         return {
           id: this.generateNodeId(),
           name: step.action || step.service,
@@ -379,9 +421,6 @@ export class WorkflowGenerator {
         if (searchResults.length > 0) {
           // Use the first (most relevant) result
           nodeType = searchResults[0].nodeType;
-          console.log(`[Workflow Generator] Found node type for "${step.service}": ${nodeType}`);
-        } else {
-          console.warn(`[Workflow Generator] No node found for "${step.service}", using HTTP Request`);
         }
       } catch (error) {
         console.error(`[Workflow Generator] Error searching for node type:`, error);
@@ -615,7 +654,6 @@ export class WorkflowGenerator {
     );
 
     if (actionNodes.length === 0) {
-      console.log('[Workflow Generator] No action nodes found, skipping callback webhook');
       return workflow;
     }
 
@@ -670,7 +708,6 @@ export class WorkflowGenerator {
       index: 0
     });
 
-    console.log('[Workflow Generator] ✅ Added execution callback webhook');
     return workflow;
   }
 
@@ -680,7 +717,7 @@ export class WorkflowGenerator {
    */
   async modifyWorkflow(workflow: N8nWorkflow, modificationRequest: string): Promise<N8nWorkflow> {
     try {
-      console.log('[Workflow Generator] Modifying workflow:', modificationRequest);
+      console.log('[Workflow Generator] 🔧 Modifying workflow');
       
       const prompt = `You are modifying an n8n workflow. Given the current workflow and modification request, return the COMPLETE modified workflow.
 
@@ -733,12 +770,8 @@ Return the complete modified workflow as valid JSON.`;
 
       // Lint the modified workflow
       const lintResult = lintWorkflow(modifiedWorkflow);
-      if (lintResult.fixes.length > 0) {
-        console.log('[Workflow Generator] Applied fixes to modified workflow:', lintResult.fixes);
-      }
 
       console.log('[Workflow Generator] ✅ Workflow modified successfully');
-      console.log('[Workflow Generator] Modified nodes:', lintResult.workflow.nodes.map(n => n.name).join(', '));
       
       return lintResult.workflow;
     } catch (error: any) {
