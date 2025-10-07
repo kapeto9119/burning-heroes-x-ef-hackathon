@@ -9,9 +9,11 @@ import {
 export class AIService {
   private openai: OpenAI;
   private systemPrompt: string;
+  private platformSummaryProvider?: () => Promise<string>;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, platformSummaryProvider?: () => Promise<string>) {
     this.openai = new OpenAI({ apiKey });
+    this.platformSummaryProvider = platformSummaryProvider;
 
     this.systemPrompt = `You are an expert n8n workflow automation assistant.
 
@@ -55,7 +57,11 @@ Be decisive, concise, and build-first.`;
         userMessage
       );
 
-      // Enhanced system prompt with conversation awareness
+      // Enhanced system prompt with conversation awareness + platform knowledge
+      const platformSummary = this.platformSummaryProvider
+        ? await this.platformSummaryProvider()
+        : undefined;
+
       const enhancedSystemPrompt = `${this.systemPrompt}
 
 CURRENT CONVERSATION STATE:
@@ -66,6 +72,8 @@ ${
     ? "⚠️ QUESTION BUDGET EXCEEDED: You already asked a question. DO NOT ask another. Build with defaults instead."
     : ""
 }
+
+${platformSummary ? `PLATFORM KNOWLEDGE:\n${platformSummary}\n` : ""}
 
 CRITICAL: Before asking ANY question, check if the information is already provided above. DO NOT re-ask for information that's already known.`;
 

@@ -8,6 +8,7 @@ import cookieParser from "cookie-parser";
 import { createServer } from "http";
 import { AIService } from "./services/ai-service";
 import { N8nMCPClient } from "./services/n8n-mcp-client";
+import { PlatformKnowledgeService } from "./services/platform-knowledge-service";
 import { N8nApiClient } from "./services/n8n-api-client";
 import { AuthService } from "./services/auth-service";
 import { WorkflowGenerator } from "./services/workflow-generator";
@@ -28,6 +29,7 @@ import { VapiService } from "./services/vapi-service";
 import billingRouter from "./routes/billing";
 import { createManagedAIRouter } from "./routes/managed-ai";
 import { pool } from "./db";
+import { createPlatformRouter } from "./routes/platform";
 
 // Validate required environment variables
 const requiredEnvVars = ["OPENAI_API_KEY", "JWT_SECRET"];
@@ -83,9 +85,13 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // Initialize services
 console.log("🚀 Initializing services...");
 
-const aiService = new AIService(process.env.OPENAI_API_KEY!);
-const authService = new AuthService(process.env.JWT_SECRET!);
 const mcpClient = new N8nMCPClient();
+const platformKnowledge = new PlatformKnowledgeService(mcpClient);
+platformKnowledge.startAutoRefresh();
+const aiService = new AIService(process.env.OPENAI_API_KEY!, () =>
+  platformKnowledge.getSummaryText()
+);
+const authService = new AuthService(process.env.JWT_SECRET!);
 const workflowGenerator = new WorkflowGenerator(mcpClient, aiService);
 const oauthService = new OAuthService();
 const credentialValidator = new CredentialValidator();
@@ -186,6 +192,7 @@ app.use(
 );
 app.use("/api/billing", billingRouter);
 app.use("/api/managed-ai", createManagedAIRouter(pool));
+app.use("/api/platform", createPlatformRouter(platformKnowledge));
 app.use("/api/n8n-webhooks", createN8nWebhookRouter(pool));
 
 // Deploy routes (only if n8n is configured)
