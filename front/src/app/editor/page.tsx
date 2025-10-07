@@ -209,7 +209,7 @@ export default function EditorPage() {
         id: `workflow_${Date.now()}`,
         text: `✅ Workflow created! It has ${
           workflow?.nodes?.length || 0
-        } nodes. Ready to deploy?`,
+        } nodes. Ready to save or deploy?`,
         isUser: false,
         timestamp: new Date(),
       };
@@ -221,7 +221,8 @@ export default function EditorPage() {
     },
     onDeployReady: (workflow) => {
       console.log("[Editor] Ready to deploy via voice:", workflow);
-      handleDeploy();
+      // Use the same deploy flow as the button - checks credentials first
+      handleDeployClick();
     },
   });
 
