@@ -420,6 +420,16 @@ export class CredentialValidator {
       const secureFlag = (val: any) => val === true || val === 'true' || val === 1 || val === '1';
       const secure: boolean = secureFlag(data.secure) || port === 465;
 
+      console.log('[SMTP Validator] Received data:', {
+        user: data.user,
+        host: data.host,
+        port: data.port,
+        secure: data.secure,
+        normalizedPort: port,
+        normalizedSecure: secure,
+        passwordLength: data.password?.length
+      });
+
       // Create transporter
       const transporter = nodemailer.createTransport({
         host: data.host,
@@ -432,6 +442,7 @@ export class CredentialValidator {
         connectionTimeout: 5000
       });
 
+      console.log('[SMTP Validator] Attempting verification...');
       // Verify connection
       await transporter.verify();
 
@@ -444,9 +455,17 @@ export class CredentialValidator {
         }
       };
     } catch (error: any) {
+      console.error('[SMTP Validator] Verification failed:', {
+        code: error?.code,
+        message: error?.message,
+        command: error?.command,
+        response: error?.response,
+        responseCode: error?.responseCode
+      });
+
       const message =
         error?.code === 'EAUTH'
-          ? 'Invalid email credentials'
+          ? 'Invalid email credentials. For Gmail, use an App Password (not your regular password). Generate one at: https://myaccount.google.com/apppasswords'
           : error?.code === 'ECONNECTION'
           ? 'Cannot connect to SMTP server'
           : /wrong version number/i.test(error?.message || '')
