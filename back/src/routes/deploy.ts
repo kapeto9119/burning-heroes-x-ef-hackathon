@@ -82,9 +82,43 @@ export function createDeployRouter(
         ? n8nClient.getWebhookUrl(webhookNode.parameters.path as string)
         : undefined;
 
-      // Store deployment record in database
-      // Generate a UUID for the workflow if it doesn't have one
+      // First, save the workflow to the workflows table
       const workflowId = workflow.id || crypto.randomUUID();
+      
+      // Extract node types and required credentials for quick reference
+      const nodeTypes = workflow.nodes.map(n => n.type);
+      const requiredCredentialTypes: string[] = [];
+      workflow.nodes.forEach(node => {
+        if (node.credentials && Object.keys(node.credentials).length > 0) {
+          Object.keys(node.credentials).forEach(credType => {
+            if (!requiredCredentialTypes.includes(credType)) {
+              requiredCredentialTypes.push(credType);
+            }
+          });
+        }
+      });
+      
+      // Insert into workflows table
+      await dbPool.query(
+        `INSERT INTO workflows (id, user_id, name, workflow_data, node_types, required_credential_types, is_active)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (id) DO UPDATE SET
+           workflow_data = EXCLUDED.workflow_data,
+           node_types = EXCLUDED.node_types,
+           required_credential_types = EXCLUDED.required_credential_types,
+           updated_at = NOW()`,
+        [
+          workflowId,
+          userId,
+          workflow.name || 'Untitled Workflow',
+          JSON.stringify(workflow),
+          nodeTypes,
+          requiredCredentialTypes,
+          false // Not active yet
+        ]
+      );
+      
+      // Now create the deployment record
       await deploymentRepo.create({
         workflowId,
         n8nWorkflowId,
