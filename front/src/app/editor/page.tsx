@@ -552,6 +552,10 @@ export default function EditorPage() {
         // Use the real chat API with conversation history
         const result = await sendChatMessage(messageText, token, history);
 
+        console.log('[Editor] 🔍 API Response:', result);
+        console.log('[Editor] 🔍 Success?', result.success);
+        console.log('[Editor] 🔍 Data:', result.data);
+
         if (result.success && result.data) {
           // The response format is { message, workflow, suggestions }
           const aiResponse = result.data.message || result.data.response;
@@ -572,8 +576,11 @@ export default function EditorPage() {
             console.log('[Editor] 📊 Nodes count:', result.data.workflow.nodes?.length);
             setWorkflow(result.data.workflow);
             setDeploymentStatus("idle");
+          } else {
+            console.log('[Editor] ⚠️ No workflow in response!');
           }
         } else {
+          console.log('[Editor] ❌ API call failed:', result.error);
           throw new Error(result.error || "Chat failed");
         }
       } catch (error: any) {
