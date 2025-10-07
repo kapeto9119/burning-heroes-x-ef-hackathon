@@ -27,10 +27,10 @@ export function createDeployRouter(
   const notificationClient = new NotificationClient();
 
   /**
-   * POST /api/deploy
-   * Deploy a workflow to n8n
+   * POST /api/deploy/save-draft
+   * Save workflow as draft (no n8n deployment)
    */
-  router.post("/", authMiddleware, async (req: Request, res: Response) => {
+  router.post('/save-draft', authMiddleware, async (req: Request, res: Response) => {
     try {
       const { workflow }: { workflow: N8nWorkflow } = req.body;
       const userId = req.user!.userId;
