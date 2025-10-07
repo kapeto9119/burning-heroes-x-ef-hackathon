@@ -225,9 +225,12 @@ export class CredentialRepository {
   /**
    * Decrypt credential data
    */
-  private decrypt(encrypted: string): any {
+  private decrypt(encrypted: string | any): any {
     try {
-      const { iv, data } = JSON.parse(encrypted);
+      // PostgreSQL may return JSON columns as objects, not strings
+      const parsed = typeof encrypted === 'string' ? JSON.parse(encrypted) : encrypted;
+      const { iv, data } = parsed;
+      
       const decipher = crypto.createDecipheriv(
         this.algorithm,
         this.encryptionKey,
