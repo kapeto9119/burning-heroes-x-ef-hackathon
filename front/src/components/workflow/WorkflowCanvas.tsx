@@ -233,11 +233,9 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
   useEffect(() => {
     if (!enableRealTimeUpdates || !workflow?.workflowId) return;
 
-    console.log('[WorkflowCanvas] 🔌 Subscribing to workflow:', workflow.workflowId);
     subscribeToWorkflow(workflow.workflowId);
 
     return () => {
-      console.log('[WorkflowCanvas] 🔌 Unsubscribing from workflow:', workflow.workflowId);
       unsubscribeFromWorkflow(workflow.workflowId);
     };
   }, [enableRealTimeUpdates, workflow?.workflowId, subscribeToWorkflow, unsubscribeFromWorkflow]);
@@ -247,7 +245,6 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
     if (!enableRealTimeUpdates) return;
 
     const handleNodeStarted = (event: NodeEvent) => {
-      console.log('[WorkflowCanvas] 🟡 Node started:', event.nodeName);
       setNodeStates(prev => new Map(prev).set(event.nodeName, 'running'));
       updateNodeStatus(event.nodeName, 'running');
       
@@ -262,7 +259,6 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
     };
 
     const handleNodeCompleted = (event: NodeEvent) => {
-      console.log(`[WorkflowCanvas] ${event.status === 'success' ? '✅' : '❌'} Node completed:`, event.nodeName);
       const status = event.status === 'success' ? 'success' : 'error';
       setNodeStates(prev => new Map(prev).set(event.nodeName, status));
       updateNodeStatus(event.nodeName, status);
@@ -275,13 +271,11 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
     };
 
     const handleNodeRunning = (event: NodeEvent) => {
-      console.log('[WorkflowCanvas] ⚡ Node running:', event.nodeName);
       setNodeStates(prev => new Map(prev).set(event.nodeName, 'running'));
       updateNodeStatus(event.nodeName, 'running');
     };
 
     const handleNodeData = (event: NodeEvent) => {
-      console.log('[WorkflowCanvas] 📊 Node data:', event.nodeName);
       setLiveNodeData(prev => new Map(prev).set(event.nodeName, {
         inputData: event.inputData,
         outputData: event.outputData,
@@ -455,20 +449,12 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
       }
     } else {
       // Use n8n connections
-      console.log('[WorkflowCanvas] Processing connections:', workflow.connections);
-      console.log('[WorkflowCanvas] Available nodes:', workflow.nodes.map((n: any) => n.name));
-      
       Object.entries(workflow.connections).forEach(([sourceNode, connections]: any) => {
-        console.log('[WorkflowCanvas] Processing source node:', sourceNode);
         const sourceNodeData = workflow.nodes.find((n: any) => n.name === sourceNode);
-        console.log('[WorkflowCanvas] Source node data:', sourceNodeData);
         
         if (connections.main && connections.main[0]) {
-          console.log('[WorkflowCanvas] Main connections:', connections.main[0]);
           connections.main[0].forEach((connection: any) => {
-            console.log('[WorkflowCanvas] Processing connection:', connection);
             const targetNodeData = workflow.nodes.find((n: any) => n.name === connection.node);
-            console.log('[WorkflowCanvas] Target node data:', targetNodeData);
             
             if (sourceNodeData && targetNodeData) {
               const edge = {
@@ -488,13 +474,7 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
                   color: '#8b5cf6',
                 },
               };
-              console.log('[WorkflowCanvas] Creating edge:', edge);
               flowEdges.push(edge);
-              console.log('[WorkflowCanvas] ✓ Connected:', sourceNode, '→', connection.node);
-              console.log('[WorkflowCanvas] Total edges now:', flowEdges.length);
-            } else {
-              console.warn('[WorkflowCanvas] ✗ Could not find nodes for connection:', sourceNode, '→', connection.node);
-              console.warn('  - Source node found:', !!sourceNodeData, sourceNode);
               console.warn('  - Target node found:', !!targetNodeData, connection.node);
             }
           });
@@ -509,7 +489,6 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
     // This ensures handles are positioned correctly before edges connect
     setTimeout(() => {
       setEdges(flowEdges);
-      console.log('[WorkflowCanvas] Set edges:', flowEdges.length);
       
       // Fit view after edges are added and force update
       setTimeout(() => {
@@ -522,8 +501,6 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
         }
       }, isPreview ? 100 : 50);
     }, isPreview ? 200 : 50);
-    
-    console.log('[WorkflowCanvas] Set nodes:', flowNodes.length);
     
     // Detect control flow groups
     detectControlFlowGroups(flowNodes, workflow.connections || {});
@@ -576,7 +553,6 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
     });
     
     setControlFlowGroups(groups);
-    console.log('[WorkflowCanvas] Detected control flow groups:', groups);
   }, []);
 
   return (
@@ -851,7 +827,6 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
                       <button
                         onClick={() => {
                           // Save changes
-                          console.log('Saving schedule changes:', editedParameters);
                           alert('Schedule updated! (Note: In production, this would update via API)');
                           setIsEditingNode(false);
                         }}

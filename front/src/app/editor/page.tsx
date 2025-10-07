@@ -199,8 +199,6 @@ export default function EditorPage() {
     assistantId: process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID || "",
     userId: user?.id, // Pass authenticated user ID to Vapi
     onWorkflowGenerated: (workflow) => {
-      console.log("[Editor] 🎉 Workflow generated via voice!", workflow);
-      console.log("[Editor] Workflow has", workflow?.nodes?.length, "nodes");
       setWorkflow(workflow);
       setDeploymentStatus("idle");
 
@@ -216,11 +214,9 @@ export default function EditorPage() {
       setMessages((prev) => [...prev, workflowMessage]);
     },
     onWorkflowUpdated: (workflow) => {
-      console.log("[Editor] Workflow updated via voice:", workflow);
       setWorkflow(workflow);
     },
     onDeployReady: (workflow) => {
-      console.log("[Editor] Ready to deploy via voice:", workflow);
       // Use the same deploy flow as the button - checks credentials first
       handleDeployClick();
     },
@@ -264,7 +260,6 @@ export default function EditorPage() {
         // Check auth before sending
         const token = getAuthToken();
         if (!token) {
-          console.log("[Editor] No auth token, cannot send message");
           setShowAuthModal(true);
           return;
         }
@@ -303,7 +298,6 @@ export default function EditorPage() {
     // Check auth before generating
     const token = getAuthToken();
     if (!token) {
-      console.log("[Editor] No auth token, cannot generate workflow");
       setShowAuthModal(true);
       return;
     }
@@ -526,7 +520,6 @@ export default function EditorPage() {
         // Check auth before sending
         const token = localStorage.getItem("auth_token");
         if (!token) {
-          console.log("[Editor] No auth token, cannot send message");
           setShowAuthModal(true);
           setIsTyping(false);
           return;
@@ -574,6 +567,9 @@ export default function EditorPage() {
 
           // If the AI generated a workflow, show it
           if (result.data.workflow) {
+            console.log('[Editor] 📊 Workflow received:', result.data.workflow);
+            console.log('[Editor] 📊 Workflow nodes:', result.data.workflow.nodes);
+            console.log('[Editor] 📊 Nodes count:', result.data.workflow.nodes?.length);
             setWorkflow(result.data.workflow);
             setDeploymentStatus("idle");
           }
@@ -898,7 +894,12 @@ export default function EditorPage() {
                   )}
                 </div>
                 <div className="flex-1 relative overflow-hidden">
-                  {workflow && workflow.nodes && workflow.nodes.length > 0 ? (
+                  {(() => {
+                    console.log('[Editor] 🎨 Render check - workflow:', workflow);
+                    console.log('[Editor] 🎨 Has nodes?', workflow?.nodes);
+                    console.log('[Editor] 🎨 Nodes length:', workflow?.nodes?.length);
+                    return workflow && workflow.nodes && workflow.nodes.length > 0;
+                  })() ? (
                     <WorkflowCanvas
                       key={workflow.id || workflow.name}
                       workflow={workflow}
