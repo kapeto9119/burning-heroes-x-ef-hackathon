@@ -8,11 +8,13 @@ import { CredentialRepository } from '../repositories/credential-repository';
 import { Pool } from 'pg';
 import { NotificationClient } from '../services/notification-client';
 import { getIntegration } from '../config/integrations';
+import { ExecutionMonitor } from '../services/execution-monitor';
 
 export function createDeployRouter(
   n8nClient: N8nApiClient,
   authService: AuthService,
-  dbPool: Pool
+  dbPool: Pool,
+  executionMonitor?: ExecutionMonitor
 ): Router {
   const router = Router();
   const authMiddleware = createAuthMiddleware(authService);
@@ -221,6 +223,14 @@ export function createDeployRouter(
       }
 
       const result = await n8nClient.executeWorkflow(deployment.n8nWorkflowId, data);
+      
+      // Start monitoring execution for real-time node updates
+      if (executionMonitor && result.id) {
+        console.log(`[Execute] 🔍 Starting execution monitor for ${result.id}`);
+        executionMonitor.startMonitoring(result.id, workflowId, userId).catch(err => {
+          console.error('[Execute] Failed to start execution monitor:', err);
+        });
+      }
       
       // Update execution stats
       await deploymentRepo.updateExecutionStats(workflowId, true, false);

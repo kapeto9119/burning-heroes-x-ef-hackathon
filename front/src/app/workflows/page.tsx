@@ -525,6 +525,7 @@ export default function WorkflowsPage() {
                 workflow={previewWorkflow} 
                 isGenerating={false}
                 latestExecution={previewExecutions.length > 0 ? previewExecutions[0] : undefined}
+                enableRealTimeUpdates={true}
               />
             </div>
             

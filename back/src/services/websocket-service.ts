@@ -197,6 +197,106 @@ export class WebSocketService {
   }
 
   /**
+   * Emit node started event
+   */
+  emitNodeStarted(
+    userId: string,
+    workflowId: string,
+    executionId: string,
+    nodeName: string
+  ) {
+    const event = {
+      type: 'node:started',
+      workflowId,
+      executionId,
+      nodeName,
+      timestamp: new Date()
+    };
+
+    this.io.to(`user:${userId}`).emit('node:started', event);
+    this.io.to(`workflow:${workflowId}`).emit('node:started', event);
+
+    console.log(`[WebSocket] Node started: ${nodeName} in execution ${executionId}`);
+  }
+
+  /**
+   * Emit node completed event
+   */
+  emitNodeCompleted(
+    userId: string,
+    workflowId: string,
+    executionId: string,
+    nodeName: string,
+    status: 'success' | 'error',
+    data?: any,
+    error?: string
+  ) {
+    const event = {
+      type: 'node:completed',
+      workflowId,
+      executionId,
+      nodeName,
+      status,
+      data,
+      error,
+      timestamp: new Date()
+    };
+
+    this.io.to(`user:${userId}`).emit('node:completed', event);
+    this.io.to(`workflow:${workflowId}`).emit('node:completed', event);
+
+    console.log(`[WebSocket] Node completed: ${nodeName} - ${status}`);
+  }
+
+  /**
+   * Emit node running event (progress update)
+   */
+  emitNodeRunning(
+    userId: string,
+    workflowId: string,
+    executionId: string,
+    nodeName: string,
+    progress?: number
+  ) {
+    const event = {
+      type: 'node:running',
+      workflowId,
+      executionId,
+      nodeName,
+      progress,
+      timestamp: new Date()
+    };
+
+    this.io.to(`user:${userId}`).emit('node:running', event);
+    this.io.to(`workflow:${workflowId}`).emit('node:running', event);
+  }
+
+  /**
+   * Emit node data update (real-time data preview)
+   */
+  emitNodeData(
+    userId: string,
+    workflowId: string,
+    executionId: string,
+    nodeName: string,
+    inputData?: any,
+    outputData?: any
+  ) {
+    const event = {
+      type: 'node:data',
+      workflowId,
+      executionId,
+      nodeName,
+      inputData,
+      outputData,
+      timestamp: new Date()
+    };
+
+    this.io.to(`user:${userId}`).emit('node:data', event);
+    this.io.to(`workflow:${workflowId}`).emit('node:data', event);
+  }
+
+  /**
    * Get connected users count
    */
   getConnectedUsersCount(): number {

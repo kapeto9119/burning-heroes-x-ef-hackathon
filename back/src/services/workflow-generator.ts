@@ -242,6 +242,65 @@ export class WorkflowGenerator {
       };
     }
     
+    // Control flow nodes
+    const controlFlowKeywords = {
+      'loop': ['loop', 'for each', 'iterate', 'batch', 'one by one'],
+      'if': ['if', 'only when', 'conditional', 'check if', 'when'],
+      'switch': ['switch', 'multiple conditions', 'different cases', 'route based on']
+    };
+    
+    // Check if this is a control flow node
+    for (const [flowType, keywords] of Object.entries(controlFlowKeywords)) {
+      if (keywords.some(keyword => stepText.includes(keyword))) {
+        console.log(`[Workflow Generator] 🔀 Using ${flowType} control flow for: ${step.action}`);
+        
+        if (flowType === 'loop') {
+          return {
+            id: this.generateNodeId(),
+            name: step.action || 'Loop Over Items',
+            type: 'n8n-nodes-base.splitInBatches',
+            position: [x, y],
+            parameters: {
+              batchSize: step.config?.batchSize || 1,
+              options: {}
+            },
+            credentials: {}
+          };
+        } else if (flowType === 'if') {
+          return {
+            id: this.generateNodeId(),
+            name: step.action || 'IF',
+            type: 'n8n-nodes-base.if',
+            position: [x, y],
+            parameters: step.config || {
+              conditions: {
+                boolean: [],
+                number: [],
+                string: []
+              },
+              combineOperation: 'all'
+            },
+            credentials: {}
+          };
+        } else if (flowType === 'switch') {
+          return {
+            id: this.generateNodeId(),
+            name: step.action || 'Switch',
+            type: 'n8n-nodes-base.switch',
+            position: [x, y],
+            parameters: step.config || {
+              mode: 'rules',
+              rules: {
+                rules: []
+              },
+              fallbackOutput: 3
+            },
+            credentials: {}
+          };
+        }
+      }
+    }
+    
     // Common service node type mapping (prevent wrong nodes like emailReadImap)
     const serviceNodeMap: Record<string, { type: string, defaultParams?: any }> = {
       'salesforce': { 

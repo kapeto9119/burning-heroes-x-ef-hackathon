@@ -279,6 +279,7 @@ export default function WorkflowTestPage() {
                     workflow={workflow}
                     isGenerating={false}
                     latestExecution={currentExecution}
+                    enableRealTimeUpdates={true}
                   />
                 </div>
               </motion.div>

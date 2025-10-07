@@ -16,6 +16,20 @@ export interface ExecutionEvent {
   timestamp: Date;
 }
 
+export interface NodeEvent {
+  type: "node:started" | "node:completed" | "node:running" | "node:data";
+  workflowId: string;
+  executionId: string;
+  nodeName: string;
+  status?: "success" | "error";
+  data?: any;
+  inputData?: any;
+  outputData?: any;
+  error?: string;
+  progress?: number;
+  timestamp: Date;
+}
+
 export interface WorkflowEvent {
   type: "workflow:deployed" | "workflow:status_changed";
   workflowId: string;
@@ -100,6 +114,27 @@ export function useWebSocket() {
       console.log("[WebSocket] Workflow status changed:", event);
       setLastEvent(event);
       notifyListeners("workflow:status_changed", event);
+    });
+
+    // Listen to node-level events
+    socket.on("node:started", (event: NodeEvent) => {
+      console.log("[WebSocket] 🟡 Node started:", event.nodeName);
+      notifyListeners("node:started", event);
+    });
+
+    socket.on("node:completed", (event: NodeEvent) => {
+      console.log(`[WebSocket] ${event.status === 'success' ? '✅' : '❌'} Node completed:`, event.nodeName);
+      notifyListeners("node:completed", event);
+    });
+
+    socket.on("node:running", (event: NodeEvent) => {
+      console.log("[WebSocket] ⚡ Node running:", event.nodeName);
+      notifyListeners("node:running", event);
+    });
+
+    socket.on("node:data", (event: NodeEvent) => {
+      console.log("[WebSocket] 📊 Node data:", event.nodeName);
+      notifyListeners("node:data", event);
     });
 
     return () => {

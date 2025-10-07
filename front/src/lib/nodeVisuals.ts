@@ -13,6 +13,7 @@ import {
   Server, Cpu, HardDrive, Package, Boxes, Layers, Grid, List,
   CheckSquare, Clock, AlertCircle, Info, HelpCircle, Star, Heart,
   Send, Download, Upload, Share2, Copy, Edit, Trash2, Eye, EyeOff,
+  Repeat, GitMerge, Split, ArrowRightLeft,
   type LucideIcon
 } from 'lucide-react';
 
@@ -89,6 +90,13 @@ const categoryVisuals: Record<string, { icon: LucideIcon; color: string }> = {
   'ai': { icon: Sparkles, color: 'from-purple-500/20 to-pink-500/20 border-purple-500/50' },
   'openai': { icon: Sparkles, color: 'from-green-500/20 to-emerald-500/20 border-green-500/50' },
   
+  // Control Flow
+  'loop': { icon: Repeat, color: 'from-indigo-500/20 to-purple-500/20 border-indigo-500/50' },
+  'splitinbatches': { icon: Repeat, color: 'from-indigo-500/20 to-purple-500/20 border-indigo-500/50' },
+  'if': { icon: GitMerge, color: 'from-yellow-500/20 to-orange-500/20 border-yellow-500/50' },
+  'switch': { icon: Split, color: 'from-cyan-500/20 to-blue-500/20 border-cyan-500/50' },
+  'merge': { icon: GitMerge, color: 'from-green-500/20 to-emerald-500/20 border-green-500/50' },
+  
   // Default fallback
   'default': { icon: Sparkles, color: 'from-gray-500/20 to-gray-600/20 border-gray-500/50' }
 };
@@ -158,4 +166,27 @@ export function isTriggerNode(nodeType: string): boolean {
   return lowerType.includes('trigger') || 
          lowerType.includes('webhook') || 
          lowerType.includes('schedule');
+}
+
+/**
+ * Check if a node is a control flow node (loop, if, switch)
+ */
+export function isControlFlowNode(nodeType: string): boolean {
+  const lowerType = nodeType.toLowerCase();
+  return lowerType.includes('splitinbatches') || 
+         lowerType.includes('if') || 
+         lowerType.includes('switch') ||
+         lowerType.includes('merge');
+}
+
+/**
+ * Get control flow type for a node
+ */
+export function getControlFlowType(nodeType: string): 'loop' | 'if' | 'switch' | 'merge' | null {
+  const lowerType = nodeType.toLowerCase();
+  if (lowerType.includes('splitinbatches')) return 'loop';
+  if (lowerType.includes('if')) return 'if';
+  if (lowerType.includes('switch')) return 'switch';
+  if (lowerType.includes('merge')) return 'merge';
+  return null;
 }
