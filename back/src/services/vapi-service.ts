@@ -343,7 +343,7 @@ export class VapiService {
 
       console.log(
         "[Vapi Service] ✅ Workflow created in n8n with ID:",
-        workflowId
+        n8nWorkflowId
       );
 
       // Update session with n8n workflow ID
