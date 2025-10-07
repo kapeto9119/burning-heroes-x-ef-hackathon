@@ -1,10 +1,14 @@
-import { Router, Request, Response } from 'express';
-import { VapiService } from '../services/vapi-service';
-import { VapiWebhookRequest, VapiAssistantConfig } from '../types/vapi';
-import { ApiResponse } from '../types';
-import { vapiAuthMiddleware } from '../middleware/vapi-auth';
+import { Router, Request, Response } from "express";
+import { VapiService } from "../services/vapi-service";
+import { PlatformKnowledgeService } from "../services/platform-knowledge-service";
+import { VapiWebhookRequest, VapiAssistantConfig } from "../types/vapi";
+import { ApiResponse } from "../types";
+import { vapiAuthMiddleware } from "../middleware/vapi-auth";
 
-export function createVoiceRouter(vapiService: VapiService): Router {
+export function createVoiceRouter(
+  vapiService: VapiService,
+  platformKnowledge?: PlatformKnowledgeService
+): Router {
   const router = Router();
 
   /**
@@ -12,92 +16,106 @@ export function createVoiceRouter(vapiService: VapiService): Router {
    * Handle Vapi function calls
    * Protected by Vapi webhook authentication
    */
-  router.post('/functions', vapiAuthMiddleware, async (req: Request, res: Response) => {
-    try {
-      const webhookData: VapiWebhookRequest = req.body;
-      const message = webhookData.message;
+  router.post(
+    "/functions",
+    vapiAuthMiddleware,
+    async (req: Request, res: Response) => {
+      try {
+        const webhookData: VapiWebhookRequest = req.body;
+        const message = webhookData.message;
 
-      console.log('[Voice API] 📨 Received webhook!');
-      console.log('[Voice API] Message type:', message.type);
-      console.log('[Voice API] Full webhook data:', JSON.stringify(webhookData, null, 2));
-
-      // Handle function calls
-      if (message.type === 'function-call' && message.functionCall) {
-        // Extract user ID from Vapi metadata or auth header
-        const userId = webhookData.call?.metadata?.userId || 
-                       req.user?.userId;
-        const callId = webhookData.call?.id || 'unknown';
-
-        console.log('[Voice API] 🔧 Processing function call:', message.functionCall.name);
-        console.log('[Voice API] 👤 User ID:', userId);
-
-        const result = await vapiService.handleFunctionCall(
-          message.functionCall,
-          callId,
-          userId
+        console.log("[Voice API] 📨 Received webhook!");
+        console.log("[Voice API] Message type:", message.type);
+        console.log(
+          "[Voice API] Full webhook data:",
+          JSON.stringify(webhookData, null, 2)
         );
 
-        console.log('[Voice API] ✅ Function result:', JSON.stringify(result, null, 2));
+        // Handle function calls
+        if (message.type === "function-call" && message.functionCall) {
+          // Extract user ID from Vapi metadata or auth header
+          const userId = webhookData.call?.metadata?.userId || req.user?.userId;
+          const callId = webhookData.call?.id || "unknown";
 
-        // Return result to Vapi
-        // Note: Vapi will only show "Success" to the client, not the full result
-        // The workflow data is in result.result.workflow
-        return res.json(result);
+          console.log(
+            "[Voice API] 🔧 Processing function call:",
+            message.functionCall.name
+          );
+          console.log("[Voice API] 👤 User ID:", userId);
+
+          const result = await vapiService.handleFunctionCall(
+            message.functionCall,
+            callId,
+            userId
+          );
+
+          console.log(
+            "[Voice API] ✅ Function result:",
+            JSON.stringify(result, null, 2)
+          );
+
+          // Return result to Vapi
+          // Note: Vapi will only show "Success" to the client, not the full result
+          // The workflow data is in result.result.workflow
+          return res.json(result);
+        }
+
+        // Handle other message types (transcript, status updates, etc.)
+        if (message.type === "transcript") {
+          console.log("[Voice API] Transcript:", message.transcript);
+        }
+
+        if (message.type === "end-of-call-report") {
+          console.log("[Voice API] Call ended:", webhookData.call?.endedReason);
+        }
+
+        // Acknowledge other message types
+        res.json({ received: true });
+      } catch (error) {
+        console.error("[Voice API] Function error:", error);
+        res.status(500).json({
+          success: false,
+          error: "Function execution failed",
+        });
       }
-
-      // Handle other message types (transcript, status updates, etc.)
-      if (message.type === 'transcript') {
-        console.log('[Voice API] Transcript:', message.transcript);
-      }
-
-      if (message.type === 'end-of-call-report') {
-        console.log('[Voice API] Call ended:', webhookData.call?.endedReason);
-      }
-
-      // Acknowledge other message types
-      res.json({ received: true });
-
-    } catch (error) {
-      console.error('[Voice API] Function error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Function execution failed'
-      });
     }
-  });
+  );
 
   /**
    * GET /api/voice/session/:callId
    * Get voice session status and workflow
    */
-  router.get('/session/:callId', (req: Request, res: Response) => {
+  router.get("/session/:callId", (req: Request, res: Response) => {
     try {
       const { callId } = req.params;
       const session = vapiService.getSession(callId);
-      
+
       if (!session) {
         return res.status(404).json({
           success: false,
-          error: 'Session not found'
+          error: "Session not found",
         });
       }
 
-      console.log('[Voice API] Session requested:', callId);
-      console.log('[Voice API] Session has workflow:', !!session.currentWorkflow);
+      console.log("[Voice API] Session requested:", callId);
+      console.log(
+        "[Voice API] Session has workflow:",
+        !!session.currentWorkflow
+      );
 
       res.json({
         success: true,
         data: {
           ...session,
           // Include the workflow if it exists
-          workflow: session.currentWorkflow || null
-        }
+          workflow: session.currentWorkflow || null,
+        },
       });
     } catch (error) {
-      console.error('[Voice API] Session error:', error);
+      console.error("[Voice API] Session error:", error);
       res.status(500).json({
         success: false,
-        error: 'Failed to get session'
+        error: "Failed to get session",
       } as ApiResponse);
     }
   });
@@ -106,19 +124,22 @@ export function createVoiceRouter(vapiService: VapiService): Router {
    * GET /api/voice/assistant-config
    * Get Vapi assistant configuration (for reference/setup)
    */
-  router.get('/assistant-config', async (req: Request, res: Response) => {
+  router.get("/assistant-config", async (req: Request, res: Response) => {
     try {
-      const serverUrl = process.env.BACKEND_URL || 'http://localhost:3001';
-      
+      const serverUrl = process.env.BACKEND_URL || "http://localhost:3001";
+      const platformSummary = platformKnowledge
+        ? await platformKnowledge.getSummaryText()
+        : undefined;
+
       const config: VapiAssistantConfig = {
-        name: 'Workflow Builder Voice Assistant',
+        name: "Workflow Builder Voice Assistant",
         model: {
-          provider: 'openai',
-          model: 'gpt-4o-mini',
+          provider: "openai",
+          model: "gpt-4o-mini",
           temperature: 0.7,
           messages: [
             {
-              role: 'system',
+              role: "system",
               content: `You are a helpful workflow automation assistant. Help users create n8n workflows through natural conversation.
 
 GUIDELINES:
@@ -131,102 +152,111 @@ GUIDELINES:
 WORKFLOW COMPONENTS:
 - Triggers: webhook, schedule, manual
 - Services: Slack, Gmail, Google Sheets, Postgres, HTTP Request
-- Always extract: what triggers it, what it does, which services to use`
-            }
+- Always extract: what triggers it, what it does, which services to use
+${platformSummary ? `\nPLATFORM KNOWLEDGE:\n${platformSummary}` : ""}`,
+            },
           ],
           functions: [
             {
-              name: 'generateWorkflow',
-              description: 'Generate a workflow based on user requirements. Call this when you have enough information about the trigger, actions, and services.',
+              name: "generateWorkflow",
+              description:
+                "Generate a workflow based on user requirements. Call this when you have enough information about the trigger, actions, and services.",
               parameters: {
-                type: 'object',
+                type: "object",
                 properties: {
                   description: {
-                    type: 'string',
-                    description: 'Complete workflow description based on the conversation'
+                    type: "string",
+                    description:
+                      "Complete workflow description based on the conversation",
                   },
                   trigger: {
-                    type: 'string',
-                    description: 'Workflow trigger type',
-                    enum: ['webhook', 'schedule', 'manual']
+                    type: "string",
+                    description: "Workflow trigger type",
+                    enum: ["webhook", "schedule", "manual"],
                   },
                   services: {
-                    type: 'array',
-                    items: { type: 'string' },
-                    description: 'List of services to use (e.g., Slack, Gmail, Postgres)'
+                    type: "array",
+                    items: { type: "string" },
+                    description:
+                      "List of services to use (e.g., Slack, Gmail, Postgres)",
                   },
                   schedule: {
-                    type: 'string',
-                    description: 'Schedule time if trigger is schedule (e.g., "9 AM daily", "every Monday")'
-                  }
+                    type: "string",
+                    description:
+                      'Schedule time if trigger is schedule (e.g., "9 AM daily", "every Monday")',
+                  },
                 },
-                required: ['description']
-              }
+                required: ["description"],
+              },
             },
             {
-              name: 'updateWorkflow',
-              description: 'Modify the current workflow based on user corrections or changes',
+              name: "updateWorkflow",
+              description:
+                "Modify the current workflow based on user corrections or changes",
               parameters: {
-                type: 'object',
+                type: "object",
                 properties: {
                   modification: {
-                    type: 'string',
-                    description: 'What to change in the workflow'
+                    type: "string",
+                    description: "What to change in the workflow",
                   },
                   nodeToModify: {
-                    type: 'string',
-                    description: 'Which node to update (optional)'
-                  }
+                    type: "string",
+                    description: "Which node to update (optional)",
+                  },
                 },
-                required: ['modification']
-              }
+                required: ["modification"],
+              },
             },
             {
-              name: 'deployWorkflow',
-              description: 'Deploy the workflow to n8n. Only call this after user confirms they want to deploy.',
+              name: "deployWorkflow",
+              description:
+                "Deploy the workflow to n8n. Only call this after user confirms they want to deploy.",
               parameters: {
-                type: 'object',
+                type: "object",
                 properties: {
                   confirm: {
-                    type: 'boolean',
-                    description: 'User confirmation to deploy'
-                  }
+                    type: "boolean",
+                    description: "User confirmation to deploy",
+                  },
                 },
-                required: ['confirm']
-              }
+                required: ["confirm"],
+              },
             },
             {
-              name: 'getWorkflowStatus',
-              description: 'Get the current status of the workflow being built',
+              name: "getWorkflowStatus",
+              description: "Get the current status of the workflow being built",
               parameters: {
-                type: 'object',
-                properties: {}
-              }
-            }
-          ]
+                type: "object",
+                properties: {},
+              },
+            },
+          ],
         },
         voice: {
-          provider: '11labs',
-          voiceId: 'rachel' // Natural, friendly female voice
+          provider: "11labs",
+          voiceId: "rachel", // Natural, friendly female voice
         },
-        firstMessage: 'Hi! I\'m your workflow assistant. What would you like to automate today?',
+        firstMessage:
+          "Hi! I'm your workflow assistant. What would you like to automate today?",
         serverUrl: `${serverUrl}/api/voice/functions`,
-        serverUrlSecret: process.env.VAPI_WEBHOOK_SECRET || 'your-webhook-secret',
+        serverUrlSecret:
+          process.env.VAPI_WEBHOOK_SECRET || "your-webhook-secret",
         endCallFunctionEnabled: true,
-        recordingEnabled: false
+        recordingEnabled: false,
       };
 
       res.json({
         success: true,
         data: config,
-        instructions: 'Use this configuration to create your Vapi assistant via the Vapi dashboard or API'
+        instructions:
+          "Use this configuration to create your Vapi assistant via the Vapi dashboard or API",
       } as ApiResponse);
-
     } catch (error) {
-      console.error('[Voice API] Config error:', error);
+      console.error("[Voice API] Config error:", error);
       res.status(500).json({
         success: false,
-        error: 'Failed to get assistant config'
+        error: "Failed to get assistant config",
       } as ApiResponse);
     }
   });

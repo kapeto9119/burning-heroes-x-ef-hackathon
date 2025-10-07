@@ -1,22 +1,29 @@
-'use server';
+"use server";
 
 // Note: All functions now require token parameter for consistency
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-export async function sendChatMessage(message: string, token?: string) {
+export async function sendChatMessage(
+  message: string,
+  token?: string,
+  conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>
+) {
   try {
     if (!token) {
-      return { success: false, error: 'Authentication token required' };
+      return { success: false, error: "Authentication token required" };
     }
 
     const response = await fetch(`${API_URL}/api/chat`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({
+        message,
+        conversationHistory: conversationHistory || [],
+      }),
     });
 
     const data = await response.json();
@@ -29,14 +36,14 @@ export async function sendChatMessage(message: string, token?: string) {
 export async function generateWorkflow(description: string, token?: string) {
   try {
     if (!token) {
-      return { success: false, error: 'Authentication token required' };
+      return { success: false, error: "Authentication token required" };
     }
 
     const response = await fetch(`${API_URL}/api/chat/generate-workflow`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ description }),
     });

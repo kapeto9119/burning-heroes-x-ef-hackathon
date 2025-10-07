@@ -178,7 +178,7 @@ export default function EditorPage() {
   // Auth guard - redirect to home if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      console.log('[Editor] User not authenticated, showing auth modal');
+      console.log("[Editor] User not authenticated, showing auth modal");
       setShowAuthModal(true);
     }
   }, [isLoading, isAuthenticated]);
@@ -262,7 +262,7 @@ export default function EditorPage() {
         // Check auth before sending
         const token = localStorage.getItem("auth_token");
         if (!token) {
-          console.log('[Editor] No auth token, cannot send message');
+          console.log("[Editor] No auth token, cannot send message");
           setShowAuthModal(true);
           return;
         }
@@ -310,7 +310,7 @@ export default function EditorPage() {
     // Check auth before generating
     const token = localStorage.getItem("auth_token");
     if (!token) {
-      console.log('[Editor] No auth token, cannot generate workflow');
+      console.log("[Editor] No auth token, cannot generate workflow");
       setShowAuthModal(true);
       return;
     }
@@ -502,7 +502,7 @@ export default function EditorPage() {
         // Check auth before sending
         const token = localStorage.getItem("auth_token");
         if (!token) {
-          console.log('[Editor] No auth token, cannot send message');
+          console.log("[Editor] No auth token, cannot send message");
           setShowAuthModal(true);
           setIsTyping(false);
           return;
@@ -510,23 +510,30 @@ export default function EditorPage() {
 
         // Check if user wants to deploy existing workflow
         // Only deploy on explicit "deploy" or "yes" if last message asked about deployment
-        const lastAssistantMessage = messages
-          .filter(m => !m.isUser)
-          .slice(-1)[0]?.text || '';
-        
-        const isDeployConfirmation = 
-          workflow && 
+        const lastAssistantMessage =
+          messages.filter((m) => !m.isUser).slice(-1)[0]?.text || "";
+
+        const isDeployConfirmation =
+          workflow &&
           (messageText.toLowerCase().includes("deploy") ||
-           (messageText.toLowerCase().match(/^(yes|yep|yeah|ok|okay|sure)$/i) && 
-            lastAssistantMessage.toLowerCase().includes("deploy")));
-        
+            (messageText
+              .toLowerCase()
+              .match(/^(yes|yep|yeah|ok|okay|sure)$/i) &&
+              lastAssistantMessage.toLowerCase().includes("deploy")));
+
         if (isDeployConfirmation) {
           await handleDeploy();
           return;
         }
 
-        // Use the real chat API - it will decide if it should generate a workflow
-        const result = await sendChatMessage(messageText, token);
+        // Prepare compact history for better intent detection
+        const history = messages.slice(-6).map((m) => ({
+          role: m.isUser ? ("user" as const) : ("assistant" as const),
+          content: m.text,
+        }));
+
+        // Use the real chat API with conversation history
+        const result = await sendChatMessage(messageText, token, history);
 
         if (result.success && result.data) {
           // The response format is { message, workflow, suggestions }

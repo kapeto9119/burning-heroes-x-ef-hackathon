@@ -123,8 +123,13 @@ if (process.env.N8N_API_URL && process.env.N8N_API_KEY) {
   );
 }
 
-// Initialize Vapi service with n8n API client
-const vapiService = new VapiService(workflowGenerator, n8nApiClient);
+// Initialize Vapi service with n8n API client and repos
+const vapiService = new VapiService(
+  workflowGenerator,
+  n8nApiClient,
+  credentialRepository,
+  pool
+);
 
 // Initialize token refresh service
 const tokenRefreshService = new TokenRefreshService(
@@ -177,7 +182,7 @@ app.get("/health", (req: Request, res: Response) => {
 app.use("/api/auth", createAuthRouter(authService));
 app.use("/api/chat", createChatRouter(aiService, mcpClient, workflowGenerator));
 app.use("/api/workflows", createWorkflowsRouter(mcpClient));
-app.use("/api/voice", createVoiceRouter(vapiService));
+app.use("/api/voice", createVoiceRouter(vapiService, platformKnowledge));
 app.use(
   "/api/oauth",
   createOAuthRouter(oauthService, credentialRepository, authService)

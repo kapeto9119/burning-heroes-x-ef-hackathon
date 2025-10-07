@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 interface User {
   id: string;
@@ -21,7 +21,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Load token from localStorage on mount
   useEffect(() => {
-    const storedToken = localStorage.getItem('auth_token');
+    const storedToken = localStorage.getItem("auth_token");
     if (storedToken) {
       setToken(storedToken);
       // Fetch user data
@@ -44,22 +44,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await fetch(`${API_URL}/api/auth/me`, {
         headers: {
-          'Authorization': `Bearer ${authToken}`,
+          Authorization: `Bearer ${authToken}`,
         },
       });
 
       if (response.ok) {
         const data = await response.json();
         setUser(data.data);
-      } else {
-        // Token is invalid, clear it
-        localStorage.removeItem('auth_token');
+      } else if (response.status === 401) {
+        // Token is invalid/expired, clear it
+        localStorage.removeItem("auth_token");
         setToken(null);
+      } else {
+        // For non-auth errors (e.g., network/CORS/misconfig), keep token and just log
+        console.warn("Failed to fetch user (non-auth error):", response.status);
       }
     } catch (error) {
-      console.error('Failed to fetch user:', error);
-      localStorage.removeItem('auth_token');
-      setToken(null);
+      // Network or other unexpected error; don't clear token so we don't log the user out on refresh
+      console.error("Failed to fetch user:", error);
     } finally {
       setIsLoading(false);
     }
@@ -67,17 +69,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const response = await fetch(`${API_URL}/api/auth/login`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ email, password }),
-      credentials: 'include', // Important: include cookies in request
+      credentials: "include", // Important: include cookies in request
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Login failed');
+      throw new Error(error.error || "Login failed");
     }
 
     const data = await response.json();
@@ -85,22 +87,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setUser(userData);
     setToken(authToken);
-    localStorage.setItem('auth_token', authToken);
+    localStorage.setItem("auth_token", authToken);
   };
 
   const register = async (email: string, password: string, name: string) => {
     const response = await fetch(`${API_URL}/api/auth/register`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ email, password, name }),
-      credentials: 'include', // Important: include cookies in request
+      credentials: "include", // Important: include cookies in request
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Registration failed');
+      throw new Error(error.error || "Registration failed");
     }
 
     const data = await response.json();
@@ -108,24 +110,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setUser(userData);
     setToken(authToken);
-    localStorage.setItem('auth_token', authToken);
+    localStorage.setItem("auth_token", authToken);
   };
 
   const logout = async () => {
     // Call backend to clear cookie
     try {
       await fetch(`${API_URL}/api/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
+        method: "POST",
+        credentials: "include",
       });
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     }
-    
+
     // Clear client-side state
     setUser(null);
     setToken(null);
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem("auth_token");
   };
 
   return (
@@ -148,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
