@@ -37,6 +37,7 @@ import { VoiceButton } from "@/components/voice/VoiceButton";
 import { VoiceVisualizer } from "@/components/voice/VoiceVisualizer";
 import { VoiceTranscript } from "@/components/voice/VoiceTranscript";
 import { useVapi } from "@/hooks/useVapi";
+import { getClientToken } from "@/lib/auth";
 import * as React from "react";
 
 interface UseAutoResizeTextareaProps {
@@ -173,7 +174,10 @@ export default function EditorPage() {
   }, []);
 
   // Get authenticated user
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, token: contextToken } = useAuth();
+
+  // Prefer context token; fall back to centralized client token util
+  const getAuthToken = () => contextToken || getClientToken();
 
   // Auth guard - redirect to home if not authenticated
   useEffect(() => {
@@ -260,7 +264,7 @@ export default function EditorPage() {
       // Send the first message to the real chat API
       const sendFirstMessage = async () => {
         // Check auth before sending
-        const token = localStorage.getItem("auth_token");
+        const token = getAuthToken();
         if (!token) {
           console.log("[Editor] No auth token, cannot send message");
           setShowAuthModal(true);
@@ -308,7 +312,7 @@ export default function EditorPage() {
 
   const handleGenerateWorkflow = async (description: string) => {
     // Check auth before generating
-    const token = localStorage.getItem("auth_token");
+    const token = getAuthToken();
     if (!token) {
       console.log("[Editor] No auth token, cannot generate workflow");
       setShowAuthModal(true);
@@ -392,7 +396,7 @@ export default function EditorPage() {
     if (!workflow) return;
 
     // Check if token exists (more reliable than checking user object)
-    const token = localStorage.getItem("auth_token");
+    const token = getAuthToken();
     if (!token || !isAuthenticated) {
       const errorMessage = {
         id: Date.now().toString(),
@@ -415,8 +419,8 @@ export default function EditorPage() {
     setMessages((prev) => [...prev, deployMessage]);
 
     try {
-      // Pass token from localStorage to server action
-      const token = localStorage.getItem("auth_token");
+      // Pass token from context/localStorage to server action
+      const token = getAuthToken();
       const deployResult = await deployWorkflow(workflow, token || undefined);
 
       if (deployResult.success && deployResult.data) {
