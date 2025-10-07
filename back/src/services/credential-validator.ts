@@ -414,12 +414,17 @@ export class CredentialValidator {
   private async validateSMTP(data: any): Promise<ValidationResult> {
     try {
       const nodemailer = require('nodemailer');
-      
+
+      // Normalize inputs
+      const port: number = typeof data.port === 'string' ? parseInt(data.port, 10) : (data.port || 587);
+      const secureFlag = (val: any) => val === true || val === 'true' || val === 1 || val === '1';
+      const secure: boolean = secureFlag(data.secure) || port === 465;
+
       // Create transporter
       const transporter = nodemailer.createTransport({
         host: data.host,
-        port: data.port || 587,
-        secure: data.secure === true || data.secure === 'true' || data.port === 465,
+        port,
+        secure,
         auth: {
           user: data.user,
           pass: data.password
@@ -434,18 +439,23 @@ export class CredentialValidator {
         valid: true,
         metadata: {
           host: data.host,
-          port: data.port,
+          port,
           user: data.user
         }
       };
     } catch (error: any) {
+      const message =
+        error?.code === 'EAUTH'
+          ? 'Invalid email credentials'
+          : error?.code === 'ECONNECTION'
+          ? 'Cannot connect to SMTP server'
+          : /wrong version number/i.test(error?.message || '')
+          ? 'TLS protocol mismatch (check port/secure: use 587 with secure=false or 465 with secure=true)'
+          : error?.message || 'SMTP validation failed';
+
       return {
         valid: false,
-        error: error.code === 'EAUTH' 
-          ? 'Invalid email credentials' 
-          : error.code === 'ECONNECTION'
-          ? 'Cannot connect to SMTP server'
-          : error.message || 'SMTP validation failed'
+        error: message
       };
     }
   }
