@@ -17,47 +17,93 @@ export class N8nMCPClient {
   private transport: StdioClientTransport | null = null;
   private isConnected: boolean = false;
   private useMockData: boolean = false;
+  private connectionAttempts: number = 0;
+  private maxRetries: number = 2;
+  private retryDelay: number = 1000; // 1 second
+  private connectionPromise: Promise<void> | null = null;
 
   constructor() {
     // Will initialize on first use
   }
 
   /**
-   * Initialize connection to MCP server
+   * Initialize connection to MCP server with retry logic
    */
   private async ensureConnected(): Promise<void> {
     if (this.isConnected && this.client) {
       return;
     }
 
-    try {
-      console.log('[MCP Client] Connecting to n8n-MCP server...');
-      
-      // Create transport using npx to run the MCP server
-      this.transport = new StdioClientTransport({
-        command: 'npx',
-        args: ['-y', 'n8n-mcp'],
-        env: process.env as Record<string, string>,
-      });
-
-      // Create MCP client
-      this.client = new Client({
-        name: 'burning-heroes-workflow-builder',
-        version: '1.0.0',
-      }, {
-        capabilities: {}
-      });
-
-      // Connect to server
-      await this.client.connect(this.transport);
-      this.isConnected = true;
-      
-      console.log('[MCP Client] ✅ Connected to n8n-MCP server');
-    } catch (error) {
-      console.error('[MCP Client] ❌ Failed to connect to MCP server:', error);
-      console.log('[MCP Client] Falling back to mock data');
-      this.useMockData = true;
+    // If already failed max retries, use mock data
+    if (this.useMockData) {
+      return;
     }
+
+    // If connection is in progress, wait for it
+    if (this.connectionPromise) {
+      return this.connectionPromise;
+    }
+
+    // Start new connection attempt
+    this.connectionPromise = this.connectWithRetry();
+    await this.connectionPromise;
+    this.connectionPromise = null;
+  }
+
+  private async connectWithRetry(): Promise<void> {
+    while (this.connectionAttempts < this.maxRetries) {
+      try {
+        this.connectionAttempts++;
+        const attemptMsg = this.connectionAttempts > 1 ? ` (attempt ${this.connectionAttempts}/${this.maxRetries})` : '';
+        console.log(`[MCP Client] Connecting to n8n-MCP server...${attemptMsg}`);
+        
+        // Create transport using npx to run the MCP server
+        this.transport = new StdioClientTransport({
+          command: 'npx',
+          args: ['-y', 'n8n-mcp'],
+          env: process.env as Record<string, string>,
+        });
+
+        // Create MCP client
+        this.client = new Client({
+          name: 'burning-heroes-workflow-builder',
+          version: '1.0.0',
+        }, {
+          capabilities: {}
+        });
+
+        // Connect to server with timeout
+        await Promise.race([
+          this.client.connect(this.transport),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Connection timeout')), 10000)
+          )
+        ]);
+        
+        this.isConnected = true;
+        console.log('[MCP Client] ✅ Connected to n8n-MCP server');
+        return;
+      } catch (error) {
+        console.error(`[MCP Client] ❌ Connection attempt ${this.connectionAttempts} failed:`, error);
+        
+        // Clean up failed connection
+        if (this.client) {
+          try { await this.client.close(); } catch {}
+          this.client = null;
+        }
+        this.transport = null;
+        
+        // Wait before retry (except on last attempt)
+        if (this.connectionAttempts < this.maxRetries) {
+          console.log(`[MCP Client] Retrying in ${this.retryDelay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, this.retryDelay));
+        }
+      }
+    }
+
+    // All retries failed
+    console.log('[MCP Client] All connection attempts failed, falling back to mock data');
+    this.useMockData = true;
   }
 
   /**
