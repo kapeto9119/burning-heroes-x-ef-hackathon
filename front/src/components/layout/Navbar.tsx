@@ -105,7 +105,7 @@ export function Navbar() {
               )}
 
               {/* Auth Button or Profile Menu */}
-              {!isAuthenticated ? (
+              {!user ? (
                 <motion.button
                   onClick={() => setShowAuthModal(true)}
                   whileHover={{ scale: 1.05 }}
