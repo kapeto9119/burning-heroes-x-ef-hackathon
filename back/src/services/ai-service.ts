@@ -592,33 +592,33 @@ Return JSON: { "improvements": ["suggestion 1", "suggestion 2", "suggestion 3"] 
         )
         .join("\n");
 
-      const prompt = `You are analyzing a conversation to determine if the user wants to BUILD/CREATE/GENERATE a workflow RIGHT NOW.
+      const prompt = `You are analyzing a conversation to determine if the user wants to BUILD/CREATE/GENERATE a workflow.
 
 Recent conversation context:
 ${contextLines}
 
 Latest user message: "${userMessage}"
 
-CRITICAL: Only return YES if the user is giving EXPLICIT CONFIRMATION or IMPERATIVE COMMAND to build.
+CRITICAL: BUILD-FIRST APPROACH - If the user describes a workflow with enough detail, return YES.
 
 Analyze if the user is:
-1. Giving an EXPLICIT command to build NOW (e.g., "do it", "build it now", "create it", "let's do it", "go ahead")
-2. Giving confirmation after being asked (e.g., "yes", "ok", "sure", "proceed", "go")
-3. Expressing urgency to build immediately (e.g., "just build it", "make it now")
+1. Describing a complete workflow (e.g., "Get orders and route to different channels based on priority")
+2. Giving an explicit command to build (e.g., "do it", "build it now", "create it")
+3. Giving confirmation after being asked (e.g., "yes", "ok", "sure", "proceed")
 
 Respond with ONLY "YES" or "NO".
 
-YES ONLY if:
-- User explicitly says: "do it", "build it", "create it now", "make it", "let's go", "proceed", "yes do it"
-- User confirms after assistant asks "should I build this?"
-- User is clearly commanding the build to happen right now
+YES if:
+- User describes a workflow with trigger + action(s) (e.g., "when X happens, do Y")
+- User describes routing/conditional logic (e.g., "route to different channels based on...")
+- User describes data processing (e.g., "get data from X and send to Y")
+- User explicitly says: "do it", "build it", "create it", "make it", "deploy"
+- User confirms after assistant asks
 
-NO if:
-- User is just DESCRIBING what they want (even if detailed)
-- User is asking questions or exploring options  
-- First time user mentions their workflow idea
-- Assistant hasn't yet asked for confirmation to build
-- User says "I want to create..." (describing, not commanding)
+NO ONLY if:
+- User is just greeting (e.g., "hey", "hi", "hello")
+- User is asking general questions without describing a workflow
+- User is asking for help or clarification
 
 Response:`;
 
