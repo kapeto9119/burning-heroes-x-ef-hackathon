@@ -43,12 +43,14 @@ export function createChatRouter(
 
       // AI-powered intent detection: Should we build a workflow?
       const shouldBuildWorkflow = await aiService.detectWorkflowIntent(message, conversationHistory);
+      console.log('[Chat] 🤔 Should build workflow?', shouldBuildWorkflow);
 
       let workflow = undefined;
       let credentialRequirements = undefined;
       let workflowDescription = message;
 
       if (shouldBuildWorkflow) {
+        console.log('[Chat] ✅ Building workflow...');
         try {
           // Extract complete requirements from conversation history
           if (conversationHistory.length > 0) {
