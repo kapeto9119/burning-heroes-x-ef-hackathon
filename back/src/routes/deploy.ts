@@ -38,6 +38,78 @@ export function createDeployRouter(
       if (!workflow || !workflow.nodes || workflow.nodes.length === 0) {
         return res.status(400).json({
           success: false,
+          error: 'Invalid workflow'
+        } as ApiResponse);
+      }
+
+      console.log('[Save Draft] User', userId, 'saving draft:', workflow.name);
+
+      // Generate workflow ID
+      const workflowId = workflow.id || crypto.randomUUID();
+      
+      // Extract node types and required credentials
+      const nodeTypes = workflow.nodes.map(n => n.type);
+      const requiredCredentialTypes: string[] = [];
+      workflow.nodes.forEach(node => {
+        if (node.credentials && Object.keys(node.credentials).length > 0) {
+          Object.keys(node.credentials).forEach(credType => {
+            if (!requiredCredentialTypes.includes(credType)) {
+              requiredCredentialTypes.push(credType);
+            }
+          });
+        }
+      });
+      
+      // Save to workflows table as draft (is_active = false, no n8n deployment)
+      await dbPool.query(
+        `INSERT INTO workflows (id, user_id, name, workflow_data, node_types, required_credential_types, is_active)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (id) DO UPDATE SET
+           workflow_data = EXCLUDED.workflow_data,
+           node_types = EXCLUDED.node_types,
+           required_credential_types = EXCLUDED.required_credential_types,
+           updated_at = NOW()`,
+        [
+          workflowId,
+          userId,
+          workflow.name || 'Untitled Workflow',
+          JSON.stringify(workflow),
+          nodeTypes,
+          requiredCredentialTypes,
+          false // Draft - not active
+        ]
+      );
+
+      res.json({
+        success: true,
+        message: 'Workflow saved as draft',
+        data: {
+          workflowId,
+          status: 'draft'
+        }
+      } as ApiResponse);
+
+    } catch (error: any) {
+      console.error('[Save Draft] Error:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to save draft'
+      } as ApiResponse);
+    }
+  });
+
+  /**
+   * POST /api/deploy
+   * Deploy a workflow to n8n
+   */
+  router.post('/', authMiddleware, async (req: Request, res: Response) => {
+    try {
+      const { workflow }: { workflow: N8nWorkflow } = req.body;
+      const userId = req.user!.userId;
+
+      if (!workflow || !workflow.nodes || workflow.nodes.length === 0) {
+        return res.status(400).json({
+          success: false,
           error: "Invalid workflow",
         } as ApiResponse);
       }
