@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Zap, TrendingUp, AlertCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { Zap, TrendingUp, AlertCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { getClientToken } from "@/lib/auth";
 
 interface UsageData {
   plan_tier: string;
@@ -26,22 +27,25 @@ export default function UsageWidget() {
   }, []);
 
   const fetchUsage = async () => {
-    const token = localStorage.getItem('token');
+    const token = getClientToken();
     if (!token) {
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/billing/usage`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/billing/usage`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       const data = await response.json();
       if (data.success) {
         setUsage(data.data);
       }
     } catch (error) {
-      console.error('Failed to fetch usage:', error);
+      console.error("Failed to fetch usage:", error);
     } finally {
       setLoading(false);
     }
@@ -79,10 +83,10 @@ export default function UsageWidget() {
           <div
             className={`h-2 rounded-full transition-all ${
               isAtLimit
-                ? 'bg-red-500'
+                ? "bg-red-500"
                 : isNearLimit
-                ? 'bg-yellow-500'
-                : 'bg-green-500'
+                ? "bg-yellow-500"
+                : "bg-green-500"
             }`}
             style={{ width: `${Math.min(usage.usage_percentage, 100)}%` }}
           />
@@ -94,29 +98,46 @@ export default function UsageWidget() {
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-300">Active Workflows</span>
           <span className="text-sm text-white font-semibold">
-            {usage.active_workflows_count} / {usage.active_workflows_limit === 999 ? '∞' : usage.active_workflows_limit}
+            {usage.active_workflows_count} /{" "}
+            {usage.active_workflows_limit === 999
+              ? "∞"
+              : usage.active_workflows_limit}
           </span>
         </div>
       </div>
 
       {/* Warning/CTA */}
       {isNearLimit && (
-        <div className={`rounded-lg p-3 flex items-start gap-2 ${
-          isAtLimit ? 'bg-red-500/20 border border-red-500/50' : 'bg-yellow-500/20 border border-yellow-500/50'
-        }`}>
-          <AlertCircle className={`w-4 h-4 flex-shrink-0 mt-0.5 ${
-            isAtLimit ? 'text-red-400' : 'text-yellow-400'
-          }`} />
+        <div
+          className={`rounded-lg p-3 flex items-start gap-2 ${
+            isAtLimit
+              ? "bg-red-500/20 border border-red-500/50"
+              : "bg-yellow-500/20 border border-yellow-500/50"
+          }`}
+        >
+          <AlertCircle
+            className={`w-4 h-4 flex-shrink-0 mt-0.5 ${
+              isAtLimit ? "text-red-400" : "text-yellow-400"
+            }`}
+          />
           <div className="flex-1">
-            <p className={`text-xs ${isAtLimit ? 'text-red-200' : 'text-yellow-200'}`}>
+            <p
+              className={`text-xs ${
+                isAtLimit ? "text-red-200" : "text-yellow-200"
+              }`}
+            >
               {isAtLimit
-                ? 'Limit reached! Upgrade to continue.'
-                : `You've used ${usage.usage_percentage.toFixed(0)}% of your limit.`}
+                ? "Limit reached! Upgrade to continue."
+                : `You've used ${usage.usage_percentage.toFixed(
+                    0
+                  )}% of your limit.`}
             </p>
             <button
-              onClick={() => router.push('/pricing')}
+              onClick={() => router.push("/pricing")}
               className={`text-xs font-semibold mt-1 underline ${
-                isAtLimit ? 'text-red-300 hover:text-red-200' : 'text-yellow-300 hover:text-yellow-200'
+                isAtLimit
+                  ? "text-red-300 hover:text-red-200"
+                  : "text-yellow-300 hover:text-yellow-200"
               }`}
             >
               Upgrade Now →
@@ -127,7 +148,7 @@ export default function UsageWidget() {
 
       {/* View Details */}
       <button
-        onClick={() => router.push('/billing')}
+        onClick={() => router.push("/billing")}
         className="w-full mt-3 text-center text-sm text-purple-400 hover:text-purple-300 transition-colors flex items-center justify-center gap-1"
       >
         <TrendingUp className="w-4 h-4" />
