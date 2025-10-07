@@ -83,7 +83,8 @@ export function createDeployRouter(
         : undefined;
 
       // Store deployment record in database
-      const workflowId = workflow.id || `wf_${Date.now()}`;
+      // Generate a UUID for the workflow if it doesn't have one
+      const workflowId = workflow.id || crypto.randomUUID();
       await deploymentRepo.create({
         workflowId,
         n8nWorkflowId,
