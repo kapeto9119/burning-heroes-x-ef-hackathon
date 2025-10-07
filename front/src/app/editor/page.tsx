@@ -24,10 +24,6 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Background } from "@/components/layout/Background";
 import { useWorkflow } from "@/contexts/WorkflowContext";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  CredentialSetupModal,
-  CredentialRequirement,
-} from "@/components/CredentialSetupModal";
 import { InlineCredentialModal } from "@/components/InlineCredentialModal";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { generateWorkflow, sendChatMessage } from "@/app/actions/chat";
@@ -150,10 +146,6 @@ export default function EditorPage() {
   >("idle");
   const [deploymentData, setDeploymentData] = useState<any>(null);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [credentialRequirements, setCredentialRequirements] = useState<
-    CredentialRequirement[]
-  >([]);
-  const [showCredentialModal, setShowCredentialModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showInlineCredentialModal, setShowInlineCredentialModal] = useState(false);
   const [missingCredentials, setMissingCredentials] = useState<any[]>([]);
@@ -293,15 +285,6 @@ export default function EditorPage() {
             if (result.data.workflow) {
               setWorkflow(result.data.workflow);
               setDeploymentStatus("idle");
-
-              // Check for credential requirements
-              if (
-                result.data.credentialRequirements &&
-                result.data.credentialRequirements.length > 0
-              ) {
-                setCredentialRequirements(result.data.credentialRequirements);
-                // Don't show modal yet - wait for user to deploy
-              }
             }
           }
         } catch (error) {
@@ -331,23 +314,13 @@ export default function EditorPage() {
       const result = await generateWorkflow(description, token);
 
       if (result.success && result.data) {
-        // Handle both old format (just workflow) and new format (workflow + credentials)
         const workflowData = result.data.workflow || result.data;
-        const credentials = result.data.credentialRequirements || [];
 
         setWorkflow(workflowData);
-        setCredentialRequirements(credentials);
-
-        const credentialInfo =
-          credentials.length > 0
-            ? `\n\n⚠️ This workflow requires credentials for: ${credentials
-                .map((c: any) => c.service)
-                .join(", ")}`
-            : "";
 
         const aiMessage = {
           id: Date.now().toString(),
-          text: `I've generated a workflow: "${workflowData.name}"\n\nNodes: ${workflowData.nodes.length}${credentialInfo}\n\nReady to deploy?`,
+          text: `I've generated a workflow: "${workflowData.name}"\n\nNodes: ${workflowData.nodes.length}\n\nReady to save or deploy?`,
           isUser: false,
           timestamp: new Date(),
         };
@@ -435,18 +408,6 @@ export default function EditorPage() {
     }
     
     // All credentials present, deploy directly
-    handleDeploy();
-  };
-
-  const handleCredentialsComplete = () => {
-    setShowCredentialModal(false);
-    setCredentialRequirements([]);
-    handleDeploy();
-  };
-
-  const handleCredentialsSkip = () => {
-    setShowCredentialModal(false);
-    // Deploy anyway (credentials can be added later)
     handleDeploy();
   };
 
@@ -1020,15 +981,6 @@ export default function EditorPage() {
             setShowInlineCredentialModal(false);
             setMissingCredentials([]);
           }}
-        />
-      )}
-
-      {/* Credential Setup Modal */}
-      {showCredentialModal && credentialRequirements.length > 0 && (
-        <CredentialSetupModal
-          requirements={credentialRequirements}
-          onComplete={handleCredentialsComplete}
-          onSkip={handleCredentialsSkip}
         />
       )}
 
