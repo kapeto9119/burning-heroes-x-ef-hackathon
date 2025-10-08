@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { getClientToken } from "@/lib/auth";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthModal } from "@/components/auth/AuthModal";
-import { Sparkles, Copy, Trash2, Play, Clock, Edit2 } from "lucide-react";
+import { Sparkles, Copy, Trash2, Play, Clock, Edit2, Maximize2, Eye, RotateCcw, Webhook, Radio, BarChart3, List, Download, Timer, Zap, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -15,19 +15,33 @@ import { Background } from "@/components/layout/Background";
 import { useWorkflow } from "@/contexts/WorkflowContext";
 import { ScheduleDialog } from "@/components/ScheduleDialog";
 import { NewWorkflowDialog } from "@/components/NewWorkflowDialog";
+import { getWorkflows, getWorkflowExecutions, executeWorkflow } from '@/app/actions/workflows';
+import { WorkflowCanvas } from '@/components/workflow/WorkflowCanvas';
+import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
+import { NodeDataInspector } from '@/components/execution/NodeDataInspector';
+import { getTimeUntilNextRun, cronToHuman } from '@/lib/schedule-utils';
+import { useWebSocket } from '@/hooks/useWebSocket';
+import { WorkflowModals } from '@/components/platform/WorkflowModals';
 
 export default function PlatformPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Check authentication on mount
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      console.log("[Platform] No auth token found, showing login modal");
-      setShowAuthModal(true);
-    }
-  }, [authLoading, isAuthenticated]);
+  // Deployed workflows state (from workflows page)
+  const [deployedWorkflows, setDeployedWorkflows] = useState<any[]>([]);
+  const [selectedDeployedWorkflow, setSelectedDeployedWorkflow] = useState<any>(null);
+  const [previewWorkflow, setPreviewWorkflow] = useState<any>(null);
+  const [executions, setExecutions] = useState<any[]>([]);
+  const [previewExecutions, setPreviewExecutions] = useState<any[]>([]);
+  const [isLoadingWorkflows, setIsLoadingWorkflows] = useState(true);
+  const [isLoadingPreviewExecutions, setIsLoadingPreviewExecutions] = useState(false);
+  const [activeTab, setActiveTab] = useState<'workflows' | 'analytics'>('workflows');
+  const [executionFilter, setExecutionFilter] = useState<'all' | 'success' | 'error'>('all');
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [showExecutionsModal, setShowExecutionsModal] = useState(false);
+  
+  // Legacy platform context (for sidebar)
   const {
     workflows,
     selectedWorkflowId,
@@ -48,6 +62,78 @@ export default function PlatformPage() {
   >(null);
   const [showNewWorkflowDialog, setShowNewWorkflowDialog] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
+  
+  // WebSocket for real-time updates
+  const { isConnected, addEventListener, subscribeToWorkflow, unsubscribeFromWorkflow } = useWebSocket();
+
+  // Load deployed workflows
+  useEffect(() => {
+    loadDeployedWorkflows();
+  }, []);
+
+  // Check authentication on mount
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      console.log("[Platform] No auth token found, showing login modal");
+      setShowAuthModal(true);
+    }
+  }, [authLoading, isAuthenticated]);
+  
+  // Listen to WebSocket events for real-time execution updates
+  useEffect(() => {
+    const unsubscribeCompleted = addEventListener('execution:completed', async (event: any) => {
+      console.log('[Platform] Execution completed event:', event);
+      
+      // Refresh executions if this workflow is being viewed
+      if (selectedDeployedWorkflow?.workflowId === event.workflowId) {
+        const token = getClientToken();
+        const result = await getWorkflowExecutions(event.workflowId, 10, token || undefined);
+        if (result.success) {
+          setExecutions(result.data || []);
+        }
+      }
+    });
+
+    const unsubscribeStarted = addEventListener('execution:started', (event: any) => {
+      console.log('[Platform] Execution started event:', event);
+    });
+
+    return () => {
+      unsubscribeCompleted();
+      unsubscribeStarted();
+    };
+  }, [selectedDeployedWorkflow, addEventListener]);
+
+  // Auto-refresh executions when enabled
+  useEffect(() => {
+    if (!autoRefresh || !selectedDeployedWorkflow) return;
+
+    const interval = setInterval(async () => {
+      const token = getClientToken();
+      const result = await getWorkflowExecutions(selectedDeployedWorkflow.workflowId, 10, token || undefined);
+      if (result.success) {
+        setExecutions(result.data || []);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, selectedDeployedWorkflow]);
+
+  // Auto-load executions when preview workflow opens
+  useEffect(() => {
+    if (previewWorkflow?.workflowId) {
+      const loadPreviewExecutions = async () => {
+        setIsLoadingPreviewExecutions(true);
+        const token = getClientToken();
+        const result = await getWorkflowExecutions(previewWorkflow.workflowId, 5, token || undefined);
+        if (result.success) {
+          setPreviewExecutions(result.data || []);
+        }
+        setIsLoadingPreviewExecutions(false);
+      };
+      loadPreviewExecutions();
+    }
+  }, [previewWorkflow?.workflowId]);
 
   // Show auth modal if not authenticated
   if (!isAuthenticated && !authLoading) {
@@ -115,16 +201,87 @@ export default function PlatformPage() {
     setShowScheduleDialog(true);
   };
 
+  const loadDeployedWorkflows = async () => {
+    setIsLoadingWorkflows(true);
+    const token = getClientToken();
+    const result = await getWorkflows(token || undefined);
+    if (result.success) {
+      setDeployedWorkflows(result.data || []);
+    }
+    setIsLoadingWorkflows(false);
+  };
+
+  const handleViewExecutions = async (workflow: any) => {
+    setSelectedDeployedWorkflow(workflow);
+    setShowExecutionsModal(true);
+    const token = getClientToken();
+    const result = await getWorkflowExecutions(workflow.workflowId, 10, token || undefined);
+    if (result.success) {
+      setExecutions(result.data || []);
+    }
+  };
+
+  const handleExecuteWorkflow = async (workflow: any) => {
+    try {
+      const token = getClientToken();
+      const result = await executeWorkflow(workflow.workflowId, {}, token || undefined);
+      if (result.success) {
+        alert('✅ Workflow executed successfully!');
+        if (selectedDeployedWorkflow?.workflowId === workflow.workflowId) {
+          handleViewExecutions(workflow);
+        }
+        if (previewWorkflow?.workflowId === workflow.workflowId) {
+          const execResult = await getWorkflowExecutions(workflow.workflowId, 5, token || undefined);
+          if (execResult.success) {
+            setPreviewExecutions(execResult.data || []);
+          }
+        }
+      } else {
+        alert('❌ Execution failed: ' + result.error);
+      }
+    } catch (error) {
+      alert('❌ Execution error');
+    }
+  };
+
+  const handleExportExecutions = () => {
+    if (executions.length === 0) return;
+
+    const headers = ['Execution ID', 'Status', 'Started At', 'Finished At', 'Duration (ms)', 'Error Message'];
+    const rows = executions.map(exec => [
+      exec.id || 'N/A',
+      exec.status || 'N/A',
+      exec.startedAt ? new Date(exec.startedAt).toLocaleString() : 'N/A',
+      exec.finishedAt ? new Date(exec.finishedAt).toLocaleString() : 'N/A',
+      exec.finishedAt && exec.startedAt 
+        ? (new Date(exec.finishedAt).getTime() - new Date(exec.startedAt).getTime()).toString()
+        : 'N/A',
+      exec.error || ''
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${selectedDeployedWorkflow?.name || 'workflow'}-executions-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
   const handleSchedule = (schedule: { days: string[]; time: string }) => {
     if (schedulingWorkflowId) {
-      // Here you would save the schedule to the workflow
       console.log("Scheduling workflow:", schedulingWorkflowId, schedule);
-      // For now, just show a toast or update workflow metadata
     }
   };
 
   const handleCreateWorkflow = (title: string) => {
-    // Set initial message with workflow title
     setMessages([
       {
         id: Date.now().toString(),
@@ -133,8 +290,6 @@ export default function PlatformPage() {
         timestamp: new Date(),
       },
     ]);
-
-    // Navigate to editor
     router.push("/editor");
   };
 
@@ -269,179 +424,186 @@ export default function PlatformPage() {
                 </div>
               </div>
 
-              {/* Right Panel - Workflow Details */}
+              {/* Right Panel - Deployed Workflows with Enhanced Features */}
               <div className="flex flex-col h-full backdrop-blur-xl bg-background/40 rounded-2xl border border-border shadow-2xl overflow-hidden">
-                {isLoading ? (
+                {/* Tabs */}
+                <div className="flex items-center gap-2 border-b border-border px-4 pt-4">
+                  <button
+                    onClick={() => setActiveTab('workflows')}
+                    className={`px-4 py-2 font-medium transition-colors relative ${
+                      activeTab === 'workflows'
+                        ? 'text-primary'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <List className="w-4 h-4" />
+                      Deployed Workflows
+                      {isConnected && (
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      )}
+                    </div>
+                    {activeTab === 'workflows' && (
+                      <motion.div
+                        layoutId="activeTab"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                      />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('analytics')}
+                    className={`px-4 py-2 font-medium transition-colors relative ${
+                      activeTab === 'analytics'
+                        ? 'text-primary'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4" />
+                      Analytics
+                    </div>
+                    {activeTab === 'analytics' && (
+                      <motion.div
+                        layoutId="activeTab"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                      />
+                    )}
+                  </button>
+                </div>
+
+                {/* Tab Content */}
+                {activeTab === 'analytics' ? (
+                  <div className="flex-1 overflow-auto p-6">
+                    <AnalyticsDashboard />
+                  </div>
+                ) : isLoadingWorkflows ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center space-y-2">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                      <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
                       <p className="text-sm text-muted-foreground">
-                        Loading workflow details...
+                        Loading deployed workflows...
                       </p>
                     </div>
                   </div>
-                ) : !selectedWorkflow ? (
+                ) : deployedWorkflows.length === 0 ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center space-y-4 p-8">
                       <Sparkles className="w-16 h-16 text-muted-foreground mx-auto" />
                       <div>
                         <h3 className="font-medium text-foreground mb-2">
-                          No Workflow Selected
+                          No Deployed Workflows
                         </h3>
                         <p className="text-sm text-muted-foreground max-w-md">
-                          {workflows.length === 0
-                            ? "Create your first workflow to get started with automation"
-                            : "Select a workflow from the list to view its details"}
+                          Create and deploy workflows from the editor to see them here
                         </p>
                       </div>
-                      {workflows.length === 0 && (
-                        <Button
-                          size="sm"
-                          className="rounded-lg bg-black text-white hover:bg-gray-800"
-                          onClick={() => setShowNewWorkflowDialog(true)}
-                        >
-                          <Sparkles className="w-4 h-4 mr-2" />
-                          Create First Workflow
-                        </Button>
-                      )}
+                      <Button
+                        size="sm"
+                        className="rounded-lg bg-black text-white hover:bg-gray-800"
+                        onClick={() => router.push('/editor')}
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Go to Editor
+                      </Button>
                     </div>
                   </div>
                 ) : (
-                  <>
-                    <div className="p-4 border-b border-border">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 group">
-                            {isEditingTitle ? (
-                              <input
-                                ref={titleInputRef}
-                                type="text"
-                                value={editingName}
-                                onChange={(e) => setEditingName(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") saveTitle();
-                                  if (e.key === "Escape") cancelEditTitle();
-                                }}
-                                onBlur={saveTitle}
-                                className="text-lg font-semibold bg-transparent border-none focus:outline-none focus:ring-0 p-0 w-full"
-                              />
+                  <div className="flex-1 overflow-auto p-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {deployedWorkflows.map((workflow) => (
+                        <motion.div
+                          key={workflow.id || workflow.workflowId}
+                          whileHover={{ scale: 1.01 }}
+                          onClick={() => setPreviewWorkflow(workflow)}
+                          className="backdrop-blur-xl bg-background/40 rounded-xl border border-border overflow-hidden cursor-pointer"
+                        >
+                          {/* Workflow Preview */}
+                          <div className="h-32 bg-accent/20 border-b border-border relative">
+                            {workflow.nodes && workflow.nodes.length > 0 ? (
+                              <div className="w-full h-full" key={`preview-${workflow.id || workflow.workflowId}`}>
+                                <WorkflowCanvas 
+                                  key={`canvas-${workflow.id || workflow.workflowId}`}
+                                  workflow={workflow} 
+                                  isGenerating={false}
+                                  isPreview={true}
+                                />
+                              </div>
                             ) : (
-                              <>
-                                <h2 className="text-lg font-semibold">
-                                  {selectedWorkflow?.name}
-                                </h2>
-                                <button
-                                  onClick={startEditingTitle}
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-accent rounded"
-                                >
-                                  <Edit2 className="w-4 h-4 text-muted-foreground" />
-                                </button>
-                              </>
+                              <div className="flex items-center justify-center h-full text-muted-foreground">
+                                <Maximize2 className="w-6 h-6" />
+                              </div>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {selectedWorkflow?.description}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="rounded-lg"
-                            onClick={() =>
-                              handleScheduleClick(selectedWorkflowId)
-                            }
-                          >
-                            <Clock className="w-4 h-4 mr-1" />
-                            Schedule
-                          </Button>
-                          <Link href="/editor">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="rounded-lg"
-                              onClick={() => {
-                                if (selectedWorkflow) {
-                                  setMessages([
-                                    {
-                                      id: Date.now().toString(),
-                                      text: `Editing workflow: ${selectedWorkflow.name}`,
-                                      isUser: false,
-                                      timestamp: new Date(),
-                                    },
-                                  ]);
-                                }
-                              }}
-                            >
-                              Edit in Chat
-                            </Button>
-                          </Link>
-                          <Button
-                            size="sm"
-                            className="rounded-lg bg-black text-white hover:bg-gray-800"
-                          >
-                            <Play className="w-4 h-4 mr-1" />
-                            Run
-                          </Button>
-                        </div>
-                      </div>
 
-                      {/* Stats */}
-                      {selectedWorkflow && (
-                        <div className="grid grid-cols-3 gap-4">
-                          <div className="bg-accent/50 rounded-lg p-3">
-                            <div className="text-xs text-muted-foreground mb-1">
-                              Total Runs
+                          <div className="p-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <h3 className="text-lg font-semibold mb-1">{workflow.name || 'Untitled Workflow'}</h3>
+                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {workflow.deployedAt 
+                                      ? new Date(workflow.deployedAt).toLocaleDateString() 
+                                      : 'Recently'}
+                                  </span>
+                                  {workflow.webhookUrl && (
+                                    <span className="font-mono text-xs bg-accent px-2 py-0.5 rounded">
+                                      Webhook
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-2xl font-bold">
-                              {selectedWorkflow.stats.runs}
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(`/workflows/${workflow.workflowId || workflow.id}/test`);
+                                }}
+                                className="flex-1"
+                              >
+                                <Zap className="w-3 h-3 mr-1" />
+                                Test
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleExecuteWorkflow(workflow);
+                                }}
+                              >
+                                <Play className="w-3 h-3 mr-1" />
+                                Run
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewExecutions(workflow);
+                                }}
+                              >
+                                <Eye className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPreviewWorkflow(workflow);
+                                }}
+                              >
+                                <Maximize2 className="w-3 h-3" />
+                              </Button>
                             </div>
                           </div>
-                          <div className="bg-accent/50 rounded-lg p-3">
-                            <div className="text-xs text-muted-foreground mb-1">
-                              Nodes
-                            </div>
-                            <div className="text-2xl font-bold">
-                              {selectedWorkflow.stats.nodes}
-                            </div>
-                          </div>
-                          <div className="bg-accent/50 rounded-lg p-3">
-                            <div className="text-xs text-muted-foreground mb-1">
-                              Avg Runtime
-                            </div>
-                            <div className="text-2xl font-bold">
-                              {selectedWorkflow.stats.avgRunTime}s
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                        </motion.div>
+                      ))}
                     </div>
-                    <div className="flex-1 p-6 overflow-auto">
-                      <motion.div
-                        key={selectedWorkflowId}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="h-full flex items-center justify-center"
-                      >
-                        <div className="text-center space-y-4">
-                          <div className="w-20 h-20 rounded-full bg-accent mx-auto flex items-center justify-center">
-                            <Sparkles className="w-10 h-10 text-primary" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-foreground mb-2">
-                              Workflow Graph
-                            </h3>
-                            <p className="text-sm text-muted-foreground max-w-md">
-                              Node graph visualization will appear here. This is
-                              where you'll see all the automation steps and
-                              connections.
-                            </p>
-                          </div>
-                        </div>
-                      </motion.div>
-                    </div>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
@@ -471,6 +633,36 @@ export default function PlatformPage() {
           setShowAuthModal(false);
           router.push('/');
         }}
+      />
+
+      <WorkflowModals
+        previewWorkflow={previewWorkflow}
+        setPreviewWorkflow={setPreviewWorkflow}
+        previewExecutions={previewExecutions}
+        setPreviewExecutions={setPreviewExecutions}
+        isLoadingPreviewExecutions={isLoadingPreviewExecutions}
+        onExecuteWorkflow={handleExecuteWorkflow}
+        onLoadWorkflows={loadDeployedWorkflows}
+        onLoadPreviewExecutions={async () => {
+          setIsLoadingPreviewExecutions(true);
+          const token = getClientToken();
+          const result = await getWorkflowExecutions(previewWorkflow.workflowId, 10, token || undefined);
+          if (result.success) {
+            setPreviewExecutions(result.data || []);
+          }
+          setIsLoadingPreviewExecutions(false);
+        }}
+        selectedDeployedWorkflow={selectedDeployedWorkflow}
+        setSelectedDeployedWorkflow={setSelectedDeployedWorkflow}
+        showExecutionsModal={showExecutionsModal}
+        setShowExecutionsModal={setShowExecutionsModal}
+        executions={executions}
+        setExecutions={setExecutions}
+        executionFilter={executionFilter}
+        setExecutionFilter={setExecutionFilter}
+        autoRefresh={autoRefresh}
+        setAutoRefresh={setAutoRefresh}
+        onExportExecutions={handleExportExecutions}
       />
     </div>
   );

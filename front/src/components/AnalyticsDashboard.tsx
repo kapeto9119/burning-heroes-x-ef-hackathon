@@ -116,18 +116,18 @@ export function AnalyticsDashboard() {
         
         <StatCard
           title="Success Rate"
-          value={`${stats.successRate.toFixed(1)}%`}
-          subtitle={`${stats.totalExecutions - stats.totalErrors} successful`}
+          value={`${(Number(stats.successRate) || 0).toFixed(1)}%`}
+          subtitle={`${Number(stats.totalExecutions) - Number(stats.totalErrors)} successful`}
           icon={<CheckCircle className="w-6 h-6 text-green-500" />}
-          trend={stats.successRate >= 95 ? 'up' : stats.successRate >= 80 ? 'neutral' : 'down'}
-          trendValue={stats.successRate >= 95 ? 'Excellent' : stats.successRate >= 80 ? 'Good' : 'Needs attention'}
+          trend={Number(stats.successRate) >= 95 ? 'up' : Number(stats.successRate) >= 80 ? 'neutral' : 'down'}
+          trendValue={Number(stats.successRate) >= 95 ? 'Excellent' : Number(stats.successRate) >= 80 ? 'Good' : 'Needs attention'}
           color="green"
         />
         
         <StatCard
           title="Total Errors"
           value={stats.totalErrors}
-          subtitle={`${((stats.totalErrors / Math.max(stats.totalExecutions, 1)) * 100).toFixed(1)}% error rate`}
+          subtitle={`${((Number(stats.totalErrors) / Math.max(Number(stats.totalExecutions), 1)) * 100).toFixed(1)}% error rate`}
           icon={<XCircle className="w-6 h-6 text-red-500" />}
           color="red"
         />
@@ -142,7 +142,7 @@ export function AnalyticsDashboard() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Successful Runs</p>
-              <p className="text-xl font-bold">{(stats.totalExecutions - stats.totalErrors).toLocaleString()}</p>
+              <p className="text-xl font-bold">{(Number(stats.totalExecutions) - Number(stats.totalErrors)).toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -167,8 +167,8 @@ export function AnalyticsDashboard() {
             <div>
               <p className="text-sm text-muted-foreground">Avg per Workflow</p>
               <p className="text-xl font-bold">
-                {stats.totalDeployments > 0 
-                  ? Math.round(stats.totalExecutions / stats.totalDeployments)
+                {Number(stats.totalDeployments) > 0 
+                  ? Math.round(Number(stats.totalExecutions) / Number(stats.totalDeployments))
                   : 0}
               </p>
             </div>
@@ -183,15 +183,15 @@ export function AnalyticsDashboard() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-muted-foreground">Success Rate</span>
-              <span className="text-sm font-medium">{stats.successRate.toFixed(1)}%</span>
+              <span className="text-sm font-medium">{(Number(stats.successRate) || 0).toFixed(1)}%</span>
             </div>
             <div className="h-2 bg-accent rounded-full overflow-hidden">
               <div 
                 className={`h-full transition-all ${
-                  stats.successRate >= 95 ? 'bg-green-500' : 
-                  stats.successRate >= 80 ? 'bg-yellow-500' : 'bg-red-500'
+                  Number(stats.successRate) >= 95 ? 'bg-green-500' : 
+                  Number(stats.successRate) >= 80 ? 'bg-yellow-500' : 'bg-red-500'
                 }`}
-                style={{ width: `${stats.successRate}%` }}
+                style={{ width: `${Number(stats.successRate) || 0}%` }}
               />
             </div>
           </div>
@@ -207,8 +207,8 @@ export function AnalyticsDashboard() {
               <div 
                 className="h-full bg-blue-500 transition-all"
                 style={{ 
-                  width: `${stats.totalDeployments > 0 
-                    ? (stats.activeDeployments / stats.totalDeployments) * 100 
+                  width: `${Number(stats.totalDeployments) > 0 
+                    ? (Number(stats.activeDeployments) / Number(stats.totalDeployments)) * 100 
                     : 0}%` 
                 }}
               />
