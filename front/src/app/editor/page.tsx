@@ -440,31 +440,84 @@ export default function EditorPage() {
       if (deployResult.success && deployResult.data) {
         setDeploymentData(deployResult.data);
 
-        // Auto-activate
-        const activateResult = await activateWorkflow(
-          deployResult.data.workflowId,
-          token || undefined
+        // Check if workflow has Manual Trigger
+        const hasManualTrigger = workflow.nodes?.some(
+          (node) => node.type === "n8n-nodes-base.manualTrigger"
         );
 
-        if (activateResult.success) {
-          const successMessage = {
+        if (hasManualTrigger) {
+          // Manual Trigger workflows - execute them immediately instead of activating
+          const executingMessage = {
             id: (Date.now() + 1).toString(),
-            text: `🎉 **SUCCESS!** Your workflow is now live and running!\n\n✅ **Workflow ID:** ${
-              deployResult.data.workflowId
-            }\n${
-              deployResult.data.webhookUrl
-                ? `\n🔗 **Webhook URL:**\n\`${deployResult.data.webhookUrl}\``
-                : ""
-            }\n\n💡 **Next step:** View your workflow in the [Workflows Dashboard](/workflows) to monitor executions and manage your automations!`,
+            text: `🎉 **Workflow Deployed!** Now executing it for you...`,
             isUser: false,
             timestamp: new Date(),
           };
-          setMessages((prev) => [...prev, successMessage]);
-          setDeploymentStatus("success");
-          setShowCelebration(true);
+          setMessages((prev) => [...prev, executingMessage]);
 
-          // Hide celebration after 3 seconds
-          setTimeout(() => setShowCelebration(false), 3000);
+          // Execute the workflow
+          const executeResult = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/deploy/${deployResult.data.workflowId}/execute`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ inputData: {} }),
+            }
+          );
+
+          const executeData = await executeResult.json();
+
+          if (executeData.success) {
+            const successMessage = {
+              id: (Date.now() + 2).toString(),
+              text: `🎉 **SUCCESS!** Your workflow has been deployed and executed!\n\n✅ **Workflow ID:** ${deployResult.data.workflowId}\n✅ **Execution ID:** ${executeData.data.executionId}\n\n💡 **Next step:** View your workflow in the [Workflows Dashboard](/workflows) to see execution results and run it again!`,
+              isUser: false,
+              timestamp: new Date(),
+            };
+            setMessages((prev) => [...prev, successMessage]);
+            setDeploymentStatus("success");
+            setShowCelebration(true);
+            setTimeout(() => setShowCelebration(false), 3000);
+          } else {
+            const errorMessage = {
+              id: (Date.now() + 2).toString(),
+              text: `⚠️ Workflow deployed but execution failed: ${executeData.error}\n\nYou can still execute it manually from the [Workflows Dashboard](/workflows).`,
+              isUser: false,
+              timestamp: new Date(),
+            };
+            setMessages((prev) => [...prev, errorMessage]);
+            setDeploymentStatus("success"); // Still success for deployment
+          }
+        } else {
+          // Auto-activate for non-manual trigger workflows
+          const activateResult = await activateWorkflow(
+            deployResult.data.workflowId,
+            token || undefined
+          );
+
+          if (activateResult.success) {
+            const successMessage = {
+              id: (Date.now() + 1).toString(),
+              text: `🎉 **SUCCESS!** Your workflow is now live and running!\n\n✅ **Workflow ID:** ${
+                deployResult.data.workflowId
+              }\n${
+                deployResult.data.webhookUrl
+                  ? `\n🔗 **Webhook URL:**\n\`${deployResult.data.webhookUrl}\``
+                  : ""
+              }\n\n💡 **Next step:** View your workflow in the [Workflows Dashboard](/workflows) to monitor executions and manage your automations!`,
+              isUser: false,
+              timestamp: new Date(),
+            };
+            setMessages((prev) => [...prev, successMessage]);
+            setDeploymentStatus("success");
+            setShowCelebration(true);
+
+            // Hide celebration after 3 seconds
+            setTimeout(() => setShowCelebration(false), 3000);
+          }
         }
       } else {
         // Check if it's a credentials error
