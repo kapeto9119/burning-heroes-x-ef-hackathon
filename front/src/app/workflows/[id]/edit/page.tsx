@@ -143,6 +143,8 @@ export default function WorkflowEditorPage() {
   const [splitEdgeByNode, setSplitEdgeByNode] = useState<Record<string, { sourceId: string; targetId: string } | undefined>>({});
   // Live DnD temp node id while dragging from palette
   const [tempDragNodeId, setTempDragNodeId] = useState<string | null>(null);
+  // Track if user is actively dragging a node
+  const [isDragging, setIsDragging] = useState(false);
   
   // Magnetic snap settings
   const SNAP_THRESHOLD = 80; // Distance in pixels to trigger snap
@@ -291,6 +293,12 @@ export default function WorkflowEditorPage() {
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
       setHasUnsavedChanges(true);
+      // Detect drag start/end
+      changes.forEach((change) => {
+        if (change.type === 'position' && change.dragging !== undefined) {
+          setIsDragging(change.dragging);
+        }
+      });
       // Apply magnetic snapping to position changes
       const modifiedChanges = changes.map((change) => {
         if (change.type === 'position' && change.dragging && change.position) {
@@ -578,9 +586,10 @@ export default function WorkflowEditorPage() {
     }
   }, [tempDragNodeId, setNodes]);
 
-  // Global unlink-on-distance: for any node currently between two nodes,
-  // if it moves far from the midpoint of its pair, restore the original pair and remove its edges
+  // Global unlink-on-distance: only run while actively dragging
   useEffect(() => {
+    if (!isDragging) return;
+
     setEdges((prevEdges) => {
       let nextEdges = prevEdges;
       let modified = false;
@@ -648,7 +657,7 @@ export default function WorkflowEditorPage() {
       }
       return nextEdges;
     });
-  }, [nodes]);
+  }, [nodes, isDragging]);
 
   const handleSave = async () => {
     if (!workflow) return;
