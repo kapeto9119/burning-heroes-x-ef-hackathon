@@ -138,9 +138,14 @@ export default function WorkflowEditorPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [initialWorkflowState, setInitialWorkflowState] = useState<{nodes: Node[], edges: Edge[]} | null>(null);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  // Track which original edge a node split so we can restore it when un-linking
+  const [splitEdgeByNode, setSplitEdgeByNode] = useState<Record<string, { sourceId: string; targetId: string } | undefined>>({});
+  // Live DnD temp node id while dragging from palette
+  const [tempDragNodeId, setTempDragNodeId] = useState<string | null>(null);
   
   // Magnetic snap settings
   const SNAP_THRESHOLD = 80; // Distance in pixels to trigger snap
+  const UNSNAP_THRESHOLD = 140; // Distance to original pair midpoint to auto-unlink
   const NODE_WIDTH = 220; // Approximate node width
   const NODE_HEIGHT = 120; // Approximate node height
   const VERTICAL_SPACING = 200; // Spacing between nodes vertically
@@ -333,6 +338,10 @@ export default function WorkflowEditorPage() {
           if (insertBetween && hasSnapped) {
             setTimeout(() => {
               setEdges((eds) => {
+                // Capture current pair (if node was already between two nodes)
+                const prevIncoming = eds.find(e => e.target === change.id);
+                const prevOutgoing = eds.find(e => e.source === change.id);
+                
                 // Remove the edge we're inserting into and any existing edges tied to this node
                 let newEdges = eds.filter(e => e.id !== insertBetween!.edgeId);
                 newEdges = newEdges.filter(e => e.source !== change.id && e.target !== change.id);
@@ -360,10 +369,71 @@ export default function WorkflowEditorPage() {
                   },
                 ];
 
+                // If the node was previously inserted between A and B, restore A->B before moving to new pair
+                if (prevIncoming && prevOutgoing) {
+                  const a = prevIncoming.source;
+                  const b = prevOutgoing.target;
+                  // Avoid restoring if it's the same pair we're inserting into
+                  if (!(a === insertBetween!.sourceId && b === insertBetween!.targetId)) {
+                    // Ensure we don't duplicate the edge
+                    const exists = newEdges.some(e => e.source === a && e.target === b);
+                    if (!exists) {
+                      newEdges.push({
+                        id: `${a}-${b}`,
+                        source: a,
+                        target: b,
+                        type: 'smoothstep',
+                        animated: false,
+                        style: { stroke: '#94a3b8', strokeWidth: 1.5 },
+                        markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+                      });
+                    }
+                  }
+                }
+
                 // Enforce degree constraint for this node
                 return normalizeEdgesForNode(newEdges, change.id);
               });
+              // Remember which pair this node split now
+              setSplitEdgeByNode((m) => ({ ...m, [change.id]: { sourceId: insertBetween!.sourceId, targetId: insertBetween!.targetId } }));
             }, 100);
+          }
+
+          // If not snapping to any edge, and currently between two nodes, unlink when far enough and restore original A->B
+          if (!hasSnapped) {
+            const incoming = edges.find(e => e.target === change.id);
+            const outgoing = edges.find(e => e.source === change.id);
+            if (incoming && outgoing) {
+              const sourceNode = nodes.find(n => n.id === incoming.source);
+              const targetNode = nodes.find(n => n.id === outgoing.target);
+              if (sourceNode && targetNode) {
+                const midX = (sourceNode.position.x + targetNode.position.x) / 2;
+                const midY = (sourceNode.position.y + targetNode.position.y) / 2;
+                const distanceToMid = Math.hypot(draggedX - midX, draggedY - midY);
+                if (distanceToMid > UNSNAP_THRESHOLD) {
+                  setEdges((eds) => {
+                    // Remove node's edges
+                    let next = eds.filter(e => e.source !== change.id && e.target !== change.id);
+                    // Restore A->B if missing
+                    const exists = next.some(e => e.source === incoming.source && e.target === outgoing.target);
+                    if (!exists) {
+                      next = next.concat({
+                        id: `${incoming.source}-${outgoing.target}`,
+                        source: incoming.source,
+                        target: outgoing.target,
+                        type: 'smoothstep',
+                        animated: false,
+                        style: { stroke: '#94a3b8', strokeWidth: 1.5 },
+                        markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+                      });
+                    }
+                    return next;
+                  });
+                  // Clear split info for this node
+                  setSplitEdgeByNode((m) => ({ ...m, [change.id]: undefined }));
+                }
+              }
+            }
           }
 
           return {
@@ -396,34 +466,64 @@ export default function WorkflowEditorPage() {
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
-    console.log('Drag over canvas');
-  }, []);
+
+    if (!reactFlowInstance) return;
+
+    // Try to read node data from DataTransfer or window cache
+    let nodeDataStr = event.dataTransfer.getData('nodeData');
+    let nodeData: any | null = null;
+    if (nodeDataStr) {
+      try { nodeData = JSON.parse(nodeDataStr); } catch {}
+    }
+    // @ts-ignore
+    if (!nodeData && (window as any).__paletteDragNode) {
+      // @ts-ignore
+      nodeData = (window as any).__paletteDragNode;
+    }
+    if (!nodeData) return;
+
+    const position = reactFlowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY });
+
+    if (!tempDragNodeId) {
+      const id = `temp-${Date.now()}`;
+      const tempNode: Node = {
+        id,
+        type: 'custom',
+        position,
+        data: {
+          label: nodeData.displayName,
+          nodeType: nodeData.type,
+          icon: nodeData.icon,
+          description: nodeData.description || 'Workflow node',
+        },
+      };
+      setNodes((nds) => nds.concat(tempNode));
+      setTempDragNodeId(id);
+    } else {
+      // Update temp node position
+      setNodes((nds) => nds.map(n => n.id === tempDragNodeId ? { ...n, position } : n));
+    }
+  }, [reactFlowInstance, tempDragNodeId, setNodes]);
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
 
+      if (tempDragNodeId) {
+        // Finalize temp node as real node
+        setHasUnsavedChanges(true);
+        setTempDragNodeId(null);
+        // Clear cache
+        try { /* @ts-ignore */ delete (window as any).__paletteDragNode; } catch {}
+        return;
+      }
+
+      // Fallback: create from DataTransfer if no temp node was created
       const type = event.dataTransfer.getData('application/reactflow');
       const nodeDataStr = event.dataTransfer.getData('nodeData');
-
-      if (!type || !nodeDataStr) {
-        console.log('Missing drag data');
-        return;
-      }
-
-      if (!reactFlowInstance) {
-        console.log('ReactFlow instance not ready');
-        return;
-      }
-
+      if (!type || !nodeDataStr || !reactFlowInstance) return;
       const nodeData = JSON.parse(nodeDataStr);
-      
-      // Convert screen coordinates to flow coordinates
-      const position = reactFlowInstance.screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY,
-      });
-
+      const position = reactFlowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY });
       const newNode: Node = {
         id: `${nodeData.type}-${Date.now()}`,
         type: 'custom',
@@ -435,13 +535,20 @@ export default function WorkflowEditorPage() {
           description: nodeData.description || 'Workflow node',
         },
       };
-
-      console.log('Adding node at position:', position);
       setHasUnsavedChanges(true);
       setNodes((nds) => nds.concat(newNode));
     },
-    [reactFlowInstance, setNodes]
+    [reactFlowInstance, tempDragNodeId, setNodes]
   );
+
+  const onDragLeaveCanvas = useCallback(() => {
+    // Remove temp node if dragging leaves canvas without drop
+    if (tempDragNodeId) {
+      setNodes((nds) => nds.filter(n => n.id !== tempDragNodeId));
+      setTempDragNodeId(null);
+      try { /* @ts-ignore */ delete (window as any).__paletteDragNode; } catch {}
+    }
+  }, [tempDragNodeId, setNodes]);
 
   const handleSave = async () => {
     if (!workflow) return;
@@ -763,6 +870,7 @@ export default function WorkflowEditorPage() {
                   className="flex-1 relative"
                   onDrop={onDrop}
                   onDragOver={onDragOver}
+                  onDragLeave={onDragLeaveCanvas}
                 >
                   <style jsx global>{`
                     .react-flow__node.snapping {
