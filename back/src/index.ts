@@ -182,7 +182,7 @@ app.get("/health", (req: Request, res: Response) => {
 
 // API Routes
 app.use("/api/auth", createAuthRouter(authService));
-app.use("/api/chat", createChatRouter(aiService, mcpClient, workflowGenerator));
+app.use("/api/chat", createChatRouter(aiService, mcpClient, workflowGenerator, authService));
 app.use("/api/workflows", createWorkflowsRouter(mcpClient, authService));
 app.use("/api/voice", createVoiceRouter(vapiService, platformKnowledge));
 app.use(

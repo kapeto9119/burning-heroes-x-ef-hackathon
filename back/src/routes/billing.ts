@@ -48,7 +48,7 @@ router.get('/plans', async (req, res) => {
  */
 router.get('/usage', authenticateToken, async (req, res) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     
     const summary = await usageLimiter.getUsageSummary(userId);
     const warnings = await usageLimiter.getUsageWarnings(userId);
@@ -76,7 +76,7 @@ router.get('/usage', authenticateToken, async (req, res) => {
  */
 router.post('/checkout', authenticateToken, async (req, res) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     const { planTier } = req.body;
 
     if (!planTier) {
@@ -141,7 +141,7 @@ router.post('/portal', authenticateToken, async (req, res) => {
       return res.status(503).json({ success: false, error: 'Billing not configured' });
     }
 
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     
     const portalUrl = await stripeService.createPortalSession(
@@ -173,7 +173,7 @@ router.post('/cancel', authenticateToken, async (req, res) => {
       return res.status(503).json({ success: false, error: 'Billing not configured' });
     }
 
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     
     await stripeService.cancelSubscription(userId);
 
@@ -201,7 +201,7 @@ router.post('/reactivate', authenticateToken, async (req, res) => {
       return res.status(503).json({ success: false, error: 'Billing not configured' });
     }
 
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     
     await stripeService.reactivateSubscription(userId);
 
@@ -225,7 +225,7 @@ router.post('/reactivate', authenticateToken, async (req, res) => {
  */
 router.get('/history', authenticateToken, async (req, res) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
     
     const result = await pool.query(
       `SELECT * FROM billing_history 

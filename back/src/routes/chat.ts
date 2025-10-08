@@ -3,6 +3,8 @@ import { AIService } from '../services/ai-service';
 import { N8nMCPClient } from '../services/n8n-mcp-client';
 import { WorkflowGenerator } from '../services/workflow-generator';
 import { ChatRequest, ApiResponse, ChatResponse } from '../types';
+import { AuthService } from '../services/auth-service';
+import { createAuthMiddleware } from '../middleware/auth';
 
 /**
  * Helper: Generate contextual suggestions
@@ -22,15 +24,17 @@ function generateSuggestions(message: string): string[] {
 export function createChatRouter(
   aiService: AIService,
   mcpClient: N8nMCPClient,
-  workflowGenerator: WorkflowGenerator
+  workflowGenerator: WorkflowGenerator,
+  authService: AuthService
 ): Router {
   const router = Router();
+  const authMiddleware = createAuthMiddleware(authService);
 
   /**
    * POST /api/chat
    * Main chat endpoint for conversing with AI
    */
-  router.post('/', async (req: Request, res: Response) => {
+  router.post('/', authMiddleware, async (req: Request, res: Response) => {
     try {
       const { message, conversationHistory = [] }: ChatRequest = req.body;
 
@@ -101,7 +105,7 @@ export function createChatRouter(
    * POST /api/chat/generate-workflow
    * Generate a workflow from description
    */
-  router.post('/generate-workflow', async (req: Request, res: Response) => {
+  router.post('/generate-workflow', authMiddleware, async (req: Request, res: Response) => {
     try {
       const { description } = req.body;
 
