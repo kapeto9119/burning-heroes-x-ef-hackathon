@@ -151,27 +151,24 @@ export class WorkflowGenerator {
       cron: 'n8n-nodes-base.scheduleTrigger'
     };
 
-    // Detect if this is a data-fetching trigger (not a traditional trigger)
-    // e.g., "grab leads from Salesforce" should be a regular Salesforce node, not a trigger
-    const isFetchAction = trigger.config?.operation === 'getAll' || 
-                          trigger.config?.operation === 'get' ||
-                          trigger.type === 'fetch' ||
-                          trigger.type === 'salesforce';
-    
-    if (isFetchAction) {
-      // This is actually a data-fetching action, not a trigger
-      // Use manual trigger and let the first action node handle the data fetching
+    // Fallback to webhook trigger (better than manual for programmatic execution)
+    if (!trigger || !trigger.type) {
       return {
         id: this.generateNodeId(),
-        name: 'Manual Trigger',
-        type: 'n8n-nodes-base.manualTrigger',
+        name: 'Webhook',
+        type: 'n8n-nodes-base.webhook',
         position: [x, y],
-        parameters: {},
+        parameters: {
+          httpMethod: 'POST',
+          path: `workflow-${Date.now()}`,
+          responseMode: 'onReceived',
+          options: {}
+        },
         credentials: {}
       };
     }
 
-    const nodeType = triggerTypes[trigger.type] || 'n8n-nodes-base.manualTrigger';
+    const nodeType = triggerTypes[trigger.type] || 'n8n-nodes-base.webhook';
 
     return {
       id: this.generateNodeId(),
