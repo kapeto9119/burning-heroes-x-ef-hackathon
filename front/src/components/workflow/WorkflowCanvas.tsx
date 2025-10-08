@@ -32,19 +32,64 @@ function CustomNode({ data }: any) {
   const visual = getNodeVisual(data.type, data.label);
   const Icon = visual.icon;
 
-  // Determine border color and animation based on status
-  const getBorderStyle = () => {
+  // Get node color based on type (pastel colors like reference)
+  const getNodeColor = () => {
+    const type = data.type.toLowerCase();
+    
+    // Trigger nodes
+    if (type.includes('webhook') || type.includes('trigger')) {
+      return 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30';
+    }
+    // Schedule nodes
+    if (type.includes('schedule') || type.includes('cron')) {
+      return 'border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/30';
+    }
+    // Communication (Email, Slack, etc)
+    if (type.includes('email') || type.includes('mail') || type.includes('gmail')) {
+      return 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30';
+    }
+    if (type.includes('slack') || type.includes('discord')) {
+      return 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30';
+    }
+    // Social/Professional networks
+    if (type.includes('linkedin') || type.includes('twitter') || type.includes('facebook')) {
+      return 'border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/30';
+    }
+    // CRM & Business
+    if (type.includes('salesforce') || type.includes('crm') || type.includes('hubspot')) {
+      return 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30';
+    }
+    // Data & Database
+    if (type.includes('postgres') || type.includes('mysql') || type.includes('database')) {
+      return 'border-cyan-200 bg-cyan-50 dark:border-cyan-800 dark:bg-cyan-950/30';
+    }
+    // HTTP & API
+    if (type.includes('http') || type.includes('api')) {
+      return 'border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/30';
+    }
+    // AI nodes
+    if (type.includes('openai') || type.includes('ai')) {
+      return 'border-pink-200 bg-pink-50 dark:border-pink-800 dark:bg-pink-950/30';
+    }
+    // Control flow
+    if (type.includes('if') || type.includes('switch') || type.includes('merge')) {
+      return 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/30';
+    }
+    // Default
+    return 'border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950/30';
+  };
+  
+  // Status border overlay (only when executing)
+  const getStatusBorder = () => {
     switch (nodeStatus) {
       case 'running':
-        return 'border-blue-500 shadow-blue-500/50';
+        return 'ring-2 ring-blue-400';
       case 'success':
-        return 'border-green-500 shadow-green-500/30';
+        return 'ring-2 ring-green-400';
       case 'error':
-        return 'border-red-500 shadow-red-500/30';
-      case 'waiting':
-        return 'border-gray-400 shadow-gray-400/20';
+        return 'ring-2 ring-red-400';
       default:
-        return 'border-purple-500/30';
+        return '';
     }
   };
 
@@ -88,91 +133,59 @@ function CustomNode({ data }: any) {
       />
       
       <div className={`
-        px-4 py-3 rounded-xl border-2 backdrop-blur-xl
-        bg-gradient-to-br ${visual.color}
-        shadow-lg hover:shadow-xl transition-all duration-200
-        w-full relative
-        ${getBorderStyle()}
+        px-4 py-3 rounded-lg border-2 shadow-md
+        ${getNodeColor()}
+        ${getStatusBorder()}
+        hover:shadow-lg transition-all duration-200
+        w-full min-w-48 relative
         ${isPreview ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
       `}>
         
-        {/* Status Badge */}
-        {nodeStatus && (
-          <div className="absolute -top-2 -right-2 z-10">
-            {nodeStatus === 'success' && (
-              <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-                <CheckCircle className="w-4 h-4 text-white" />
-              </div>
-            )}
-            {nodeStatus === 'error' && (
-              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
-                <XCircle className="w-4 h-4 text-white" />
-              </div>
-            )}
-            {nodeStatus === 'running' && (
-              <motion.div 
-                className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg"
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  boxShadow: [
-                    '0 0 0 0 rgba(59, 130, 246, 0.7)',
-                    '0 0 0 10px rgba(59, 130, 246, 0)',
-                    '0 0 0 0 rgba(59, 130, 246, 0)'
-                  ]
-                }}
-                transition={{ 
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: 'easeInOut'
-                }}
-              >
-                <Loader2 className="w-4 h-4 text-white animate-spin" />
-              </motion.div>
-            )}
-            {nodeStatus === 'waiting' && (
-              <div className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center shadow-lg">
-                <Clock className="w-4 h-4 text-white" />
-              </div>
-            )}
-          </div>
-        )}
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-background/80 flex items-center justify-center">
+        {/* Header with icon and status icon */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
             <Icon className="w-4 h-4" />
+            <span className="font-medium text-sm">{data.label}</span>
           </div>
-          <div className="flex-1">
-            <div className="font-medium text-sm text-foreground">{data.label}</div>
-            <div className="text-xs text-muted-foreground">{data.nodeType}</div>
-          </div>
+          {/* Status icon (top right, small) */}
+          {nodeStatus === 'success' && (
+            <CheckCircle className="w-3 h-3 text-green-500" />
+          )}
+          {nodeStatus === 'running' && (
+            <Loader2 className="w-3 h-3 text-blue-500 animate-spin" />
+          )}
+          {nodeStatus === 'error' && (
+            <div className="w-3 h-3 bg-red-500 rounded-full" />
+          )}
+          {nodeStatus === 'waiting' && (
+            <Clock className="w-3 h-3 text-gray-400" />
+          )}
         </div>
+        
+        {/* Description */}
         {data.description && (
-          <div className="mt-2 text-xs text-muted-foreground">
+          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
             {data.description}
+          </p>
+        )}
+        
+        {/* Status Badge (bottom, like reference) */}
+        {nodeStatus && (
+          <div className={`
+            inline-flex px-2 py-1 rounded text-xs border
+            ${nodeStatus === 'completed' || nodeStatus === 'success' 
+              ? 'text-green-700 border-green-300 dark:text-green-400 dark:border-green-700' 
+              : nodeStatus === 'running' 
+              ? 'text-blue-700 border-blue-300 dark:text-blue-400 dark:border-blue-700'
+              : nodeStatus === 'error'
+              ? 'text-red-700 border-red-300 dark:text-red-400 dark:border-red-700'
+              : 'text-gray-500 border-gray-300 dark:text-gray-400 dark:border-gray-600'
+            }
+          `}>
+            {nodeStatus}
           </div>
         )}
       </div>
-      
-      {/* Animated glow effect */}
-      <motion.div
-        className="absolute inset-0 rounded-xl blur-xl opacity-30 -z-10"
-        style={{
-          background: `radial-gradient(circle, ${
-            data.type.includes('webhook') ? '#3b82f6' :
-            data.type.includes('schedule') ? '#a855f7' :
-            data.type.includes('slack') ? '#22c55e' :
-            '#6b7280'
-          } 0%, transparent 70%)`
-        }}
-        animate={{
-          scale: [1, 1.1, 1],
-          opacity: [0.3, 0.5, 0.3],
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      />
     </motion.div>
   );
 }
