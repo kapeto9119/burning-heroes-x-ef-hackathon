@@ -23,6 +23,7 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
       }
       
       const workflowRecords = await workflowRepo.findByUser(userId);
+      console.log(`[Workflows] Found ${workflowRecords.length} workflows for user ${userId}`);
       
       // Convert to format expected by frontend (includes metadata + workflow_data)
       const workflows = workflowRecords.map(record => ({

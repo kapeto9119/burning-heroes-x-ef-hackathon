@@ -204,6 +204,13 @@ export function createDeployRouter(
       });
 
       // Insert into workflows table
+      console.log('[Deploy] Saving workflow to database:', {
+        workflowId,
+        userId,
+        name: workflow.name,
+        is_active: false
+      });
+      
       await dbPool.query(
         `INSERT INTO workflows (id, user_id, name, workflow_data, node_types, required_credential_types, is_active)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -222,6 +229,8 @@ export function createDeployRouter(
           false, // Not active yet
         ]
       );
+      
+      console.log('[Deploy] ✅ Workflow saved to database successfully');
 
       // Now create the deployment record
       console.log('[Deploy] Creating deployment record...');
@@ -623,6 +632,13 @@ export function createDeployRouter(
 
         // Update deployment status
         await deploymentRepo.updateStatus(workflowId, "active");
+        
+        // Update workflow is_active flag in workflows table
+        await dbPool.query(
+          'UPDATE workflows SET is_active = true, updated_at = NOW() WHERE id = $1',
+          [workflowId]
+        );
+        console.log('[Activate] ✅ Workflow marked as active in database');
 
         // Emit WebSocket event
         const wsService = (req.app as any).wsService;
