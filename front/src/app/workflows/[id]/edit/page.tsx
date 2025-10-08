@@ -143,8 +143,8 @@ export default function WorkflowEditorPage() {
   const [splitEdgeByNode, setSplitEdgeByNode] = useState<Record<string, { sourceId: string; targetId: string } | undefined>>({});
   // Live DnD temp node id while dragging from palette
   const [tempDragNodeId, setTempDragNodeId] = useState<string | null>(null);
-  // Track if user is actively dragging a node
-  const [isDragging, setIsDragging] = useState(false);
+  // Track which node is being dragged
+  const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
   
   // Magnetic snap settings
   const SNAP_THRESHOLD = 80; // Distance in pixels to trigger snap
@@ -295,8 +295,12 @@ export default function WorkflowEditorPage() {
       setHasUnsavedChanges(true);
       // Detect drag start/end
       changes.forEach((change) => {
-        if (change.type === 'position' && change.dragging !== undefined) {
-          setIsDragging(change.dragging);
+        if (change.type === 'position') {
+          if (change.dragging) {
+            setDraggingNodeId(change.id);
+          } else if (change.dragging === false) {
+            setDraggingNodeId(null);
+          }
         }
       });
       // Apply magnetic snapping to position changes
@@ -586,15 +590,20 @@ export default function WorkflowEditorPage() {
     }
   }, [tempDragNodeId, setNodes]);
 
-  // Global unlink-on-distance: only run while actively dragging
+  // Global unlink-on-distance: only check the node being dragged
   useEffect(() => {
-    if (!isDragging) return;
+    if (!draggingNodeId) return;
 
     setEdges((prevEdges) => {
       let nextEdges = prevEdges;
       let modified = false;
 
-      nodes.forEach((n) => {
+      // Only check the node being dragged
+      const n = nodes.find(node => node.id === draggingNodeId);
+      if (!n) return prevEdges;
+
+      {
+        // Scope for the single node check
         const incoming = nextEdges.find((e) => e.target === n.id);
         const outgoing = nextEdges.find((e) => e.source === n.id);
 
@@ -602,7 +611,7 @@ export default function WorkflowEditorPage() {
         if (incoming && outgoing) {
           const sourceNode = nodes.find((x) => x.id === incoming.source);
           const targetNode = nodes.find((x) => x.id === outgoing.target);
-          if (!sourceNode || !targetNode) return;
+          if (!sourceNode || !targetNode) return prevEdges;
 
           const midX = (sourceNode.position.x + targetNode.position.x) / 2;
           const midY = (sourceNode.position.y + targetNode.position.y) / 2;
@@ -626,38 +635,35 @@ export default function WorkflowEditorPage() {
             }
             nextEdges = updated;
           }
-          return;
         }
 
         // Case 2: node is tail with only one connection (incoming only or outgoing only)
         if (incoming && !outgoing) {
           const sourceNode = nodes.find((x) => x.id === incoming.source);
-          if (!sourceNode) return;
+          if (!sourceNode) return prevEdges;
           const dist = Math.hypot(n.position.x - sourceNode.position.x, n.position.y - sourceNode.position.y);
           if (dist > UNSNAP_THRESHOLD) {
             modified = true;
             nextEdges = nextEdges.filter((e) => e.id !== incoming.id);
           }
-          return;
         }
         if (!incoming && outgoing) {
           const targetNode = nodes.find((x) => x.id === outgoing.target);
-          if (!targetNode) return;
+          if (!targetNode) return prevEdges;
           const dist = Math.hypot(n.position.x - targetNode.position.x, n.position.y - targetNode.position.y);
           if (dist > UNSNAP_THRESHOLD) {
             modified = true;
             nextEdges = nextEdges.filter((e) => e.id !== outgoing.id);
           }
-          return;
         }
-      });
+      }
 
       if (modified) {
         setHasUnsavedChanges(true);
       }
       return nextEdges;
     });
-  }, [nodes, isDragging]);
+  }, [nodes, draggingNodeId]);
 
   const handleSave = async () => {
     if (!workflow) return;
@@ -861,7 +867,7 @@ export default function WorkflowEditorPage() {
       <div className="relative z-10">
         <Navbar />
 
-        <div className="container mx-auto px-6 py-6 max-w-[1800px] h-screen overflow-hidden flex flex-col">
+        <div className="container mx-auto px-6 py-6 max-w-[1800px] h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
           {/* Editor Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
