@@ -147,7 +147,8 @@ export default function EditorPage() {
   const [deploymentData, setDeploymentData] = useState<any>(null);
   const [showCelebration, setShowCelebration] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showInlineCredentialModal, setShowInlineCredentialModal] = useState(false);
+  const [showInlineCredentialModal, setShowInlineCredentialModal] =
+    useState(false);
   const [missingCredentials, setMissingCredentials] = useState<any[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -340,7 +341,7 @@ export default function EditorPage() {
 
   const handleSaveClick = async () => {
     if (!workflow) return;
-    
+
     // Check if user is authenticated
     if (!isAuthenticated) {
       setShowAuthModal(true);
@@ -351,7 +352,7 @@ export default function EditorPage() {
     try {
       const token = getAuthToken();
       const result = await saveWorkflow(workflow, token || undefined);
-      
+
       if (result.success) {
         setSaveSuccess(true);
         const successMessage = {
@@ -361,11 +362,11 @@ export default function EditorPage() {
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, successMessage]);
-        
+
         // Hide success indicator after 3 seconds
         setTimeout(() => setSaveSuccess(false), 3000);
       } else {
-        throw new Error(result.error || 'Failed to save workflow');
+        throw new Error(result.error || "Failed to save workflow");
       }
     } catch (error: any) {
       const errorMessage = {
@@ -382,7 +383,7 @@ export default function EditorPage() {
 
   const handleDeployClick = async () => {
     if (!workflow) return;
-    
+
     // Check if user is authenticated
     if (!isAuthenticated) {
       setShowAuthModal(true);
@@ -391,17 +392,23 @@ export default function EditorPage() {
 
     // Check for missing credentials
     const token = getAuthToken();
-    const credCheck = await checkWorkflowCredentials(workflow, token || undefined);
-    
+    const credCheck = await checkWorkflowCredentials(
+      workflow,
+      token || undefined
+    );
+
     if (credCheck.success && credCheck.data) {
-      if (!credCheck.data.hasAllCredentials && credCheck.data.missingCredentials.length > 0) {
+      if (
+        !credCheck.data.hasAllCredentials &&
+        credCheck.data.missingCredentials.length > 0
+      ) {
         // Show inline credential modal
         setMissingCredentials(credCheck.data.missingCredentials);
         setShowInlineCredentialModal(true);
         return;
       }
     }
-    
+
     // All credentials present, deploy directly
     handleDeploy();
   };
@@ -440,84 +447,31 @@ export default function EditorPage() {
       if (deployResult.success && deployResult.data) {
         setDeploymentData(deployResult.data);
 
-        // Check if workflow has Manual Trigger
-        const hasManualTrigger = workflow.nodes?.some(
-          (node) => node.type === "n8n-nodes-base.manualTrigger"
+        // Auto-activate the workflow (works for webhook triggers)
+        const activateResult = await activateWorkflow(
+          deployResult.data.workflowId,
+          token || undefined
         );
 
-        if (hasManualTrigger) {
-          // Manual Trigger workflows - execute them immediately instead of activating
-          const executingMessage = {
+        if (activateResult.success) {
+          const successMessage = {
             id: (Date.now() + 1).toString(),
-            text: `🎉 **Workflow Deployed!** Now executing it for you...`,
+            text: `🎉 **SUCCESS!** Your workflow is now live and running!\n\n✅ **Workflow ID:** ${
+              deployResult.data.workflowId
+            }\n${
+              deployResult.data.webhookUrl
+                ? `\n🔗 **Webhook URL:**\n\`${deployResult.data.webhookUrl}\`\n\n💡 Call this URL to trigger your workflow!`
+                : ""
+            }\n\n📊 **Next step:** View your workflow in the [Workflows Dashboard](/workflows) to monitor executions!`,
             isUser: false,
             timestamp: new Date(),
           };
-          setMessages((prev) => [...prev, executingMessage]);
+          setMessages((prev) => [...prev, successMessage]);
+          setDeploymentStatus("success");
+          setShowCelebration(true);
 
-          // Execute the workflow
-          const executeResult = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/deploy/${deployResult.data.workflowId}/execute`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ inputData: {} }),
-            }
-          );
-
-          const executeData = await executeResult.json();
-
-          if (executeData.success) {
-            const successMessage = {
-              id: (Date.now() + 2).toString(),
-              text: `🎉 **SUCCESS!** Your workflow has been deployed and executed!\n\n✅ **Workflow ID:** ${deployResult.data.workflowId}\n✅ **Execution ID:** ${executeData.data.executionId}\n\n💡 **Next step:** View your workflow in the [Workflows Dashboard](/workflows) to see execution results and run it again!`,
-              isUser: false,
-              timestamp: new Date(),
-            };
-            setMessages((prev) => [...prev, successMessage]);
-            setDeploymentStatus("success");
-            setShowCelebration(true);
-            setTimeout(() => setShowCelebration(false), 3000);
-          } else {
-            const errorMessage = {
-              id: (Date.now() + 2).toString(),
-              text: `⚠️ Workflow deployed but execution failed: ${executeData.error}\n\nYou can still execute it manually from the [Workflows Dashboard](/workflows).`,
-              isUser: false,
-              timestamp: new Date(),
-            };
-            setMessages((prev) => [...prev, errorMessage]);
-            setDeploymentStatus("success"); // Still success for deployment
-          }
-        } else {
-          // Auto-activate for non-manual trigger workflows
-          const activateResult = await activateWorkflow(
-            deployResult.data.workflowId,
-            token || undefined
-          );
-
-          if (activateResult.success) {
-            const successMessage = {
-              id: (Date.now() + 1).toString(),
-              text: `🎉 **SUCCESS!** Your workflow is now live and running!\n\n✅ **Workflow ID:** ${
-                deployResult.data.workflowId
-              }\n${
-                deployResult.data.webhookUrl
-                  ? `\n🔗 **Webhook URL:**\n\`${deployResult.data.webhookUrl}\``
-                  : ""
-              }\n\n💡 **Next step:** View your workflow in the [Workflows Dashboard](/workflows) to monitor executions and manage your automations!`,
-              isUser: false,
-              timestamp: new Date(),
-            };
-            setMessages((prev) => [...prev, successMessage]);
-            setDeploymentStatus("success");
-            setShowCelebration(true);
-
-            // Hide celebration after 3 seconds
-            setTimeout(() => setShowCelebration(false), 3000);
-          }
+          // Hide celebration after 3 seconds
+          setTimeout(() => setShowCelebration(false), 3000);
         }
       } else {
         // Check if it's a credentials error
@@ -605,9 +559,9 @@ export default function EditorPage() {
         // Use the real chat API with conversation history
         const result = await sendChatMessage(messageText, token, history);
 
-        console.log('[Editor] 🔍 API Response:', result);
-        console.log('[Editor] 🔍 Success?', result.success);
-        console.log('[Editor] 🔍 Data:', result.data);
+        console.log("[Editor] 🔍 API Response:", result);
+        console.log("[Editor] 🔍 Success?", result.success);
+        console.log("[Editor] 🔍 Data:", result.data);
 
         if (result.success && result.data) {
           // The response format is { message, workflow, suggestions }
@@ -624,16 +578,22 @@ export default function EditorPage() {
 
           // If the AI generated a workflow, show it
           if (result.data.workflow) {
-            console.log('[Editor] 📊 Workflow received:', result.data.workflow);
-            console.log('[Editor] 📊 Workflow nodes:', result.data.workflow.nodes);
-            console.log('[Editor] 📊 Nodes count:', result.data.workflow.nodes?.length);
+            console.log("[Editor] 📊 Workflow received:", result.data.workflow);
+            console.log(
+              "[Editor] 📊 Workflow nodes:",
+              result.data.workflow.nodes
+            );
+            console.log(
+              "[Editor] 📊 Nodes count:",
+              result.data.workflow.nodes?.length
+            );
             setWorkflow(result.data.workflow);
             setDeploymentStatus("idle");
           } else {
-            console.log('[Editor] ⚠️ No workflow in response!');
+            console.log("[Editor] ⚠️ No workflow in response!");
           }
         } else {
-          console.log('[Editor] ❌ API call failed:', result.error);
+          console.log("[Editor] ❌ API call failed:", result.error);
           throw new Error(result.error || "Chat failed");
         }
       } catch (error: any) {
@@ -859,7 +819,9 @@ export default function EditorPage() {
                     </h2>
                     <p className="text-sm text-muted-foreground">
                       {workflow
-                        ? `${workflow.nodes?.length || 0} nodes${isPreviewMode ? " • Preview Mode" : ""}`
+                        ? `${workflow.nodes?.length || 0} nodes${
+                            isPreviewMode ? " • Preview Mode" : ""
+                          }`
                         : "Your automation nodes will appear here"}
                     </p>
                   </div>
@@ -955,10 +917,18 @@ export default function EditorPage() {
                 </div>
                 <div className="flex-1 relative overflow-hidden">
                   {(() => {
-                    console.log('[Editor] 🎨 Render check - workflow:', workflow);
-                    console.log('[Editor] 🎨 Has nodes?', workflow?.nodes);
-                    console.log('[Editor] 🎨 Nodes length:', workflow?.nodes?.length);
-                    return workflow && workflow.nodes && workflow.nodes.length > 0;
+                    console.log(
+                      "[Editor] 🎨 Render check - workflow:",
+                      workflow
+                    );
+                    console.log("[Editor] 🎨 Has nodes?", workflow?.nodes);
+                    console.log(
+                      "[Editor] 🎨 Nodes length:",
+                      workflow?.nodes?.length
+                    );
+                    return (
+                      workflow && workflow.nodes && workflow.nodes.length > 0
+                    );
                   })() ? (
                     <WorkflowCanvas
                       key={workflow.id || workflow.name}
