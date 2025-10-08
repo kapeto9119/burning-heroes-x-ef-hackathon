@@ -261,37 +261,45 @@ export default function WorkflowEditorPage() {
           const draggedX = change.position!.x;
           const draggedY = change.position!.y;
 
-          // Check all edges to see if we're near the midpoint (to insert between nodes)
-          edges.forEach((edge) => {
-            const sourceNode = nodes.find(n => n.id === edge.source);
-            const targetNode = nodes.find(n => n.id === edge.target);
-            
-            if (!sourceNode || !targetNode || edge.source === change.id || edge.target === change.id) return;
+          // Check if this node is already connected (has incoming or outgoing edges)
+          const nodeHasConnections = edges.some(
+            e => e.source === change.id || e.target === change.id
+          );
 
-            // Calculate midpoint of the edge
-            const midX = (sourceNode.position.x + targetNode.position.x) / 2;
-            const midY = (sourceNode.position.y + targetNode.position.y) / 2;
+          // Only allow insertion if the node doesn't have connections yet
+          if (!nodeHasConnections) {
+            // Check all edges to see if we're near the midpoint (to insert between nodes)
+            edges.forEach((edge) => {
+              const sourceNode = nodes.find(n => n.id === edge.source);
+              const targetNode = nodes.find(n => n.id === edge.target);
+              
+              if (!sourceNode || !targetNode || edge.source === change.id || edge.target === change.id) return;
 
-            // Calculate distance from dragged node to edge midpoint
-            const distanceToMidpoint = Math.sqrt(
-              Math.pow(draggedX - midX, 2) + Math.pow(draggedY - midY, 2)
-            );
+              // Calculate midpoint of the edge
+              const midX = (sourceNode.position.x + targetNode.position.x) / 2;
+              const midY = (sourceNode.position.y + targetNode.position.y) / 2;
 
-            // If close to the edge midpoint, snap to insert position
-            if (distanceToMidpoint < SNAP_THRESHOLD && !hasSnapped) {
-              snappedPosition = { x: midX, y: midY };
-              hasSnapped = true;
-              insertBetween = {
-                sourceId: edge.source,
-                targetId: edge.target,
-                edgeId: edge.id,
-              };
+              // Calculate distance from dragged node to edge midpoint
+              const distanceToMidpoint = Math.sqrt(
+                Math.pow(draggedX - midX, 2) + Math.pow(draggedY - midY, 2)
+              );
 
-              // Visual feedback for snapping
-              setSnappingNodeId(change.id);
-              setTimeout(() => setSnappingNodeId(null), 300);
-            }
-          });
+              // If close to the edge midpoint, snap to insert position
+              if (distanceToMidpoint < SNAP_THRESHOLD && !hasSnapped) {
+                snappedPosition = { x: midX, y: midY };
+                hasSnapped = true;
+                insertBetween = {
+                  sourceId: edge.source,
+                  targetId: edge.target,
+                  edgeId: edge.id,
+                };
+
+                // Visual feedback for snapping
+                setSnappingNodeId(change.id);
+                setTimeout(() => setSnappingNodeId(null), 300);
+              }
+            });
+          }
 
           // If we found an insertion point, update connections
           if (insertBetween && hasSnapped) {
@@ -758,7 +766,7 @@ export default function WorkflowEditorPage() {
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 20 }}
-                      className="absolute right-4 top-16 bottom-4 w-80 z-50 backdrop-blur-xl bg-background/95 rounded-2xl border border-border shadow-2xl overflow-auto"
+                      className="absolute right-4 top-16 w-72 max-h-[calc(100%-5rem)] z-50 backdrop-blur-xl bg-background/95 rounded-xl border border-border shadow-2xl overflow-auto"
                     >
                       <NodeConfigPanel
                 node={selectedNode}
