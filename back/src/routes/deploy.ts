@@ -117,6 +117,12 @@ export function createDeployRouter(
       console.log(
         `[Deploy] User ${userId} deploying workflow: ${workflow.name}`
       );
+      
+      // Debug: Check what nodes we're receiving from frontend
+      console.log('[Deploy] Incoming workflow node types:', workflow.nodes.map((n: any) => ({
+        name: n.name,
+        type: n.type
+      })));
 
       // Get user credentials from repository
       const userCredentials = await credentialRepo.findByUser(userId);
@@ -165,11 +171,14 @@ export function createDeployRouter(
 
       // Get webhook URL if workflow has webhook trigger
       // Search in workflowWithCredentials (the actual deployed workflow)
+      console.log('[Deploy] All node types in workflow:', workflowWithCredentials.nodes.map((n: any) => n.type));
+      
       const webhookNode = workflowWithCredentials.nodes.find(
         (node: any) => node.type === "n8n-nodes-base.webhook"
       );
 
       console.log('[Deploy] Webhook node found:', webhookNode?.name);
+      console.log('[Deploy] Webhook node type:', webhookNode?.type);
       console.log('[Deploy] Webhook path:', webhookNode?.parameters?.path);
 
       const webhookUrl = webhookNode?.parameters?.path
