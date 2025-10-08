@@ -209,6 +209,7 @@ export function createDeployRouter(
       );
 
       // Now create the deployment record
+      console.log('[Deploy] Creating deployment record...');
       await deploymentRepo.create({
         workflowId,
         n8nWorkflowId,
@@ -217,6 +218,7 @@ export function createDeployRouter(
         status: "inactive", // Starts inactive, user activates manually
         deployedAt: new Date(),
       });
+      console.log('[Deploy] ✅ Deployment record created');
 
       const response: DeploymentResponse = {
         n8nWorkflowId,
@@ -224,6 +226,7 @@ export function createDeployRouter(
         status: "inactive",
         deployedAt: new Date(),
       };
+      console.log('[Deploy] Preparing response:', response);
 
       // Send deployment success email
       const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
@@ -257,6 +260,7 @@ export function createDeployRouter(
         })
         .catch((err) => console.error("[Deploy] Failed to send email:", err));
 
+      console.log('[Deploy] 🚀 Sending success response to frontend');
       res.json({
         success: true,
         data: {
@@ -266,8 +270,9 @@ export function createDeployRouter(
         message:
           "Workflow deployed successfully. Activate it to start running.",
       } as ApiResponse<DeploymentResponse>);
+      console.log('[Deploy] ✅ Response sent successfully');
     } catch (error: any) {
-      console.error("[Deploy] Error:", error);
+      console.error("[Deploy] ❌ Error:", error);
       res.status(500).json({
         success: false,
         error: error.message || "Failed to deploy workflow",
