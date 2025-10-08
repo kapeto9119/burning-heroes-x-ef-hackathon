@@ -164,8 +164,9 @@ export function createDeployRouter(
       );
 
       // Get webhook URL if workflow has webhook trigger
-      const webhookNode = workflow.nodes.find(
-        (node) => node.type.includes("webhook") || node.type.includes("Webhook")
+      // Search in workflowWithCredentials (the actual deployed workflow)
+      const webhookNode = workflowWithCredentials.nodes.find(
+        (node: any) => node.type === "n8n-nodes-base.webhook"
       );
 
       console.log('[Deploy] Webhook node found:', webhookNode?.name);
