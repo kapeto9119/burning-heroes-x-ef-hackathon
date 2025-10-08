@@ -424,186 +424,213 @@ export default function PlatformPage() {
                 </div>
               </div>
 
-              {/* Right Panel - Deployed Workflows with Enhanced Features */}
+              {/* Right Panel - Selected Workflow Canvas */}
               <div className="flex flex-col h-full backdrop-blur-xl bg-background/40 rounded-2xl border border-border shadow-2xl overflow-hidden">
-                {/* Tabs */}
-                <div className="flex items-center gap-2 border-b border-border px-4 pt-4">
-                  <button
-                    onClick={() => setActiveTab('workflows')}
-                    className={`px-4 py-2 font-medium transition-colors relative ${
-                      activeTab === 'workflows'
-                        ? 'text-primary'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <List className="w-4 h-4" />
-                      Deployed Workflows
-                      {isConnected && (
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                      )}
-                    </div>
-                    {activeTab === 'workflows' && (
-                      <motion.div
-                        layoutId="activeTab"
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                      />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('analytics')}
-                    className={`px-4 py-2 font-medium transition-colors relative ${
-                      activeTab === 'analytics'
-                        ? 'text-primary'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <BarChart3 className="w-4 h-4" />
-                      Analytics
-                    </div>
-                    {activeTab === 'analytics' && (
-                      <motion.div
-                        layoutId="activeTab"
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                      />
-                    )}
-                  </button>
-                </div>
-
-                {/* Tab Content */}
-                {activeTab === 'analytics' ? (
-                  <div className="flex-1 overflow-auto p-6">
-                    <AnalyticsDashboard />
-                  </div>
-                ) : isLoadingWorkflows ? (
+                {isLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center space-y-2">
-                      <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+                      <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
                       <p className="text-sm text-muted-foreground">
-                        Loading deployed workflows...
+                        Loading workflow...
                       </p>
                     </div>
                   </div>
-                ) : deployedWorkflows.length === 0 ? (
+                ) : !selectedWorkflow ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center space-y-4 p-8">
                       <Sparkles className="w-16 h-16 text-muted-foreground mx-auto" />
                       <div>
                         <h3 className="font-medium text-foreground mb-2">
-                          No Deployed Workflows
+                          No Workflow Selected
                         </h3>
                         <p className="text-sm text-muted-foreground max-w-md">
-                          Create and deploy workflows from the editor to see them here
+                          {workflows.length === 0
+                            ? "Create your first workflow to get started with automation"
+                            : "Select a workflow from the list to view its canvas"}
                         </p>
                       </div>
-                      <Button
-                        size="sm"
-                        className="rounded-lg bg-black text-white hover:bg-gray-800"
-                        onClick={() => router.push('/editor')}
-                      >
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Go to Editor
-                      </Button>
+                      {workflows.length === 0 && (
+                        <Button
+                          size="sm"
+                          className="rounded-lg bg-black text-white hover:bg-gray-800"
+                          onClick={() => setShowNewWorkflowDialog(true)}
+                        >
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Create First Workflow
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 overflow-auto p-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      {deployedWorkflows.map((workflow) => (
-                        <motion.div
-                          key={workflow.id || workflow.workflowId}
-                          whileHover={{ scale: 1.01 }}
-                          onClick={() => setPreviewWorkflow(workflow)}
-                          className="backdrop-blur-xl bg-background/40 rounded-xl border border-border overflow-hidden cursor-pointer"
-                        >
-                          {/* Workflow Preview */}
-                          <div className="h-32 bg-accent/20 border-b border-border relative">
-                            {workflow.nodes && workflow.nodes.length > 0 ? (
-                              <div className="w-full h-full" key={`preview-${workflow.id || workflow.workflowId}`}>
-                                <WorkflowCanvas 
-                                  key={`canvas-${workflow.id || workflow.workflowId}`}
-                                  workflow={workflow} 
-                                  isGenerating={false}
-                                  isPreview={true}
-                                />
-                              </div>
+                  <>
+                    {/* Header with workflow actions */}
+                    <div className="p-4 border-b border-border">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 group">
+                            {isEditingTitle ? (
+                              <input
+                                ref={titleInputRef}
+                                type="text"
+                                value={editingName}
+                                onChange={(e) => setEditingName(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") saveTitle();
+                                  if (e.key === "Escape") cancelEditTitle();
+                                }}
+                                onBlur={saveTitle}
+                                className="text-lg font-semibold bg-transparent border-none focus:outline-none focus:ring-0 p-0 w-full"
+                              />
                             ) : (
-                              <div className="flex items-center justify-center h-full text-muted-foreground">
-                                <Maximize2 className="w-6 h-6" />
-                              </div>
+                              <>
+                                <h2 className="text-lg font-semibold">
+                                  {selectedWorkflow?.name}
+                                </h2>
+                                <button
+                                  onClick={startEditingTitle}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-accent rounded"
+                                >
+                                  <Edit2 className="w-4 h-4 text-muted-foreground" />
+                                </button>
+                              </>
                             )}
                           </div>
-
-                          <div className="p-4">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex-1">
-                                <h3 className="text-lg font-semibold mb-1">{workflow.name || 'Untitled Workflow'}</h3>
-                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                  <span className="flex items-center gap-1">
-                                    <Clock className="w-3 h-3" />
-                                    {workflow.deployedAt 
-                                      ? new Date(workflow.deployedAt).toLocaleDateString() 
-                                      : 'Recently'}
-                                  </span>
-                                  {workflow.webhookUrl && (
-                                    <span className="font-mono text-xs bg-accent px-2 py-0.5 rounded">
-                                      Webhook
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {selectedWorkflow?.description || 'Visual workflow editor'}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {isConnected && (
+                            <div className="flex items-center gap-2 px-3 py-1 bg-green-500/20 border border-green-500/30 rounded-full">
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                              <span className="text-xs font-medium text-green-500">Live</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  router.push(`/workflows/${workflow.workflowId || workflow.id}/test`);
-                                }}
-                                className="flex-1"
-                              >
-                                <Zap className="w-3 h-3 mr-1" />
-                                Test
-                              </Button>
-                              <Button
-                                size="sm"
-                                className="bg-green-600 hover:bg-green-700 text-white flex-1"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleExecuteWorkflow(workflow);
-                                }}
-                              >
-                                <Play className="w-3 h-3 mr-1" />
-                                Run
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleViewExecutions(workflow);
-                                }}
-                              >
-                                <Eye className="w-3 h-3" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setPreviewWorkflow(workflow);
-                                }}
-                              >
-                                <Maximize2 className="w-3 h-3" />
-                              </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const wf = deployedWorkflows.find(w => 
+                                w.id === selectedWorkflowId || w.workflowId === selectedWorkflowId
+                              );
+                              if (wf) handleViewExecutions(wf);
+                            }}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Logs
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const wf = deployedWorkflows.find(w => 
+                                w.id === selectedWorkflowId || w.workflowId === selectedWorkflowId
+                              );
+                              if (wf) {
+                                router.push(`/workflows/${wf.workflowId || wf.id}/test`);
+                              }
+                            }}
+                            className="bg-gradient-to-r from-purple-600/10 to-pink-600/10 hover:from-purple-600/20 hover:to-pink-600/20 border-purple-500/30"
+                          >
+                            <Zap className="w-4 h-4 mr-2" />
+                            Test
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => {
+                              const wf = deployedWorkflows.find(w => 
+                                w.id === selectedWorkflowId || w.workflowId === selectedWorkflowId
+                              );
+                              if (wf) handleExecuteWorkflow(wf);
+                            }}
+                          >
+                            <Play className="w-4 h-4 mr-2" />
+                            Run
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const wf = deployedWorkflows.find(w => 
+                                w.id === selectedWorkflowId || w.workflowId === selectedWorkflowId
+                              );
+                              if (wf) setPreviewWorkflow(wf);
+                            }}
+                          >
+                            <Maximize2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Stats */}
+                      {selectedWorkflow && (
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="bg-accent/50 rounded-lg p-3">
+                            <div className="text-xs text-muted-foreground mb-1">
+                              Total Runs
+                            </div>
+                            <div className="text-2xl font-bold">
+                              {selectedWorkflow.stats.runs}
                             </div>
                           </div>
-                        </motion.div>
-                      ))}
+                          <div className="bg-accent/50 rounded-lg p-3">
+                            <div className="text-xs text-muted-foreground mb-1">
+                              Nodes
+                            </div>
+                            <div className="text-2xl font-bold">
+                              {selectedWorkflow.stats.nodes}
+                            </div>
+                          </div>
+                          <div className="bg-accent/50 rounded-lg p-3">
+                            <div className="text-xs text-muted-foreground mb-1">
+                              Avg Runtime
+                            </div>
+                            <div className="text-2xl font-bold">
+                              {selectedWorkflow.stats.avgRunTime}s
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
+
+                    {/* Canvas Area */}
+                    <div className="flex-1 overflow-hidden relative">
+                      {selectedWorkflow.workflow_data?.nodes && selectedWorkflow.workflow_data.nodes.length > 0 ? (
+                        <WorkflowCanvas 
+                          workflow={selectedWorkflow.workflow_data} 
+                          isGenerating={false}
+                          latestExecution={previewExecutions.length > 0 ? previewExecutions[0] : undefined}
+                          enableRealTimeUpdates={true}
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <div className="text-center space-y-4">
+                            <div className="w-20 h-20 rounded-full bg-accent mx-auto flex items-center justify-center">
+                              <Sparkles className="w-10 h-10 text-primary" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-foreground mb-2">
+                                No Workflow Canvas
+                              </h3>
+                              <p className="text-sm text-muted-foreground max-w-md">
+                                This workflow hasn't been designed yet. Edit it in the editor to add nodes.
+                              </p>
+                            </div>
+                            <Link href="/editor">
+                              <Button
+                                size="sm"
+                                className="rounded-lg bg-black text-white hover:bg-gray-800"
+                              >
+                                <Edit2 className="w-4 h-4 mr-2" />
+                                Edit in Editor
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
             </div>

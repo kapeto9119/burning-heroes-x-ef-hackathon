@@ -327,8 +327,8 @@ export default function BillingPage() {
                 <div>
                   <p className="text-gray-400 text-sm">Executions</p>
                   <p className="text-white text-2xl font-bold">
-                    {usage.executions_used.toLocaleString()} /{" "}
-                    {usage.executions_limit.toLocaleString()}
+                    {Number(usage.executions_used).toLocaleString()} /{" "}
+                    {Number(usage.executions_limit).toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -354,10 +354,10 @@ export default function BillingPage() {
                 <div>
                   <p className="text-gray-400 text-sm">Active Workflows</p>
                   <p className="text-white text-2xl font-bold">
-                    {usage.active_workflows_count} /{" "}
-                    {usage.active_workflows_limit === 999
+                    {Number(usage.active_workflows_count)} /{" "}
+                    {Number(usage.active_workflows_limit) === 999
                       ? "∞"
-                      : usage.active_workflows_limit}
+                      : Number(usage.active_workflows_limit)}
                   </p>
                 </div>
               </div>
@@ -366,11 +366,11 @@ export default function BillingPage() {
                   className="h-2 rounded-full bg-purple-500 transition-all"
                   style={{
                     width:
-                      usage.active_workflows_limit === 999
+                      Number(usage.active_workflows_limit) === 999
                         ? "0%"
                         : `${Math.min(
-                            (usage.active_workflows_count /
-                              usage.active_workflows_limit) *
+                            (Number(usage.active_workflows_count) /
+                              Number(usage.active_workflows_limit)) *
                               100,
                             100
                           )}%`,
@@ -378,9 +378,9 @@ export default function BillingPage() {
                 />
               </div>
               <p className="text-gray-400 text-sm mt-2">
-                {usage.active_workflows_limit === 999
+                {Number(usage.active_workflows_limit) === 999
                   ? "Unlimited"
-                  : `${usage.active_workflows_count} active`}
+                  : `${Number(usage.active_workflows_count)} active`}
               </p>
             </div>
 
@@ -393,7 +393,7 @@ export default function BillingPage() {
                 <div>
                   <p className="text-gray-400 text-sm">AI Cost This Period</p>
                   <p className="text-white text-2xl font-bold">
-                    ${usage.total_ai_cost_this_period?.toFixed(2) || "0.00"}
+                    ${(Number(usage.total_ai_cost_this_period) || 0).toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -434,7 +434,7 @@ export default function BillingPage() {
                     />
                     <div>
                       <p className="text-white font-semibold">
-                        ${invoice.amount_usd} -{" "}
+                        ${Number(invoice.amount_usd).toFixed(2)} -{" "}
                         {invoice.plan_tier.toUpperCase()}
                       </p>
                       <p className="text-gray-400 text-sm">
