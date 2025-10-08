@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Background } from '@/components/layout/Background';
+import { getClientToken } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Trash2, Clock, CheckCircle, XCircle, Loader2, Maximize2, Eye, RotateCcw, Webhook, Copy, Radio, BarChart3, List, Download, Timer, Zap } from 'lucide-react';
 import { getWorkflows, activateWorkflow, getWorkflowExecutions, executeWorkflow } from '@/app/actions/workflows';
@@ -93,7 +94,8 @@ export default function WorkflowsPage() {
 
   const loadWorkflows = async () => {
     setIsLoading(true);
-    const result = await getWorkflows();
+    const token = getClientToken();
+    const result = await getWorkflows(token || undefined);
     if (result.success) {
       setWorkflows(result.data || []);
     }
