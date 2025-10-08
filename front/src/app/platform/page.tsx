@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getClientToken } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthModal } from "@/components/auth/AuthModal";
 import { Sparkles, Copy, Trash2, Play, Clock, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
@@ -16,15 +18,16 @@ import { NewWorkflowDialog } from "@/components/NewWorkflowDialog";
 
 export default function PlatformPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Check authentication on mount
   useEffect(() => {
-    const token = getClientToken();
-    if (!token) {
-      console.log("[Platform] No auth token found, redirecting to login");
-      router.push("/login");
+    if (!authLoading && !isAuthenticated) {
+      console.log("[Platform] No auth token found, showing login modal");
+      setShowAuthModal(true);
     }
-  }, [router]);
+  }, [authLoading, isAuthenticated]);
   const {
     workflows,
     selectedWorkflowId,
@@ -45,6 +48,39 @@ export default function PlatformPage() {
   >(null);
   const [showNewWorkflowDialog, setShowNewWorkflowDialog] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
+
+  // Show auth modal if not authenticated
+  if (!isAuthenticated && !authLoading) {
+    return (
+      <div className="min-h-screen relative overflow-hidden bg-background text-foreground">
+        <div className="fixed inset-0 w-full h-full">
+          <Background />
+        </div>
+        <div className="relative z-10">
+          <Navbar />
+          <div className="flex items-center justify-center min-h-[80vh]">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-foreground mb-4">Authentication Required</h1>
+              <p className="text-muted-foreground mb-6">Please log in to access the platform</p>
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-all"
+              >
+                Log In
+              </button>
+            </div>
+          </div>
+        </div>
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => {
+            setShowAuthModal(false);
+            router.push('/');
+          }}
+        />
+      </div>
+    );
+  }
 
   const startEditingTitle = () => {
     const workflow = workflows.find((w) => w.id === selectedWorkflowId);
@@ -427,6 +463,14 @@ export default function PlatformPage() {
         isOpen={showNewWorkflowDialog}
         onClose={() => setShowNewWorkflowDialog(false)}
         onCreateWorkflow={handleCreateWorkflow}
+      />
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => {
+          setShowAuthModal(false);
+          router.push('/');
+        }}
       />
     </div>
   );

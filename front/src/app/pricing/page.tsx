@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getClientToken } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthModal } from "@/components/auth/AuthModal";
 import { Check, Zap, Sparkles, Rocket, Crown } from "lucide-react";
 
 interface Plan {
@@ -18,9 +20,11 @@ interface Plan {
 
 export default function PricingPage() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     fetchPlans();
@@ -52,7 +56,8 @@ export default function PricingPage() {
     try {
       const token = getClientToken();
       if (!token) {
-        router.push("/login?redirect=/pricing");
+        setShowAuthModal(true);
+        setUpgrading(null);
         return;
       }
 
@@ -300,6 +305,12 @@ export default function PricingPage() {
           </div>
         </div>
       </div>
+      
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </div>
   );
 }

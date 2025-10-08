@@ -13,6 +13,8 @@ import {
   Activity,
 } from "lucide-react";
 import { getClientToken } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 interface UsageData {
   plan_tier: string;
@@ -37,20 +39,30 @@ interface BillingHistory {
 
 export default function BillingPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [usage, setUsage] = useState<UsageData | null>(null);
   const [history, setHistory] = useState<BillingHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [openingPortal, setOpeningPortal] = useState(false);
   const [billingConfigured, setBillingConfigured] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (!authLoading) {
+      if (!isAuthenticated) {
+        setShowAuthModal(true);
+        setLoading(false);
+      } else {
+        fetchData();
+      }
+    }
+  }, [authLoading, isAuthenticated]);
 
   const fetchData = async () => {
     const token = getClientToken();
     if (!token) {
-      router.push("/login?redirect=/billing");
+      setShowAuthModal(true);
+      setLoading(false);
       return;
     }
 
@@ -165,7 +177,32 @@ export default function BillingPage() {
     }
   };
 
-  if (loading) {
+  // Show auth modal if not authenticated
+  if (!isAuthenticated && !authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-white mb-4">Authentication Required</h1>
+          <p className="text-gray-300 mb-6">Please log in to view your billing information</p>
+          <button
+            onClick={() => setShowAuthModal(true)}
+            className="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-lg font-semibold transition-all"
+          >
+            Log In
+          </button>
+        </div>
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => {
+            setShowAuthModal(false);
+            router.push('/');
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
         <div className="text-white text-xl">Loading billing data...</div>
@@ -422,6 +459,15 @@ export default function BillingPage() {
           )}
         </div>
       </div>
+      
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => {
+          setShowAuthModal(false);
+          router.push('/');
+        }}
+      />
     </div>
   );
 }

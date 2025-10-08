@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import { getClientToken } from "@/lib/auth";
 
@@ -38,25 +38,52 @@ export interface WorkflowEvent {
   timestamp: Date;
 }
 
-export function useWebSocket() {
-  const [isConnected, setIsConnected] = useState(false);
-  const [lastEvent, setLastEvent] = useState<
-    ExecutionEvent | WorkflowEvent | null
-  >(null);
-  const socketRef = useRef<Socket | null>(null);
-  const listenersRef = useRef<Map<string, Set<Function>>>(new Map());
+// Singleton WebSocket Manager
+class WebSocketManager {
+  private static instance: WebSocketManager | null = null;
+  private socket: Socket | null = null;
+  private listeners: Map<string, Set<Function>> = new Map();
+  private connectionListeners: Set<(connected: boolean) => void> = new Set();
+  private isConnected: boolean = false;
+  private subscriberCount: number = 0;
 
-  // Initialize WebSocket connection
-  useEffect(() => {
+  private constructor() {}
+
+  static getInstance(): WebSocketManager {
+    if (!WebSocketManager.instance) {
+      WebSocketManager.instance = new WebSocketManager();
+    }
+    return WebSocketManager.instance;
+  }
+
+  addSubscriber() {
+    this.subscriberCount++;
+    console.log(`[WebSocket] Subscriber added. Total: ${this.subscriberCount}`);
+    
+    // Initialize connection if this is the first subscriber
+    if (this.subscriberCount === 1 && !this.socket) {
+      this.connect();
+    }
+  }
+
+  removeSubscriber() {
+    this.subscriberCount--;
+    console.log(`[WebSocket] Subscriber removed. Total: ${this.subscriberCount}`);
+    
+    // Keep connection alive even when count reaches 0
+    // The connection will be reused if a new subscriber comes
+  }
+
+  private connect() {
     const token = getClientToken();
     if (!token) {
       console.log("[WebSocket] No auth token, skipping connection");
       return;
     }
 
-    console.log("[WebSocket] Connecting to", WS_URL);
+    console.log("[WebSocket] 🔌 Establishing single shared connection to", WS_URL);
 
-    const socket = io(WS_URL, {
+    this.socket = io(WS_URL, {
       auth: { token },
       transports: ["websocket", "polling"],
       reconnection: true,
@@ -64,124 +91,167 @@ export function useWebSocket() {
       reconnectionAttempts: 5,
     });
 
-    socketRef.current = socket;
-
-    socket.on("connect", () => {
-      console.log("[WebSocket] Connected!", socket.id);
-      setIsConnected(true);
+    this.socket.on("connect", () => {
+      console.log("[WebSocket] ✅ Connected! Socket ID:", this.socket?.id);
+      this.isConnected = true;
+      this.notifyConnectionListeners(true);
     });
 
-    socket.on("disconnect", () => {
-      console.log("[WebSocket] Disconnected");
-      setIsConnected(false);
+    this.socket.on("disconnect", () => {
+      console.log("[WebSocket] ⚠️ Disconnected");
+      this.isConnected = false;
+      this.notifyConnectionListeners(false);
     });
 
-    socket.on("connected", (data) => {
+    this.socket.on("connected", (data) => {
       console.log("[WebSocket] Welcome message:", data);
     });
 
-    socket.on("connect_error", (error) => {
+    this.socket.on("connect_error", (error) => {
       console.error("[WebSocket] Connection error:", error.message);
-      setIsConnected(false);
+      this.isConnected = false;
+      this.notifyConnectionListeners(false);
     });
 
     // Listen to all execution events
-    socket.on("execution:started", (event: ExecutionEvent) => {
+    this.socket.on("execution:started", (event: ExecutionEvent) => {
       console.log("[WebSocket] Execution started:", event);
-      setLastEvent(event);
-      notifyListeners("execution:started", event);
+      this.notifyListeners("execution:started", event);
     });
 
-    socket.on("execution:completed", (event: ExecutionEvent) => {
+    this.socket.on("execution:completed", (event: ExecutionEvent) => {
       console.log("[WebSocket] Execution completed:", event);
-      setLastEvent(event);
-      notifyListeners("execution:completed", event);
+      this.notifyListeners("execution:completed", event);
     });
 
-    socket.on("execution:progress", (event: ExecutionEvent) => {
+    this.socket.on("execution:progress", (event: ExecutionEvent) => {
       console.log("[WebSocket] Execution progress:", event);
-      setLastEvent(event);
-      notifyListeners("execution:progress", event);
+      this.notifyListeners("execution:progress", event);
     });
 
-    socket.on("workflow:deployed", (event: WorkflowEvent) => {
+    this.socket.on("workflow:deployed", (event: WorkflowEvent) => {
       console.log("[WebSocket] Workflow deployed:", event);
-      setLastEvent(event);
-      notifyListeners("workflow:deployed", event);
+      this.notifyListeners("workflow:deployed", event);
     });
 
-    socket.on("workflow:status_changed", (event: WorkflowEvent) => {
+    this.socket.on("workflow:status_changed", (event: WorkflowEvent) => {
       console.log("[WebSocket] Workflow status changed:", event);
-      setLastEvent(event);
-      notifyListeners("workflow:status_changed", event);
+      this.notifyListeners("workflow:status_changed", event);
     });
 
     // Listen to node-level events
-    socket.on("node:started", (event: NodeEvent) => {
+    this.socket.on("node:started", (event: NodeEvent) => {
       console.log("[WebSocket] 🟡 Node started:", event.nodeName);
-      notifyListeners("node:started", event);
+      this.notifyListeners("node:started", event);
     });
 
-    socket.on("node:completed", (event: NodeEvent) => {
+    this.socket.on("node:completed", (event: NodeEvent) => {
       console.log(`[WebSocket] ${event.status === 'success' ? '✅' : '❌'} Node completed:`, event.nodeName);
-      notifyListeners("node:completed", event);
+      this.notifyListeners("node:completed", event);
     });
 
-    socket.on("node:running", (event: NodeEvent) => {
+    this.socket.on("node:running", (event: NodeEvent) => {
       console.log("[WebSocket] ⚡ Node running:", event.nodeName);
-      notifyListeners("node:running", event);
+      this.notifyListeners("node:running", event);
     });
 
-    socket.on("node:data", (event: NodeEvent) => {
+    this.socket.on("node:data", (event: NodeEvent) => {
       console.log("[WebSocket] 📊 Node data:", event.nodeName);
-      notifyListeners("node:data", event);
+      this.notifyListeners("node:data", event);
     });
+  }
+
+  subscribeToWorkflow(workflowId: string) {
+    if (this.socket?.connected) {
+      console.log("[WebSocket] Subscribing to workflow:", workflowId);
+      this.socket.emit("subscribe:workflow", workflowId);
+    }
+  }
+
+  unsubscribeFromWorkflow(workflowId: string) {
+    if (this.socket?.connected) {
+      console.log("[WebSocket] Unsubscribing from workflow:", workflowId);
+      this.socket.emit("unsubscribe:workflow", workflowId);
+    }
+  }
+
+  addEventListener(eventType: string, callback: Function) {
+    if (!this.listeners.has(eventType)) {
+      this.listeners.set(eventType, new Set());
+    }
+    this.listeners.get(eventType)!.add(callback);
 
     return () => {
-      console.log("[WebSocket] Cleaning up connection");
-      socket.disconnect();
+      this.listeners.get(eventType)?.delete(callback);
+    };
+  }
+
+  addConnectionListener(callback: (connected: boolean) => void) {
+    this.connectionListeners.add(callback);
+    // Immediately call with current state
+    callback(this.isConnected);
+
+    return () => {
+      this.connectionListeners.delete(callback);
+    };
+  }
+
+  private notifyListeners(eventType: string, event: any) {
+    const listeners = this.listeners.get(eventType);
+    if (listeners) {
+      listeners.forEach((callback) => callback(event));
+    }
+  }
+
+  private notifyConnectionListeners(connected: boolean) {
+    this.connectionListeners.forEach((callback) => callback(connected));
+  }
+
+  getConnectionState(): boolean {
+    return this.isConnected;
+  }
+}
+
+// Hook to use the shared WebSocket connection
+export function useWebSocket() {
+  const [isConnected, setIsConnected] = useState(false);
+  const [lastEvent, setLastEvent] = useState<
+    ExecutionEvent | WorkflowEvent | null
+  >(null);
+
+  // Get singleton instance
+  const manager = WebSocketManager.getInstance();
+
+  // Register this component as a subscriber
+  useEffect(() => {
+    manager.addSubscriber();
+
+    // Subscribe to connection state changes
+    const unsubscribe = manager.addConnectionListener(setIsConnected);
+
+    return () => {
+      unsubscribe();
+      manager.removeSubscriber();
     };
   }, []);
 
   // Subscribe to a specific workflow
   const subscribeToWorkflow = useCallback((workflowId: string) => {
-    if (socketRef.current?.connected) {
-      console.log("[WebSocket] Subscribing to workflow:", workflowId);
-      socketRef.current.emit("subscribe:workflow", workflowId);
-    }
+    manager.subscribeToWorkflow(workflowId);
   }, []);
 
   // Unsubscribe from a workflow
   const unsubscribeFromWorkflow = useCallback((workflowId: string) => {
-    if (socketRef.current?.connected) {
-      console.log("[WebSocket] Unsubscribing from workflow:", workflowId);
-      socketRef.current.emit("unsubscribe:workflow", workflowId);
-    }
+    manager.unsubscribeFromWorkflow(workflowId);
   }, []);
 
   // Add event listener
   const addEventListener = useCallback(
     (eventType: string, callback: Function) => {
-      if (!listenersRef.current.has(eventType)) {
-        listenersRef.current.set(eventType, new Set());
-      }
-      listenersRef.current.get(eventType)!.add(callback);
-
-      // Return cleanup function
-      return () => {
-        listenersRef.current.get(eventType)?.delete(callback);
-      };
+      return manager.addEventListener(eventType, callback);
     },
     []
   );
-
-  // Notify all listeners for an event type
-  const notifyListeners = (eventType: string, event: any) => {
-    const listeners = listenersRef.current.get(eventType);
-    if (listeners) {
-      listeners.forEach((callback) => callback(event));
-    }
-  };
 
   return {
     isConnected,
