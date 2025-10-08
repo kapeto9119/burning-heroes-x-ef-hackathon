@@ -509,6 +509,15 @@ export default function WorkflowsPage() {
                   }
                   return null;
                 })()}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => router.push(`/workflows/${previewWorkflow.id || previewWorkflow.workflowId}/test`)}
+                  className="bg-gradient-to-r from-purple-600/10 to-pink-600/10 hover:from-purple-600/20 hover:to-pink-600/20 border-purple-500/30"
+                >
+                  <Zap className="w-4 h-4 mr-2" />
+                  Test Workflow
+                </Button>
                 <button
                   onClick={() => {
                     setPreviewWorkflow(null);

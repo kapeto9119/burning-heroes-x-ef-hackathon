@@ -348,7 +348,7 @@ export default function WorkflowTestPage() {
                       size="sm"
                       onClick={handleGenerateWithAI}
                       disabled={isGeneratingData}
-                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg shadow-purple-500/30 dark:shadow-purple-500/20"
                     >
                       {isGeneratingData ? (
                         <>

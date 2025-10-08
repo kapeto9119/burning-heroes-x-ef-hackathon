@@ -5,6 +5,7 @@ import ReactFlow, {
   Node,
   Edge,
   Background,
+  BackgroundVariant,
   Controls,
   MiniMap,
   useNodesState,
@@ -659,10 +660,11 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
           );
         })}
         <Background
-          gap={24}
-          size={1}
-          color="hsl(var(--border))"
-          className="opacity-30"
+          variant={BackgroundVariant.Dots}
+          gap={16}
+          size={1.5}
+          color={isPreview ? "hsl(var(--border))" : "hsl(var(--muted-foreground))"}
+          className={isPreview ? "opacity-20" : "opacity-40"}
         />
         {!isPreview && (
           <>
