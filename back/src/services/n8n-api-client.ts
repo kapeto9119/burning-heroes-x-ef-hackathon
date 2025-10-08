@@ -115,19 +115,31 @@ export class N8nApiClient {
   }
 
   /**
-   * Execute a workflow manually (test execution for Manual Trigger workflows)
+   * Execute a workflow manually (uses internal REST API for Manual Trigger workflows)
    */
   async executeWorkflow(workflowId: string, data?: any): Promise<any> {
     try {
       console.log('[n8n API] Executing workflow:', workflowId);
 
-      // Use test-workflow endpoint which works for Manual Trigger workflows
-      const response = await this.axiosInstance.post(`/workflows/${workflowId}/test`, {
-        workflowData: data || {}
-      });
+      // Use internal REST API endpoint (not the public API)
+      // This endpoint works for Manual Trigger workflows
+      const response = await axios.post(
+        `${this.apiUrl}/rest/workflows/run`,
+        {
+          workflowId,
+          data: data || {}
+        },
+        {
+          headers: {
+            'X-N8N-API-KEY': this.apiKey,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
 
-      console.log('[n8n API] ✅ Workflow executed, execution ID:', response.data?.executionId);
-      return response.data;
+      const executionId = response.data?.executionId || response.data?.data?.executionId;
+      console.log('[n8n API] ✅ Workflow executed, execution ID:', executionId);
+      return { executionId };
     } catch (error: any) {
       console.error('[n8n API] ❌ Failed to execute workflow:', error.response?.data || error.message);
       throw new Error(`Failed to execute workflow: ${error.response?.data?.message || error.message}`);
