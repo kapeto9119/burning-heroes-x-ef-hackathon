@@ -464,10 +464,12 @@ CRITICAL RULES:
 Respond with a JSON object containing:
 {
   "workflowName": "descriptive name",
-  "trigger": { "type": "manual|webhook|schedule", "config": {} },
+  "trigger": { "type": "webhook|schedule", "config": {} },
   "steps": [
     { "action": "fetch_leads_from_salesforce", "service": "salesforce", "config": {...} },
     { "action": "generate_email_content", "service": "ai", "prompt": "...", "config": {...} },
+    
+IMPORTANT: Use "webhook" trigger type for all on-demand workflows (default). Only use "schedule" if user explicitly requests scheduled execution (e.g., "every day at 9am", "hourly", "weekly").
     { "action": "send_email", "service": "email", "config": {...} }
   ],
   "requiredCredentials": ["salesforce", "email"],
