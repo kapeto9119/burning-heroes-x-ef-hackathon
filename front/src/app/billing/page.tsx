@@ -41,6 +41,7 @@ export default function BillingPage() {
   const [history, setHistory] = useState<BillingHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [openingPortal, setOpeningPortal] = useState(false);
+  const [billingConfigured, setBillingConfigured] = useState(true);
 
   useEffect(() => {
     fetchData();
@@ -62,23 +63,55 @@ export default function BillingPage() {
         }
       );
       const usageData = await usageRes.json();
-      if (usageData.success) {
+      
+      // Check if billing is not configured (503 error)
+      if (usageRes.status === 503 || usageData.error?.includes('not configured')) {
+        setBillingConfigured(false);
+        // Set default usage data for display purposes
+        setUsage({
+          plan_tier: 'free',
+          executions_used: 0,
+          executions_limit: 100,
+          usage_percentage: 0,
+          active_workflows_count: 0,
+          active_workflows_limit: 3,
+          current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          total_ai_cost_this_period: 0,
+          warnings: []
+        });
+      } else if (usageData.success) {
         setUsage(usageData.data);
+        setBillingConfigured(true);
       }
 
-      // Fetch billing history
-      const historyRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/billing/history`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
+      // Fetch billing history (only if billing is configured)
+      if (usageRes.status !== 503) {
+        const historyRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/billing/history`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const historyData = await historyRes.json();
+        if (historyData.success) {
+          setHistory(historyData.data);
         }
-      );
-      const historyData = await historyRes.json();
-      if (historyData.success) {
-        setHistory(historyData.data);
       }
     } catch (error) {
       console.error("Failed to fetch billing data:", error);
+      // Set default data even on error
+      setUsage({
+        plan_tier: 'free',
+        executions_used: 0,
+        executions_limit: 100,
+        usage_percentage: 0,
+        active_workflows_count: 0,
+        active_workflows_limit: 3,
+        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        total_ai_cost_this_period: 0,
+        warnings: []
+      });
+      setBillingConfigured(false);
     } finally {
       setLoading(false);
     }
@@ -161,16 +194,34 @@ export default function BillingPage() {
               Manage your subscription and track usage
             </p>
           </div>
-          <button
-            onClick={openBillingPortal}
-            disabled={openingPortal}
-            className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-lg font-semibold transition-all"
-          >
-            <CreditCard className="w-5 h-5" />
-            {openingPortal ? "Opening..." : "Manage Billing"}
-            <ExternalLink className="w-4 h-4" />
-          </button>
+          {billingConfigured && (
+            <button
+              onClick={openBillingPortal}
+              disabled={openingPortal}
+              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-lg font-semibold transition-all"
+            >
+              <CreditCard className="w-5 h-5" />
+              {openingPortal ? "Opening..." : "Manage Billing"}
+              <ExternalLink className="w-4 h-4" />
+            </button>
+          )}
         </div>
+
+        {/* Billing Not Configured Notice */}
+        {!billingConfigured && (
+          <div className="mb-8 bg-blue-500/20 border border-blue-500/50 rounded-lg p-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-6 h-6 text-blue-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-blue-200 font-semibold mb-2">Billing Not Configured</h3>
+                <p className="text-blue-300/80 text-sm">
+                  Payment processing is currently not configured on this instance. You're using the free tier with default limits.
+                  Contact your administrator to set up billing and unlock premium features.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Warnings */}
         {usage.warnings && usage.warnings.length > 0 && (
@@ -183,12 +234,14 @@ export default function BillingPage() {
                 <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-yellow-200">{warning}</p>
-                  <button
-                    onClick={() => router.push("/pricing")}
-                    className="text-yellow-400 hover:text-yellow-300 text-sm font-semibold mt-2 underline"
-                  >
-                    Upgrade Now →
-                  </button>
+                  {billingConfigured && (
+                    <button
+                      onClick={() => router.push("/pricing")}
+                      className="text-yellow-400 hover:text-yellow-300 text-sm font-semibold mt-2 underline"
+                    >
+                      Upgrade Now →
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -216,12 +269,14 @@ export default function BillingPage() {
                 </span>
               </div>
             </div>
-            <button
-              onClick={() => router.push("/pricing")}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
-            >
-              Upgrade Plan
-            </button>
+            {billingConfigured && (
+              <button
+                onClick={() => router.push("/pricing")}
+                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
+              >
+                Upgrade Plan
+              </button>
+            )}
           </div>
 
           {/* Usage Stats Grid */}
