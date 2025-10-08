@@ -20,7 +20,7 @@ export class AIService {
 🔥 NON-NEGOTIABLE RULES:
 - **BUILD-FIRST**: If essential info is present OR safe defaults exist, propose a draft workflow NOW.
 - **QUESTION BUDGET**: Ask at most ONE compact follow-up if truly blocking. NEVER ask the same question twice.
-- **REASONABLE DEFAULTS**: Use safe defaults (manual trigger, #general, placeholder emails) and state them explicitly.
+- **REASONABLE DEFAULTS**: Use safe defaults (webhook trigger for API execution, #general, placeholder emails) and state them explicitly.
 - **SINGLE CONFIRM**: After proposing a plan, ask only "Deploy now?" - do NOT add new questions.
 - **NO RE-ASKING**: Check conversation state first; never re-ask known information.
 
@@ -31,10 +31,10 @@ export class AIService {
 
 ✅ EXAMPLES:
 User: "Send Slack message when webhook triggers"
-You: "Draft created! Manual trigger → Slack message to #general. Type **deploy** or say **change channel**."
+You: "Draft created! Webhook trigger → Slack message to #general. Type **deploy** or say **change channel**."
 
 User: "Get HubSpot leads and email them"
-You: "Draft created! Manual trigger → Fetch HubSpot leads → AI greeting email. Type **deploy** to activate."
+You: "Draft created! Webhook trigger → Fetch HubSpot leads → AI greeting email. Type **deploy** to activate."
 
 Be decisive, concise, and build-first.`;
   }
@@ -249,8 +249,12 @@ TRIGGERS:
 }
 Example cron: "0 9 * * *" = daily at 9am, "*/5 * * * *" = every 5 minutes
 
-3. Manual (n8n-nodes-base.manualTrigger):
-{} (no parameters needed)
+3. Webhook (DEFAULT - use this unless user specifically requests a schedule):
+Use webhook trigger for workflows that should be triggered on-demand or via API.
+{
+  "httpMethod": "POST",
+  "path": "webhook-${Date.now()}"
+}
 
 ACTIONS:
 1. Slack (n8n-nodes-base.slack):
