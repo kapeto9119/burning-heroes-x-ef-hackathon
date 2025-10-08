@@ -137,6 +137,7 @@ export default function WorkflowEditorPage() {
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [initialWorkflowState, setInitialWorkflowState] = useState<{nodes: Node[], edges: Edge[]} | null>(null);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   
   // Magnetic snap settings
   const SNAP_THRESHOLD = 80; // Distance in pixels to trigger snap
@@ -148,6 +149,30 @@ export default function WorkflowEditorPage() {
   const nodeTypes = useMemo(() => ({
     custom: CustomEditorNode,
   }), []);
+
+  // Helper: keep at most one incoming and one outgoing edge for a node
+  const normalizeEdgesForNode = useCallback((list: Edge[], nodeId: string) => {
+    let incoming: Edge | undefined;
+    let outgoing: Edge | undefined;
+    const others: Edge[] = [];
+    for (const e of list) {
+      if (e.target === nodeId) {
+        if (!incoming) incoming = e; else continue;
+      } else if (e.source === nodeId) {
+        if (!outgoing) outgoing = e; else continue;
+      } else {
+        others.push(e);
+      }
+      // keep pushed edges in place
+      if (others[others.length - 1] !== e && e.target !== nodeId && e.source !== nodeId) {
+        // no-op
+      }
+    }
+    const kept: Edge[] = [...others];
+    if (incoming) kept.push(incoming);
+    if (outgoing) kept.push(outgoing);
+    return kept;
+  }, []);
 
   // Load workflow
   useEffect(() => {
@@ -308,50 +333,35 @@ export default function WorkflowEditorPage() {
           if (insertBetween && hasSnapped) {
             setTimeout(() => {
               setEdges((eds) => {
-                // Remove any existing edges connected to this node (for re-linking)
-                let newEdges = eds.filter(e => 
-                  e.source !== change.id && e.target !== change.id
-                );
-                
-                // Remove the edge we're inserting into
-                newEdges = newEdges.filter(e => e.id !== insertBetween!.edgeId);
-                
+                // Remove the edge we're inserting into and any existing edges tied to this node
+                let newEdges = eds.filter(e => e.id !== insertBetween!.edgeId);
+                newEdges = newEdges.filter(e => e.source !== change.id && e.target !== change.id);
+
                 // Add two new edges: source -> dragged node -> target
-                return [
+                newEdges = [
                   ...newEdges,
-                  // Edge from source to dragged node
                   {
                     id: `${insertBetween!.sourceId}-${change.id}`,
                     source: insertBetween!.sourceId,
                     target: change.id,
                     type: 'smoothstep',
                     animated: false,
-                    style: {
-                      stroke: '#94a3b8',
-                      strokeWidth: 1.5,
-                    },
-                    markerEnd: {
-                      type: MarkerType.ArrowClosed,
-                      color: '#94a3b8',
-                    },
+                    style: { stroke: '#94a3b8', strokeWidth: 1.5 },
+                    markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
                   },
-                  // Edge from dragged node to target
                   {
                     id: `${change.id}-${insertBetween!.targetId}`,
                     source: change.id,
                     target: insertBetween!.targetId,
                     type: 'smoothstep',
                     animated: false,
-                    style: {
-                      stroke: '#94a3b8',
-                      strokeWidth: 1.5,
-                    },
-                    markerEnd: {
-                      type: MarkerType.ArrowClosed,
-                      color: '#94a3b8',
-                    },
+                    style: { stroke: '#94a3b8', strokeWidth: 1.5 },
+                    markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
                   },
                 ];
+
+                // Enforce degree constraint for this node
+                return normalizeEdgesForNode(newEdges, change.id);
               });
             }, 100);
           }
@@ -372,9 +382,15 @@ export default function WorkflowEditorPage() {
   const onConnect = useCallback(
     (params: Connection) => {
       setHasUnsavedChanges(true);
-      setEdges((eds) => addEdge(params, eds));
+      setEdges((eds) => {
+        const next = addEdge(params, eds);
+        // Enforce at most one incoming and one outgoing per node for both ends
+        const afterSource = normalizeEdgesForNode(next, params.source as string);
+        const afterBoth = normalizeEdgesForNode(afterSource, params.target as string);
+        return afterBoth;
+      });
     },
-    [setEdges]
+    [setEdges, normalizeEdgesForNode]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -572,18 +588,7 @@ export default function WorkflowEditorPage() {
     // When a node snaps to a new position, old connections are removed
   }, []);
 
-  // Prevent accidental navigation with unsaved changes
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedChanges]);
+  // Custom leave confirm modal instead of browser beforeunload
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -650,13 +655,8 @@ export default function WorkflowEditorPage() {
             <Button
               variant="ghost"
               onClick={() => {
-                if (hasUnsavedChanges) {
-                  if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
-                    router.push('/workflows');
-                  }
-                } else {
-                  router.push('/workflows');
-                }
+                if (hasUnsavedChanges) setShowLeaveConfirm(true);
+                else router.push('/workflows');
               }}
               className="mb-4"
             >
@@ -839,35 +839,61 @@ export default function WorkflowEditorPage() {
                   )}
                 </div>
 
-                {/* Node Configuration Panel - Inside Canvas Container */}
-                <AnimatePresence>
-                  {showConfigPanel && selectedNode && (
-                    <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      className="absolute right-4 top-16 bottom-4 w-80 z-50 backdrop-blur-xl bg-background/95 rounded-2xl border border-border shadow-2xl overflow-auto"
-                    >
-                      <NodeConfigPanel
-                node={selectedNode}
-                nodeDefinition={availableNodes 
-                  ? [
-                      ...availableNodes.triggers,
-                      ...availableNodes.actions,
-                      ...availableNodes.logic,
-                      ...availableNodes.ai,
-                      ...availableNodes.database,
-                      ...availableNodes.communication,
-                    ].find(n => n.type === selectedNode.data.nodeType)
-                  : undefined
-                }
-                onSave={handleNodeConfigSave}
-                        onClose={() => {
-                          setShowConfigPanel(false);
-                          setSelectedNode(null);
-                        }}
-                        onGetDetails={getNodeDetails}
-                      />
+                {/* Leave Confirm Modal */}
+          <AnimatePresence>
+            {showLeaveConfirm && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+              >
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-md p-6"
+                >
+                  <h3 className="text-lg font-semibold mb-2">Leave without saving?</h3>
+                  <p className="text-sm text-muted-foreground mb-6">You have unsaved changes. If you leave now, your edits will be lost.</p>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setShowLeaveConfirm(false)}>Cancel</Button>
+                    <Button variant="destructive" onClick={() => router.push('/workflows')}>Leave</Button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Node Configuration Panel - Inside Canvas Container */}
+          <AnimatePresence>
+            {showConfigPanel && selectedNode && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="absolute right-4 top-16 bottom-4 w-80 z-50 backdrop-blur-xl bg-background/95 rounded-2xl border border-border shadow-2xl overflow-auto"
+              >
+                <NodeConfigPanel
+                  node={selectedNode}
+                  nodeDefinition={availableNodes 
+                    ? [
+                        ...availableNodes.triggers,
+                        ...availableNodes.actions,
+                        ...availableNodes.logic,
+                        ...availableNodes.ai,
+                        ...availableNodes.database,
+                        ...availableNodes.communication,
+                      ].find(n => n.type === selectedNode.data.nodeType)
+                    : undefined
+                  }
+                  onSave={handleNodeConfigSave}
+                  onClose={() => {
+                    setShowConfigPanel(false);
+                    setSelectedNode(null);
+                  }}
+                  onGetDetails={getNodeDetails}
+                />
                     </motion.div>
                   )}
                 </AnimatePresence>
