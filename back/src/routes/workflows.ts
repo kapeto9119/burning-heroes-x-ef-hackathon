@@ -2,16 +2,19 @@ import { Router, Request, Response } from 'express';
 import { N8nMCPClient } from '../services/n8n-mcp-client';
 import { ApiResponse, N8nWorkflow } from '../types';
 import { WorkflowRepository } from '../repositories/workflow-repository';
+import { AuthService } from '../services/auth-service';
+import { createAuthMiddleware } from '../middleware/auth';
 
-export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
+export function createWorkflowsRouter(mcpClient: N8nMCPClient, authService: AuthService): Router {
   const router = Router();
+  const authMiddleware = createAuthMiddleware(authService);
   const workflowRepo = new WorkflowRepository();
 
   /**
    * GET /api/workflows
    * List all workflows for the authenticated user
    */
-  router.get('/', async (req: Request, res: Response) => {
+  router.get('/', authMiddleware, async (req: Request, res: Response) => {
     try {
       const userId = req.user?.userId;
       
@@ -56,7 +59,7 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient): Router {
    * GET /api/workflows/:id
    * Get a specific workflow
    */
-  router.get('/:id', async (req: Request, res: Response) => {
+  router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
