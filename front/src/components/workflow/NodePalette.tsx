@@ -74,6 +74,11 @@ export function NodePalette({ nodes, isLoading, onNodeSelect, onSearch }: NodePa
     event.dataTransfer.setData('application/reactflow', node.type);
     event.dataTransfer.setData('nodeData', JSON.stringify(node));
     event.dataTransfer.effectAllowed = 'move';
+    // Cache globally to allow canvas to read during dragover in some browsers
+    try {
+      // @ts-ignore
+      (window as any).__paletteDragNode = node;
+    } catch {}
   };
 
   const categories = [
