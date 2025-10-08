@@ -20,7 +20,8 @@ import {
   CheckCircle,
   XCircle,
   RotateCcw,
-  Sparkles
+  Sparkles,
+  AlertCircle
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Background } from '@/components/layout/Background';
@@ -43,12 +44,16 @@ export default function WorkflowTestPage() {
   const [testPayload, setTestPayload] = useState('{\n  "test": true,\n  "message": "Test execution"\n}');
   const [payloadError, setPayloadError] = useState<string | null>(null);
   const [isGeneratingData, setIsGeneratingData] = useState(false);
+  const [isDeployed, setIsDeployed] = useState<boolean | null>(null);
+  const [isCheckingDeployment, setIsCheckingDeployment] = useState(true);
 
-  // Load workflow
+  // Load workflow and check deployment status
   useEffect(() => {
     const loadWorkflow = async () => {
       try {
         const token = getClientToken();
+        
+        // Load workflow data
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/workflows/${workflowId}`,
           {
@@ -62,10 +67,29 @@ export default function WorkflowTestPage() {
         if (result.success) {
           setWorkflow(result.data);
         }
+        
+        // Check if workflow is deployed
+        const deployResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/deploy/${workflowId}/status`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        
+        if (deployResponse.ok) {
+          const deployResult = await deployResponse.json();
+          setIsDeployed(deployResult.success && deployResult.data?.deployed);
+        } else {
+          setIsDeployed(false);
+        }
       } catch (error) {
         console.error('Failed to load workflow:', error);
+        setIsDeployed(false);
       } finally {
         setIsLoading(false);
+        setIsCheckingDeployment(false);
       }
     };
 
@@ -125,7 +149,12 @@ export default function WorkflowTestPage() {
           setCurrentExecution(historyResult.data[0]);
         }
       } else {
-        alert('Execution failed: ' + result.error);
+        // Check if it's a deployment error
+        if (result.error?.includes('not deployed') || result.error?.includes('Workflow not deployed')) {
+          alert('⚠️ This workflow needs to be deployed before testing.\n\nPlease go back and click "Deploy" first.');
+        } else {
+          alert('Execution failed: ' + result.error);
+        }
       }
     } catch (error: any) {
       alert('Execution error: ' + error.message);
@@ -235,6 +264,23 @@ export default function WorkflowTestPage() {
               <div>
                 <h1 className="text-3xl font-bold mb-2">Test Workflow</h1>
                 <p className="text-muted-foreground">{workflow.name}</p>
+                
+                {/* Deployment Status Badge */}
+                {!isCheckingDeployment && (
+                  <div className="mt-2">
+                    {isDeployed ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-green-500/10 border border-green-500/30 text-green-600">
+                        <CheckCircle className="w-3 h-3" />
+                        Deployed
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-600">
+                        <AlertCircle className="w-3 h-3" />
+                        Not Deployed
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-3">
                 <Button
@@ -247,8 +293,9 @@ export default function WorkflowTestPage() {
                 </Button>
                 <Button
                   onClick={handleExecute}
-                  disabled={isExecuting || !!payloadError}
+                  disabled={isExecuting || !!payloadError || !isDeployed || isCheckingDeployment}
                   className="bg-green-600 hover:bg-green-700 text-white"
+                  title={!isDeployed ? 'Deploy the workflow first to test it' : ''}
                 >
                   {isExecuting ? (
                     <>
@@ -265,6 +312,33 @@ export default function WorkflowTestPage() {
               </div>
             </div>
           </motion.div>
+
+          {/* Not Deployed Warning */}
+          {!isCheckingDeployment && !isDeployed && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 backdrop-blur-xl bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4"
+            >
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-yellow-600 mb-1">Workflow Not Deployed</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    This workflow needs to be deployed before you can test it. Deployment creates
+                    the necessary infrastructure and connections in n8n.
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={() => router.push('/workflows')}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                  >
+                    Go Back to Deploy
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Main Content */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

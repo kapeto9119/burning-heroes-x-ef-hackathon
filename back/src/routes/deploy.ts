@@ -353,6 +353,59 @@ export function createDeployRouter(
   );
 
   /**
+   * GET /api/deploy/:workflowId/status
+   * Check if a workflow is deployed
+   */
+  router.get(
+    "/:workflowId/status",
+    authMiddleware,
+    async (req: Request, res: Response) => {
+      try {
+        const { workflowId } = req.params;
+        const userId = req.user!.userId;
+
+        const deployment = await deploymentRepo.findByWorkflowId(workflowId);
+
+        if (!deployment) {
+          return res.json({
+            success: true,
+            data: {
+              deployed: false,
+              workflowId
+            }
+          } as ApiResponse);
+        }
+
+        // Verify ownership
+        if (deployment.userId !== userId) {
+          return res.status(403).json({
+            success: false,
+            error: "Unauthorized",
+          } as ApiResponse);
+        }
+
+        res.json({
+          success: true,
+          data: {
+            deployed: true,
+            workflowId,
+            n8nWorkflowId: deployment.n8nWorkflowId,
+            isActive: deployment.status === 'active',
+            deployedAt: deployment.deployedAt
+          }
+        } as ApiResponse);
+
+      } catch (error: any) {
+        console.error("[Status] Error:", error);
+        res.status(500).json({
+          success: false,
+          error: error.message || "Failed to check status",
+        } as ApiResponse);
+      }
+    }
+  );
+
+  /**
    * POST /api/deploy/:workflowId/execute
    * Execute a deployed workflow
    */
