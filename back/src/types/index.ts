@@ -24,6 +24,7 @@ export interface N8nNode {
   position: [number, number];
   parameters: Record<string, any>;
   credentials?: Record<string, any>;
+  webhookId?: string; // Required for webhook nodes to enable programmatic activation
 }
 
 export interface N8nConnection {

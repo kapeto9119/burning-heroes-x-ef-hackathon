@@ -158,6 +158,7 @@ export class WorkflowGenerator {
         name: 'Webhook',
         type: 'n8n-nodes-base.webhook',
         position: [x, y],
+        webhookId: crypto.randomUUID(), // REQUIRED for programmatic activation!
         parameters: {
           httpMethod: 'POST',
           path: `workflow-${Date.now()}`,
@@ -170,7 +171,7 @@ export class WorkflowGenerator {
 
     const nodeType = triggerTypes[trigger.type] || 'n8n-nodes-base.webhook';
 
-    return {
+    const node: any = {
       id: this.generateNodeId(),
       name: trigger.type === 'webhook' ? 'Webhook' : trigger.type === 'schedule' ? 'Schedule' : 'Manual Trigger',
       type: nodeType,
@@ -178,6 +179,13 @@ export class WorkflowGenerator {
       parameters: trigger.config || {},
       credentials: {}
     };
+    
+    // Add webhookId for webhook triggers (REQUIRED for programmatic activation!)
+    if (nodeType === 'n8n-nodes-base.webhook') {
+      node.webhookId = crypto.randomUUID();
+    }
+    
+    return node;
   }
 
   /**
