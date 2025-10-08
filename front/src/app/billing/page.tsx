@@ -335,13 +335,13 @@ export default function BillingPage() {
               <div className="w-full bg-gray-700 rounded-full h-2">
                 <div
                   className={`h-2 rounded-full transition-all ${getUsageColor(
-                    usage.usage_percentage
+                    Number(usage.usage_percentage) || 0
                   )}`}
-                  style={{ width: `${Math.min(usage.usage_percentage, 100)}%` }}
+                  style={{ width: `${Math.min(Number(usage.usage_percentage) || 0, 100)}%` }}
                 />
               </div>
               <p className="text-gray-400 text-sm mt-2">
-                {usage.usage_percentage.toFixed(1)}% used
+                {(Number(usage.usage_percentage) || 0).toFixed(1)}% used
               </p>
             </div>
 

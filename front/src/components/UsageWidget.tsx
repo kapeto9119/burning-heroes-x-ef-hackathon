@@ -55,8 +55,9 @@ export default function UsageWidget() {
     return null;
   }
 
-  const isNearLimit = usage.usage_percentage >= 80;
-  const isAtLimit = usage.usage_percentage >= 100;
+  const usagePercent = Number(usage.usage_percentage) || 0;
+  const isNearLimit = usagePercent >= 80;
+  const isAtLimit = usagePercent >= 100;
 
   return (
     <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 border border-white/20">
@@ -88,7 +89,7 @@ export default function UsageWidget() {
                 ? "bg-yellow-500"
                 : "bg-green-500"
             }`}
-            style={{ width: `${Math.min(usage.usage_percentage, 100)}%` }}
+            style={{ width: `${Math.min(usagePercent, 100)}%` }}
           />
         </div>
       </div>
@@ -128,7 +129,7 @@ export default function UsageWidget() {
             >
               {isAtLimit
                 ? "Limit reached! Upgrade to continue."
-                : `You've used ${usage.usage_percentage.toFixed(
+                : `You've used ${usagePercent.toFixed(
                     0
                   )}% of your limit.`}
             </p>
