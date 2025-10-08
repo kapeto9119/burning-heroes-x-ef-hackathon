@@ -110,7 +110,9 @@ export default function PlatformPage() {
 
     const interval = setInterval(async () => {
       const token = getClientToken();
-      const result = await getWorkflowExecutions(selectedDeployedWorkflow.workflowId, 10, token || undefined);
+      const wfId = selectedDeployedWorkflow.workflowId || selectedDeployedWorkflow.id;
+      if (!wfId) return;
+      const result = await getWorkflowExecutions(wfId, 10, token || undefined);
       if (result.success) {
         setExecutions(result.data || []);
       }
@@ -215,7 +217,9 @@ export default function PlatformPage() {
     setSelectedDeployedWorkflow(workflow);
     setShowExecutionsModal(true);
     const token = getClientToken();
-    const result = await getWorkflowExecutions(workflow.workflowId, 10, token || undefined);
+    const wfId = workflow.workflowId || workflow.id;
+    if (!wfId) return;
+    const result = await getWorkflowExecutions(wfId, 10, token || undefined);
     if (result.success) {
       setExecutions(result.data || []);
     }
@@ -224,14 +228,21 @@ export default function PlatformPage() {
   const handleExecuteWorkflow = async (workflow: any) => {
     try {
       const token = getClientToken();
-      const result = await executeWorkflow(workflow.workflowId, {}, token || undefined);
+      const wfId = workflow.workflowId || workflow.id;
+      if (!wfId) {
+        alert('❌ Cannot execute: workflow ID is missing');
+        return;
+      }
+      const result = await executeWorkflow(wfId, {}, token || undefined);
       if (result.success) {
         alert('✅ Workflow executed successfully!');
-        if (selectedDeployedWorkflow?.workflowId === workflow.workflowId) {
+        const selectedId = selectedDeployedWorkflow?.workflowId || selectedDeployedWorkflow?.id;
+        if (selectedId && selectedId === wfId) {
           handleViewExecutions(workflow);
         }
-        if (previewWorkflow?.workflowId === workflow.workflowId) {
-          const execResult = await getWorkflowExecutions(workflow.workflowId, 5, token || undefined);
+        const previewId = previewWorkflow?.workflowId || previewWorkflow?.id;
+        if (previewId && previewId === wfId) {
+          const execResult = await getWorkflowExecutions(wfId, 5, token || undefined);
           if (execResult.success) {
             setPreviewExecutions(execResult.data || []);
           }
@@ -673,7 +684,9 @@ export default function PlatformPage() {
         onLoadPreviewExecutions={async () => {
           setIsLoadingPreviewExecutions(true);
           const token = getClientToken();
-          const result = await getWorkflowExecutions(previewWorkflow.workflowId, 10, token || undefined);
+          const wfId = previewWorkflow.workflowId || previewWorkflow.id;
+          if (!wfId) { setIsLoadingPreviewExecutions(false); return; }
+          const result = await getWorkflowExecutions(wfId, 10, token || undefined);
           if (result.success) {
             setPreviewExecutions(result.data || []);
           }

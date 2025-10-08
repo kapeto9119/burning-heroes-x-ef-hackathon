@@ -135,6 +135,8 @@ export default function WorkflowEditorPage() {
   const [showConfigPanel, setShowConfigPanel] = useState(false);
   const [snappingNodeId, setSnappingNodeId] = useState<string | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [initialWorkflowState, setInitialWorkflowState] = useState<{nodes: Node[], edges: Edge[]} | null>(null);
   
   // Magnetic snap settings
   const SNAP_THRESHOLD = 80; // Distance in pixels to trigger snap
@@ -202,6 +204,9 @@ export default function WorkflowEditorPage() {
           });
 
           setNodes(flowNodes);
+          
+          // Store initial state for unsaved changes detection
+          setInitialWorkflowState({ nodes: flowNodes, edges: [] });
 
           // Convert connections to edges
           const flowEdges: Edge[] = [];
@@ -236,6 +241,9 @@ export default function WorkflowEditorPage() {
           }
 
           setEdges(flowEdges);
+          
+          // Update initial state with edges
+          setInitialWorkflowState({ nodes: flowNodes, edges: flowEdges });
         }
       }
     } catch (error) {
@@ -248,6 +256,7 @@ export default function WorkflowEditorPage() {
   // Magnetic snapping for node connections - INSERT between nodes
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
+      setHasUnsavedChanges(true);
       // Apply magnetic snapping to position changes
       const modifiedChanges = changes.map((change) => {
         if (change.type === 'position' && change.dragging && change.position) {
@@ -261,6 +270,14 @@ export default function WorkflowEditorPage() {
           const draggedX = change.position!.x;
           const draggedY = change.position!.y;
 
+          // Check all edges to see if we're near the midpoint (to insert between nodes)
+          edges.forEach((edge) => {
+            const sourceNode = nodes.find(n => n.id === edge.source);
+            const targetNode = nodes.find(n => n.id === edge.target);
+            
+            // Skip if this edge involves the dragged node (we'll handle re-linking)
+            if (!sourceNode || !targetNode) return;
+            if (edge.source === change.id || edge.target === change.id) return;
           // Check if this node is already connected (has incoming or outgoing edges)
           const nodeHasConnections = edges.some(
             e => e.source === change.id || e.target === change.id
@@ -305,8 +322,13 @@ export default function WorkflowEditorPage() {
           if (insertBetween && hasSnapped) {
             setTimeout(() => {
               setEdges((eds) => {
-                // Remove the old edge
-                const newEdges = eds.filter(e => e.id !== insertBetween!.edgeId);
+                // Remove any existing edges connected to this node (for re-linking)
+                let newEdges = eds.filter(e => 
+                  e.source !== change.id && e.target !== change.id
+                );
+                
+                // Remove the edge we're inserting into
+                newEdges = newEdges.filter(e => e.id !== insertBetween!.edgeId);
                 
                 // Add two new edges: source -> dragged node -> target
                 return [
@@ -362,7 +384,10 @@ export default function WorkflowEditorPage() {
   );
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => {
+      setHasUnsavedChanges(true);
+      setEdges((eds) => addEdge(params, eds));
+    },
     [setEdges]
   );
 
@@ -410,6 +435,7 @@ export default function WorkflowEditorPage() {
       };
 
       console.log('Adding node at position:', position);
+      setHasUnsavedChanges(true);
       setNodes((nds) => nds.concat(newNode));
     },
     [reactFlowInstance, setNodes]
@@ -472,6 +498,9 @@ export default function WorkflowEditorPage() {
 
       if (data.success) {
         setSaveSuccess(true);
+        setHasUnsavedChanges(false);
+        // Update initial state after successful save
+        setInitialWorkflowState({ nodes, edges });
         setTimeout(() => setSaveSuccess(false), 3000);
       } else {
         throw new Error(data.error || 'Failed to save');
@@ -512,14 +541,63 @@ export default function WorkflowEditorPage() {
 
   const handleDeleteNode = () => {
     if (selectedNode) {
+      setHasUnsavedChanges(true);
+      // Find edges connected to this node
+      const incomingEdge = edges.find(e => e.target === selectedNode.id);
+      const outgoingEdge = edges.find(e => e.source === selectedNode.id);
+      
+      // Remove the node and its edges
       setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
-      setEdges((eds) =>
-        eds.filter((edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id)
-      );
+      setEdges((eds) => {
+        let newEdges = eds.filter((edge) => 
+          edge.source !== selectedNode.id && edge.target !== selectedNode.id
+        );
+        
+        // If this node was between two nodes, reconnect them
+        if (incomingEdge && outgoingEdge) {
+          newEdges.push({
+            id: `${incomingEdge.source}-${outgoingEdge.target}`,
+            source: incomingEdge.source,
+            target: outgoingEdge.target,
+            type: 'smoothstep',
+            animated: false,
+            style: {
+              stroke: '#94a3b8',
+              strokeWidth: 1.5,
+            },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: '#94a3b8',
+            },
+          });
+        }
+        
+        return newEdges;
+      });
       setSelectedNode(null);
       setShowConfigPanel(false);
     }
   };
+
+  // Handle when a node is moved away from its insertion position
+  // This reconnects the nodes it was between
+  const handleNodeDragStop = useCallback(() => {
+    // This is handled by the snapping logic automatically
+    // When a node snaps to a new position, old connections are removed
+  }, []);
+
+  // Prevent accidental navigation with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -532,6 +610,7 @@ export default function WorkflowEditorPage() {
         } else if (selectedEdges.length > 0) {
           e.preventDefault();
           // Delete selected edges
+          setHasUnsavedChanges(true);
           setEdges((eds) => eds.filter((edge) => !selectedEdges.includes(edge.id)));
           setSelectedEdges([]);
         }
@@ -584,7 +663,15 @@ export default function WorkflowEditorPage() {
           >
             <Button
               variant="ghost"
-              onClick={() => router.push('/workflows')}
+              onClick={() => {
+                if (hasUnsavedChanges) {
+                  if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
+                    router.push('/workflows');
+                  }
+                } else {
+                  router.push('/workflows');
+                }
+              }}
               className="mb-4"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -593,7 +680,14 @@ export default function WorkflowEditorPage() {
 
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold mb-1">Edit Workflow</h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-bold mb-1">Edit Workflow</h1>
+                  {hasUnsavedChanges && (
+                    <span className="text-xs bg-yellow-500/20 text-yellow-600 px-2 py-1 rounded-full border border-yellow-500/30">
+                      Unsaved changes
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground">{workflow?.name || 'Workflow Editor'}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {nodes.length} nodes • {edges.length} connections
