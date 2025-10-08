@@ -168,9 +168,14 @@ export function createDeployRouter(
         (node) => node.type.includes("webhook") || node.type.includes("Webhook")
       );
 
+      console.log('[Deploy] Webhook node found:', webhookNode?.name);
+      console.log('[Deploy] Webhook path:', webhookNode?.parameters?.path);
+
       const webhookUrl = webhookNode?.parameters?.path
         ? n8nClient.getWebhookUrl(webhookNode.parameters.path as string)
         : undefined;
+      
+      console.log('[Deploy] Generated webhook URL:', webhookUrl);
 
       // First, save the workflow to the workflows table
       const workflowId = workflow.id || crypto.randomUUID();
