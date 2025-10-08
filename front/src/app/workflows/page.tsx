@@ -42,7 +42,8 @@ export default function WorkflowsPage() {
       
       // Refresh executions if this workflow is being viewed
       if (selectedWorkflow?.workflowId === event.workflowId) {
-        const result = await getWorkflowExecutions(event.workflowId, 10);
+        const token = getClientToken();
+        const result = await getWorkflowExecutions(event.workflowId, 10, token || undefined);
         if (result.success) {
           setExecutions(result.data || []);
         }
@@ -68,7 +69,8 @@ export default function WorkflowsPage() {
     if (!autoRefresh || !selectedWorkflow) return;
 
     const interval = setInterval(async () => {
-      const result = await getWorkflowExecutions(selectedWorkflow.workflowId, 10);
+      const token = getClientToken();
+      const result = await getWorkflowExecutions(selectedWorkflow.workflowId, 10, token || undefined);
       if (result.success) {
         setExecutions(result.data || []);
       }
@@ -82,7 +84,8 @@ export default function WorkflowsPage() {
     if (previewWorkflow?.workflowId) {
       const loadPreviewExecutions = async () => {
         setIsLoadingPreviewExecutions(true);
-        const result = await getWorkflowExecutions(previewWorkflow.workflowId, 5);
+        const token = getClientToken();
+        const result = await getWorkflowExecutions(previewWorkflow.workflowId, 5, token || undefined);
         if (result.success) {
           setPreviewExecutions(result.data || []);
         }
@@ -104,7 +107,8 @@ export default function WorkflowsPage() {
 
   const handleViewExecutions = async (workflow: any) => {
     setSelectedWorkflow(workflow);
-    const result = await getWorkflowExecutions(workflow.workflowId, 10);
+    const token = getClientToken();
+    const result = await getWorkflowExecutions(workflow.workflowId, 10, token || undefined);
     if (result.success) {
       setExecutions(result.data || []);
     }
@@ -112,7 +116,8 @@ export default function WorkflowsPage() {
 
   const handleExecuteWorkflow = async (workflow: any) => {
     try {
-      const result = await executeWorkflow(workflow.workflowId, {});
+      const token = getClientToken();
+      const result = await executeWorkflow(workflow.workflowId, {}, token || undefined);
       if (result.success) {
         alert('✅ Workflow executed successfully!');
         // Refresh executions if modal is open
@@ -121,7 +126,7 @@ export default function WorkflowsPage() {
         }
         // Refresh preview executions if preview modal is open
         if (previewWorkflow?.workflowId === workflow.workflowId) {
-          const execResult = await getWorkflowExecutions(workflow.workflowId, 5);
+          const execResult = await getWorkflowExecutions(workflow.workflowId, 5, token || undefined);
           if (execResult.success) {
             setPreviewExecutions(execResult.data || []);
           }
@@ -469,7 +474,8 @@ export default function WorkflowsPage() {
                   variant="outline"
                   onClick={async () => {
                     setIsLoadingPreviewExecutions(true);
-                    const result = await getWorkflowExecutions(previewWorkflow.workflowId, 10);
+                    const token = getClientToken();
+                    const result = await getWorkflowExecutions(previewWorkflow.workflowId, 10, token || undefined);
                     if (result.success) {
                       setPreviewExecutions(result.data || []);
                     }

@@ -75,7 +75,10 @@ export default function WorkflowTestPage() {
   // Load execution history
   useEffect(() => {
     const loadHistory = async () => {
-      const result = await getWorkflowExecutions(workflowId, 5);
+      const token = getClientToken();
+      if (!token) return;
+      
+      const result = await getWorkflowExecutions(workflowId, 5, token || undefined);
       if (result.success) {
         setExecutionHistory(result.data || []);
         if (result.data && result.data.length > 0) {
@@ -103,14 +106,20 @@ export default function WorkflowTestPage() {
       return;
     }
 
+    const token = getClientToken();
+    if (!token) {
+      alert('Authentication required. Please log in again.');
+      return;
+    }
+
     setIsExecuting(true);
     try {
       const payload = JSON.parse(testPayload);
-      const result = await executeWorkflow(workflowId, payload);
+      const result = await executeWorkflow(workflowId, payload, token || undefined);
 
       if (result.success) {
         // Refresh execution history
-        const historyResult = await getWorkflowExecutions(workflowId, 5);
+        const historyResult = await getWorkflowExecutions(workflowId, 5, token || undefined);
         if (historyResult.success && historyResult.data) {
           setExecutionHistory(historyResult.data);
           setCurrentExecution(historyResult.data[0]);

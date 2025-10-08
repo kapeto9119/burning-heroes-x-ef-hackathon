@@ -26,6 +26,7 @@ import { useWebSocket, NodeEvent } from '@/hooks/useWebSocket';
 // Now uses dynamic visual system to support all N8N nodes
 function CustomNode({ data }: any) {
   const nodeStatus = data.executionStatus;
+  const isPreview = data.isPreview || false; // Get preview mode from node data
   
   // Get dynamic icon and color based on node type
   const visual = getNodeVisual(data.type, data.label);
@@ -90,8 +91,9 @@ function CustomNode({ data }: any) {
         px-4 py-3 rounded-xl border-2 backdrop-blur-xl
         bg-gradient-to-br ${visual.color}
         shadow-lg hover:shadow-xl transition-all duration-200
-        w-full relative nodrag
+        w-full relative
         ${getBorderStyle()}
+        ${isPreview ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
       `}>
         
         {/* Status Badge */}
@@ -419,6 +421,7 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
           parameters: node.parameters,
           rawNode: node,
           executionStatus: nodeStatusMap.get(node.name),
+          isPreview: isPreview, // Pass preview mode to node
         },
       };
     });
