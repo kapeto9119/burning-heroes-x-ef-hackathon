@@ -361,6 +361,7 @@ export default function WorkflowEditorPage() {
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
+    console.log('Drag over canvas');
   }, []);
 
   const onDrop = useCallback(
@@ -657,12 +658,12 @@ export default function WorkflowEditorPage() {
             </div>
 
             {/* Canvas - Right Column */}
-            <div className="lg:col-span-3 overflow-hidden relative">
+            <div className="lg:col-span-3 overflow-hidden">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
-                className="backdrop-blur-xl bg-background/40 rounded-2xl border border-border overflow-hidden h-full flex flex-col"
+                className="backdrop-blur-xl bg-background/40 rounded-2xl border border-border overflow-hidden h-full flex flex-col relative"
               >
                 <div className="p-3 border-b border-border flex-shrink-0">
                   <h2 className="font-semibold text-sm">Workflow Canvas</h2>
@@ -670,7 +671,11 @@ export default function WorkflowEditorPage() {
                     Drag nodes • Click edges to select • Drag from handles to reconnect
                   </p>
                 </div>
-                <div className="flex-1 relative">
+                <div 
+                  className="flex-1 relative"
+                  onDrop={onDrop}
+                  onDragOver={onDragOver}
+                >
                   <style jsx global>{`
                     .react-flow__node.snapping {
                       box-shadow: 0 0 20px 4px rgba(139, 92, 246, 0.6) !important;
@@ -694,8 +699,6 @@ export default function WorkflowEditorPage() {
                     onNodesChange={handleNodesChange}
                     onEdgesChange={onEdgesChange}
                     onConnect={onConnect}
-                    onDrop={onDrop}
-                    onDragOver={onDragOver}
                     onNodeClick={handleNodeClick}
                     onEdgeClick={(_, edge) => {
                       setSelectedEdges([edge.id]);
@@ -747,21 +750,17 @@ export default function WorkflowEditorPage() {
                     </motion.div>
                   )}
                 </div>
-              </motion.div>
-            </div>
-          </div>
 
-          {/* Node Configuration Panel - Inside Canvas */}
-          <AnimatePresence>
-            {showConfigPanel && selectedNode && (
-              <div className="absolute right-4 top-4 bottom-4 w-80 z-50 pointer-events-none">
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="backdrop-blur-xl bg-background/95 rounded-2xl border border-border shadow-2xl h-full overflow-auto pointer-events-auto"
-                >
-                  <NodeConfigPanel
+                {/* Node Configuration Panel - Inside Canvas Container */}
+                <AnimatePresence>
+                  {showConfigPanel && selectedNode && (
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="absolute right-4 top-16 bottom-4 w-80 z-50 backdrop-blur-xl bg-background/95 rounded-2xl border border-border shadow-2xl overflow-auto"
+                    >
+                      <NodeConfigPanel
                 node={selectedNode}
                 nodeDefinition={availableNodes 
                   ? [
@@ -775,16 +774,18 @@ export default function WorkflowEditorPage() {
                   : undefined
                 }
                 onSave={handleNodeConfigSave}
-                onClose={() => {
-                  setShowConfigPanel(false);
-                  setSelectedNode(null);
-                }}
-                    onGetDetails={getNodeDetails}
-                  />
-                </motion.div>
-              </div>
-            )}
-          </AnimatePresence>
+                        onClose={() => {
+                          setShowConfigPanel(false);
+                          setSelectedNode(null);
+                        }}
+                        onGetDetails={getNodeDetails}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
