@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Background } from '@/components/layout/Background';
@@ -26,6 +26,7 @@ import ReactFlow, {
   XYPosition,
   Handle,
   Position,
+  updateEdge,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -154,6 +155,9 @@ export default function WorkflowEditorPage() {
   const nodeTypes = useMemo(() => ({
     custom: CustomEditorNode,
   }), []);
+
+  // Track edge update lifecycle for reconnection by drag
+  const edgeUpdateSuccessful = useRef(true);
 
   // Helper: keep at most one incoming and one outgoing edge for a node
   const normalizeEdgesForNode = useCallback((list: Edge[], nodeId: string) => {
@@ -463,6 +467,30 @@ export default function WorkflowEditorPage() {
     [setEdges, normalizeEdgesForNode]
   );
 
+  const onEdgeUpdateStart = useCallback(() => {
+    edgeUpdateSuccessful.current = false;
+  }, []);
+
+  const onEdgeUpdate = useCallback((oldEdge: Edge, newConnection: Connection) => {
+    setHasUnsavedChanges(true);
+    setEdges((eds) => {
+      const updated = updateEdge(oldEdge, newConnection, eds);
+      const afterSource = newConnection.source ? normalizeEdgesForNode(updated, newConnection.source) : updated;
+      const afterBoth = newConnection.target ? normalizeEdgesForNode(afterSource, newConnection.target) : afterSource;
+      return afterBoth;
+    });
+    edgeUpdateSuccessful.current = true;
+  }, [setEdges, normalizeEdgesForNode]);
+
+  const onEdgeUpdateEnd = useCallback((_: any, edge: Edge) => {
+    if (!edgeUpdateSuccessful.current) {
+      // if not reconnected, remove the edge
+      setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+      setHasUnsavedChanges(true);
+    }
+    edgeUpdateSuccessful.current = true;
+  }, [setEdges]);
+
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
@@ -549,6 +577,78 @@ export default function WorkflowEditorPage() {
       try { /* @ts-ignore */ delete (window as any).__paletteDragNode; } catch {}
     }
   }, [tempDragNodeId, setNodes]);
+
+  // Global unlink-on-distance: for any node currently between two nodes,
+  // if it moves far from the midpoint of its pair, restore the original pair and remove its edges
+  useEffect(() => {
+    setEdges((prevEdges) => {
+      let nextEdges = prevEdges;
+      let modified = false;
+
+      nodes.forEach((n) => {
+        const incoming = nextEdges.find((e) => e.target === n.id);
+        const outgoing = nextEdges.find((e) => e.source === n.id);
+
+        // Case 1: node is between two nodes (incoming + outgoing)
+        if (incoming && outgoing) {
+          const sourceNode = nodes.find((x) => x.id === incoming.source);
+          const targetNode = nodes.find((x) => x.id === outgoing.target);
+          if (!sourceNode || !targetNode) return;
+
+          const midX = (sourceNode.position.x + targetNode.position.x) / 2;
+          const midY = (sourceNode.position.y + targetNode.position.y) / 2;
+          const dist = Math.hypot(n.position.x - midX, n.position.y - midY);
+          if (dist > UNSNAP_THRESHOLD) {
+            modified = true;
+            // remove n's edges
+            let updated = nextEdges.filter((e) => e.source !== n.id && e.target !== n.id);
+            // restore A->B if missing
+            const exists = updated.some((e) => e.source === incoming.source && e.target === outgoing.target);
+            if (!exists) {
+              updated = updated.concat({
+                id: `${incoming.source}-${outgoing.target}`,
+                source: incoming.source,
+                target: outgoing.target,
+                type: 'smoothstep',
+                animated: false,
+                style: { stroke: '#94a3b8', strokeWidth: 1.5 },
+                markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+              });
+            }
+            nextEdges = updated;
+          }
+          return;
+        }
+
+        // Case 2: node is tail with only one connection (incoming only or outgoing only)
+        if (incoming && !outgoing) {
+          const sourceNode = nodes.find((x) => x.id === incoming.source);
+          if (!sourceNode) return;
+          const dist = Math.hypot(n.position.x - sourceNode.position.x, n.position.y - sourceNode.position.y);
+          if (dist > UNSNAP_THRESHOLD) {
+            modified = true;
+            nextEdges = nextEdges.filter((e) => e.id !== incoming.id);
+          }
+          return;
+        }
+        if (!incoming && outgoing) {
+          const targetNode = nodes.find((x) => x.id === outgoing.target);
+          if (!targetNode) return;
+          const dist = Math.hypot(n.position.x - targetNode.position.x, n.position.y - targetNode.position.y);
+          if (dist > UNSNAP_THRESHOLD) {
+            modified = true;
+            nextEdges = nextEdges.filter((e) => e.id !== outgoing.id);
+          }
+          return;
+        }
+      });
+
+      if (modified) {
+        setHasUnsavedChanges(true);
+      }
+      return nextEdges;
+    });
+  }, [nodes]);
 
   const handleSave = async () => {
     if (!workflow) return;
@@ -877,6 +977,30 @@ export default function WorkflowEditorPage() {
                       box-shadow: 0 0 20px 4px rgba(139, 92, 246, 0.6) !important;
                       transition: box-shadow 0.2s ease-in-out;
                     }
+                    /* Larger, clearer edge updater circle */
+                    .react-flow__edge-updater {
+                      stroke: #8b5cf6 !important; /* purple */
+                      fill: #ffffff !important;
+                      stroke-width: 2px !important;
+                      transform: scale(1.3);
+                    }
+                    /* Highlight selected edges */
+                    .react-flow__edge.selected path {
+                      stroke: #8b5cf6 !important;
+                      stroke-width: 2.5px !important;
+                    }
+                    /* Larger node handles for easier grabbing */
+                    .react-flow__handle {
+                      width: 12px !important;
+                      height: 12px !important;
+                      border: 2px solid #8b5cf6 !important;
+                      background: #ffffff !important;
+                      box-shadow: 0 0 0 2px rgba(139,92,246,0.15);
+                    }
+                    .react-flow__handle:hover {
+                      background: #f5f3ff !important; /* light purple */
+                      box-shadow: 0 0 0 4px rgba(139,92,246,0.2);
+                    }
                   `}</style>
                   <ReactFlow
                     nodes={nodes.map(node => ({
@@ -896,6 +1020,9 @@ export default function WorkflowEditorPage() {
                     onEdgesChange={onEdgesChange}
                     onConnect={onConnect}
                     onNodeClick={handleNodeClick}
+                    onEdgeUpdateStart={onEdgeUpdateStart}
+                    onEdgeUpdate={onEdgeUpdate}
+                    onEdgeUpdateEnd={onEdgeUpdateEnd}
                     onEdgeClick={(_, edge) => {
                       setSelectedEdges([edge.id]);
                       setSelectedNode(null);
@@ -909,10 +1036,13 @@ export default function WorkflowEditorPage() {
                     nodesDraggable={true}
                     nodesConnectable={true}
                     elementsSelectable={true}
+                    edgesUpdatable={true}
+                    edgeUpdaterRadius={30}
                     reconnectRadius={20}
                     defaultEdgeOptions={{
                       animated: false,
                       type: 'smoothstep',
+                      updatable: true,
                       style: {
                         strokeWidth: 1.5,
                         stroke: '#94a3b8'
