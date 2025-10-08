@@ -75,7 +75,7 @@ function CustomEditorNode({ data }: any) {
   };
 
   return (
-    <div className="relative" style={{ width: '220px' }}>
+    <div className="relative" style={{ minWidth: '220px', maxWidth: '400px' }}>
       <Handle
         type="target"
         position={Position.Top}
@@ -96,12 +96,12 @@ function CustomEditorNode({ data }: any) {
         px-4 py-3 rounded-lg border-2 shadow-md bg-white
         ${getNodeColor()}
         hover:shadow-lg transition-all duration-200
-        w-full min-w-48 relative cursor-grab active:cursor-grabbing
+        w-full relative cursor-grab active:cursor-grabbing
       `}>
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Icon className="w-4 h-4" />
-            <span className="font-medium text-sm">{data.label}</span>
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <Icon className="w-4 h-4 flex-shrink-0" />
+            <span className="font-medium text-sm break-words">{data.label}</span>
           </div>
         </div>
         
@@ -131,13 +131,16 @@ export default function WorkflowEditorPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [selectedEdges, setSelectedEdges] = useState<string[]>([]);
   const [showConfigPanel, setShowConfigPanel] = useState(false);
   const [snappingNodeId, setSnappingNodeId] = useState<string | null>(null);
+  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   
   // Magnetic snap settings
-  const SNAP_THRESHOLD = 50; // Distance in pixels to trigger snap
+  const SNAP_THRESHOLD = 80; // Distance in pixels to trigger snap
   const NODE_WIDTH = 220; // Approximate node width
-  const NODE_HEIGHT = 100; // Approximate node height
+  const NODE_HEIGHT = 120; // Approximate node height
+  const VERTICAL_SPACING = 200; // Spacing between nodes vertically
   
   // Memoize custom node types
   const nodeTypes = useMemo(() => ({
@@ -242,7 +245,7 @@ export default function WorkflowEditorPage() {
     }
   };
 
-  // Magnetic snapping for node connections
+  // Magnetic snapping for node connections - INSERT between nodes
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
       // Apply magnetic snapping to position changes
@@ -253,53 +256,89 @@ export default function WorkflowEditorPage() {
 
           let snappedPosition = { ...change.position };
           let hasSnapped = false;
+          let insertBetween: { sourceId: string; targetId: string; edgeId: string } | null = null;
 
-          // Check all other nodes for snap opportunities
-          nodes.forEach((targetNode) => {
-            if (targetNode.id === change.id) return; // Skip self
+          const draggedX = change.position!.x;
+          const draggedY = change.position!.y;
 
-            const targetX = targetNode.position.x;
-            const targetY = targetNode.position.y;
-            const draggedX = change.position!.x;
-            const draggedY = change.position!.y;
+          // Check all edges to see if we're near the midpoint (to insert between nodes)
+          edges.forEach((edge) => {
+            const sourceNode = nodes.find(n => n.id === edge.source);
+            const targetNode = nodes.find(n => n.id === edge.target);
+            
+            if (!sourceNode || !targetNode || edge.source === change.id || edge.target === change.id) return;
 
-            // Calculate snap points (for vertical layout - snap above/below)
-            const snapPoints = [
-              // Vertical snapping (align below target)
-              {
-                x: targetX,
-                y: targetY + NODE_HEIGHT + 100,
-                distance: Math.abs(draggedX - targetX) + Math.abs(draggedY - (targetY + NODE_HEIGHT + 100)),
-              },
-              // Vertical snapping (align above target)
-              {
-                x: targetX,
-                y: targetY - NODE_HEIGHT - 100,
-                distance: Math.abs(draggedX - targetX) + Math.abs(draggedY - (targetY - NODE_HEIGHT - 100)),
-              },
-              // Horizontal alignment (same X as target)
-              {
-                x: targetX,
-                y: draggedY,
-                distance: Math.abs(draggedX - targetX),
-              },
-            ];
+            // Calculate midpoint of the edge
+            const midX = (sourceNode.position.x + targetNode.position.x) / 2;
+            const midY = (sourceNode.position.y + targetNode.position.y) / 2;
 
-            // Find closest snap point
-            const closestSnap = snapPoints.reduce((closest, point) => 
-              point.distance < closest.distance ? point : closest
+            // Calculate distance from dragged node to edge midpoint
+            const distanceToMidpoint = Math.sqrt(
+              Math.pow(draggedX - midX, 2) + Math.pow(draggedY - midY, 2)
             );
 
-            // Apply snap if within threshold
-            if (closestSnap.distance < SNAP_THRESHOLD && !hasSnapped) {
-              snappedPosition = { x: closestSnap.x, y: closestSnap.y };
+            // If close to the edge midpoint, snap to insert position
+            if (distanceToMidpoint < SNAP_THRESHOLD && !hasSnapped) {
+              snappedPosition = { x: midX, y: midY };
               hasSnapped = true;
-              
+              insertBetween = {
+                sourceId: edge.source,
+                targetId: edge.target,
+                edgeId: edge.id,
+              };
+
               // Visual feedback for snapping
               setSnappingNodeId(change.id);
               setTimeout(() => setSnappingNodeId(null), 300);
             }
           });
+
+          // If we found an insertion point, update connections
+          if (insertBetween && hasSnapped) {
+            setTimeout(() => {
+              setEdges((eds) => {
+                // Remove the old edge
+                const newEdges = eds.filter(e => e.id !== insertBetween!.edgeId);
+                
+                // Add two new edges: source -> dragged node -> target
+                return [
+                  ...newEdges,
+                  // Edge from source to dragged node
+                  {
+                    id: `${insertBetween!.sourceId}-${change.id}`,
+                    source: insertBetween!.sourceId,
+                    target: change.id,
+                    type: 'smoothstep',
+                    animated: false,
+                    style: {
+                      stroke: '#94a3b8',
+                      strokeWidth: 1.5,
+                    },
+                    markerEnd: {
+                      type: MarkerType.ArrowClosed,
+                      color: '#94a3b8',
+                    },
+                  },
+                  // Edge from dragged node to target
+                  {
+                    id: `${change.id}-${insertBetween!.targetId}`,
+                    source: change.id,
+                    target: insertBetween!.targetId,
+                    type: 'smoothstep',
+                    animated: false,
+                    style: {
+                      stroke: '#94a3b8',
+                      strokeWidth: 1.5,
+                    },
+                    markerEnd: {
+                      type: MarkerType.ArrowClosed,
+                      color: '#94a3b8',
+                    },
+                  },
+                ];
+              });
+            }, 100);
+          }
 
           return {
             ...change,
@@ -311,7 +350,7 @@ export default function WorkflowEditorPage() {
 
       onNodesChange(modifiedChanges);
     },
-    [nodes, onNodesChange, SNAP_THRESHOLD, NODE_WIDTH, NODE_HEIGHT]
+    [nodes, edges, onNodesChange, setEdges, SNAP_THRESHOLD]
   );
 
   const onConnect = useCallback(
@@ -336,11 +375,20 @@ export default function WorkflowEditorPage() {
       }
 
       const nodeData = JSON.parse(nodeDataStr);
-      const reactFlowBounds = (event.target as HTMLElement).getBoundingClientRect();
-      const position = {
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
-      };
+      
+      // Get the ReactFlow wrapper element
+      const reactFlowWrapper = document.querySelector('.react-flow');
+      if (!reactFlowWrapper) return;
+      
+      const reactFlowBounds = reactFlowWrapper.getBoundingClientRect();
+      
+      // Convert screen coordinates to flow coordinates
+      if (!reactFlowInstance) return;
+      
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
 
       const newNode: Node = {
         id: `${nodeData.type}-${Date.now()}`,
@@ -468,10 +516,17 @@ export default function WorkflowEditorPage() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Delete key - delete selected node
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNode) {
-        e.preventDefault();
-        handleDeleteNode();
+      // Delete key - delete selected node or edges
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedNode) {
+          e.preventDefault();
+          handleDeleteNode();
+        } else if (selectedEdges.length > 0) {
+          e.preventDefault();
+          // Delete selected edges
+          setEdges((eds) => eds.filter((edge) => !selectedEdges.includes(edge.id)));
+          setSelectedEdges([]);
+        }
       }
       // Escape key - close config panel
       if (e.key === 'Escape' && showConfigPanel) {
@@ -487,7 +542,7 @@ export default function WorkflowEditorPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNode, showConfigPanel]);
+  }, [selectedNode, selectedEdges, showConfigPanel]);
 
   if (isLoading) {
     return (
@@ -512,7 +567,7 @@ export default function WorkflowEditorPage() {
       <div className="relative z-10">
         <Navbar />
 
-        <div className="container mx-auto px-6 py-8 max-w-[1800px]">
+        <div className="container mx-auto px-6 py-8 max-w-[1800px] h-screen overflow-hidden flex flex-col">
           {/* Editor Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -585,15 +640,14 @@ export default function WorkflowEditorPage() {
           </motion.div>
 
           {/* Editor Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 overflow-hidden">
             {/* Node Palette - Left Column */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 overflow-hidden">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="backdrop-blur-xl bg-background/40 rounded-2xl border border-border overflow-hidden sticky top-6"
-                style={{ maxHeight: 'calc(100vh - 200px)' }}
+                className="backdrop-blur-xl bg-background/40 rounded-2xl border border-border overflow-hidden h-full flex flex-col"
               >
                 <NodePalette
                   nodes={availableNodes}
@@ -604,20 +658,20 @@ export default function WorkflowEditorPage() {
             </div>
 
             {/* Canvas - Right Column */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-3 overflow-hidden">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
-                className="backdrop-blur-xl bg-background/40 rounded-2xl border border-border overflow-hidden"
+                className="backdrop-blur-xl bg-background/40 rounded-2xl border border-border overflow-hidden h-full flex flex-col"
               >
-                <div className="p-4 border-b border-border">
+                <div className="p-4 border-b border-border flex-shrink-0">
                   <h2 className="font-semibold">Workflow Canvas</h2>
                   <p className="text-sm text-muted-foreground">
                     Drag nodes from the palette and connect them to build your workflow
                   </p>
                 </div>
-                <div className="h-[700px] relative">
+                <div className="flex-1 relative">
                   <style jsx global>{`
                     .react-flow__node.snapping {
                       box-shadow: 0 0 20px 4px rgba(139, 92, 246, 0.6) !important;
@@ -629,13 +683,30 @@ export default function WorkflowEditorPage() {
                       ...node,
                       className: node.id === snappingNodeId ? 'snapping' : '',
                     }))}
-                    edges={edges}
+                    edges={edges.map(edge => ({
+                      ...edge,
+                      selected: selectedEdges.includes(edge.id),
+                      style: {
+                        ...edge.style,
+                        stroke: selectedEdges.includes(edge.id) ? '#8b5cf6' : '#94a3b8',
+                        strokeWidth: selectedEdges.includes(edge.id) ? 2.5 : 1.5,
+                      },
+                    }))}
                     onNodesChange={handleNodesChange}
                     onEdgesChange={onEdgesChange}
                     onConnect={onConnect}
                     onDrop={onDrop}
                     onDragOver={onDragOver}
                     onNodeClick={handleNodeClick}
+                    onEdgeClick={(_, edge) => {
+                      setSelectedEdges([edge.id]);
+                      setSelectedNode(null);
+                    }}
+                    onPaneClick={() => {
+                      setSelectedNode(null);
+                      setSelectedEdges([]);
+                    }}
+                    onInit={setReactFlowInstance}
                     nodeTypes={nodeTypes}
                     nodesDraggable={true}
                     nodesConnectable={true}

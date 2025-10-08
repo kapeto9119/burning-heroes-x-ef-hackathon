@@ -158,7 +158,7 @@ function CustomNode({ data }: any) {
         repeat: nodeStatus === 'running' ? Infinity : 0
       }}
       className="relative"
-      style={{ width: '220px' }}
+      style={{ minWidth: '220px', maxWidth: '400px' }}
     >
       {/* Input handle (top side) - positioned at top center border */}
       <Handle
@@ -189,15 +189,15 @@ function CustomNode({ data }: any) {
         ${getNodeColor()}
         ${getStatusBorder()}
         hover:shadow-lg transition-all duration-200
-        w-full min-w-48 relative
+        w-full relative
         ${isPreview ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
       `}>
         
         {/* Header with icon and status icon */}
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Icon className="w-4 h-4" />
-            <span className="font-medium text-sm">{data.label}</span>
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <Icon className="w-4 h-4 flex-shrink-0" />
+            <span className="font-medium text-sm break-words">{data.label}</span>
           </div>
           {/* Status icon (top right, small) */}
           {nodeStatus === 'success' && (
