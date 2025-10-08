@@ -15,12 +15,64 @@ import ReactFlow, {
   MarkerType,
   Handle,
   Position,
+  useReactFlow,
+  useViewport,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, Loader2, Clock, Save, Edit3, Volume2, VolumeX } from 'lucide-react';
 import { getNodeVisual, isControlFlowNode, getControlFlowType } from '@/lib/nodeVisuals';
 import { useWebSocket, NodeEvent } from '@/hooks/useWebSocket';
+
+// Control Flow Container Component that properly transforms with viewport
+function ControlFlowContainer({ group, nodes }: { group: any, nodes: Node[] }) {
+  const { x: viewportX, y: viewportY, zoom } = useViewport();
+  
+  const groupNodes = nodes.filter(n => group.nodes.includes(n.id));
+  if (groupNodes.length === 0) return null;
+  
+  const minX = Math.min(...groupNodes.map(n => n.position.x));
+  const maxX = Math.max(...groupNodes.map(n => n.position.x + 220)); // 220 is node width
+  const minY = Math.min(...groupNodes.map(n => n.position.y));
+  const maxY = Math.max(...groupNodes.map(n => n.position.y + 100)); // approx node height
+  
+  const width = (maxX - minX + 40) * zoom;
+  const height = (maxY - minY + 40) * zoom;
+  const x = (minX - 20) * zoom + viewportX;
+  const y = (minY - 40) * zoom + viewportY; // Extra space for label
+  
+  // Color based on control flow type
+  const colors = {
+    loop: 'border-indigo-500/40 bg-indigo-500/5',
+    if: 'border-yellow-500/40 bg-yellow-500/5',
+    switch: 'border-cyan-500/40 bg-cyan-500/5',
+    merge: 'border-green-500/40 bg-green-500/5'
+  };
+  
+  return (
+    <div
+      className={`absolute border-2 rounded-xl ${colors[group.type as keyof typeof colors]} pointer-events-none transition-all duration-200`}
+      style={{
+        left: `${x}px`,
+        top: `${y}px`,
+        width: `${width}px`,
+        height: `${height}px`,
+        zIndex: -1
+      }}
+    >
+      <div 
+        className="absolute bg-background/90 border border-border rounded text-xs font-medium px-2 py-1"
+        style={{
+          top: `${-6 * zoom}px`,
+          left: `${2 * zoom}px`,
+          fontSize: `${Math.max(0.75, 0.75 * zoom)}rem`
+        }}
+      >
+        {group.condition || group.type.toUpperCase()}
+      </div>
+    </div>
+  );
+}
 
 // Custom node component with animations
 // Now uses dynamic visual system to support all N8N nodes
@@ -36,47 +88,47 @@ function CustomNode({ data }: any) {
   const getNodeColor = () => {
     const type = data.type.toLowerCase();
     
-    // Trigger nodes
-    if (type.includes('webhook') || type.includes('trigger')) {
-      return 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30';
+    // Trigger nodes - Blue
+    if (type.includes('webhook') || type.includes('trigger') || type.includes('manual')) {
+      return 'border-blue-200 bg-blue-50';
     }
-    // Schedule nodes
+    // Schedule nodes - Purple
     if (type.includes('schedule') || type.includes('cron')) {
-      return 'border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/30';
+      return 'border-purple-200 bg-purple-50';
     }
-    // Communication (Email, Slack, etc)
+    // Communication (Email, Slack, etc) - Green
     if (type.includes('email') || type.includes('mail') || type.includes('gmail')) {
-      return 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30';
+      return 'border-green-200 bg-green-50';
     }
     if (type.includes('slack') || type.includes('discord')) {
-      return 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30';
+      return 'border-emerald-200 bg-emerald-50';
     }
-    // Social/Professional networks
+    // Social/Professional networks - Purple
     if (type.includes('linkedin') || type.includes('twitter') || type.includes('facebook')) {
-      return 'border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/30';
+      return 'border-purple-200 bg-purple-50';
     }
-    // CRM & Business
+    // CRM & Business - Blue
     if (type.includes('salesforce') || type.includes('crm') || type.includes('hubspot')) {
-      return 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30';
+      return 'border-blue-200 bg-blue-50';
     }
-    // Data & Database
+    // Data & Database - Cyan
     if (type.includes('postgres') || type.includes('mysql') || type.includes('database')) {
-      return 'border-cyan-200 bg-cyan-50 dark:border-cyan-800 dark:bg-cyan-950/30';
+      return 'border-cyan-200 bg-cyan-50';
     }
-    // HTTP & API
+    // HTTP & API - Orange
     if (type.includes('http') || type.includes('api')) {
-      return 'border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/30';
+      return 'border-orange-200 bg-orange-50';
     }
-    // AI nodes
+    // AI nodes - Pink
     if (type.includes('openai') || type.includes('ai')) {
-      return 'border-pink-200 bg-pink-50 dark:border-pink-800 dark:bg-pink-950/30';
+      return 'border-pink-200 bg-pink-50';
     }
-    // Control flow
+    // Control flow - Yellow
     if (type.includes('if') || type.includes('switch') || type.includes('merge')) {
-      return 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/30';
+      return 'border-yellow-200 bg-yellow-50';
     }
-    // Default
-    return 'border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950/30';
+    // Default - Gray
+    return 'border-gray-200 bg-gray-50';
   };
   
   // Status border overlay (only when executing)
@@ -108,32 +160,32 @@ function CustomNode({ data }: any) {
       className="relative"
       style={{ width: '220px' }}
     >
-      {/* Input handle (left side) - positioned at left center border */}
+      {/* Input handle (top side) - positioned at top center border */}
       <Handle
         type="target"
-        position={Position.Left}
+        position={Position.Top}
         id="input"
-        className="w-3 h-3 !bg-purple-500 border-2 border-white"
+        className="w-3 h-3 !bg-gray-400 border-2 border-white"
         style={{ 
-          left: '0px',
+          top: '0px',
         }}
         isConnectable={false}
       />
       
-      {/* Output handle (right side) - positioned at right center border */}
+      {/* Output handle (bottom side) - positioned at bottom center border */}
       <Handle
         type="source"
-        position={Position.Right}
+        position={Position.Bottom}
         id="output"
-        className="w-3 h-3 !bg-purple-500 border-2 border-white"
+        className="w-3 h-3 !bg-gray-400 border-2 border-white"
         style={{ 
-          right: '0px',
+          bottom: '0px',
         }}
         isConnectable={false}
       />
       
       <div className={`
-        px-4 py-3 rounded-lg border-2 shadow-md
+        px-4 py-3 rounded-lg border-2 shadow-md bg-white
         ${getNodeColor()}
         ${getStatusBorder()}
         hover:shadow-lg transition-all duration-200
@@ -162,24 +214,22 @@ function CustomNode({ data }: any) {
           )}
         </div>
         
-        {/* Description */}
-        {data.description && (
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-            {data.description}
-          </p>
-        )}
+        {/* Description - Always show */}
+        <p className="text-xs text-gray-600 mb-2">
+          {data.description || 'Workflow node'}
+        </p>
         
         {/* Status Badge (bottom, like reference) */}
         {nodeStatus && (
           <div className={`
-            inline-flex px-2 py-1 rounded text-xs border
+            inline-flex px-2 py-1 rounded text-xs border bg-white
             ${nodeStatus === 'completed' || nodeStatus === 'success' 
-              ? 'text-green-700 border-green-300 dark:text-green-400 dark:border-green-700' 
+              ? 'text-green-700 border-green-300' 
               : nodeStatus === 'running' 
-              ? 'text-blue-700 border-blue-300 dark:text-blue-400 dark:border-blue-700'
+              ? 'text-blue-700 border-blue-300'
               : nodeStatus === 'error'
-              ? 'text-red-700 border-red-300 dark:text-red-400 dark:border-red-700'
-              : 'text-gray-500 border-gray-300 dark:text-gray-400 dark:border-gray-600'
+              ? 'text-red-700 border-red-300'
+              : 'text-gray-500 border-gray-300'
             }
           `}>
             {nodeStatus}
@@ -196,6 +246,26 @@ interface WorkflowCanvasProps {
   latestExecution?: any;
   isPreview?: boolean;
   enableRealTimeUpdates?: boolean; // Enable WebSocket real-time node updates
+}
+
+// Helper function to get default description based on node type
+function getNodeDescription(nodeType: string): string {
+  const type = nodeType.toLowerCase();
+  
+  if (type.includes('webhook')) return 'Receive HTTP requests to trigger workflow';
+  if (type.includes('schedule')) return 'Trigger workflow on a schedule';
+  if (type.includes('manual')) return 'Manually trigger workflow';
+  if (type.includes('email') || type.includes('mail')) return 'Send email message';
+  if (type.includes('slack')) return 'Send Slack message';
+  if (type.includes('http')) return 'Make HTTP request';
+  if (type.includes('if')) return 'Conditional branching';
+  if (type.includes('switch')) return 'Route based on conditions';
+  if (type.includes('loop') || type.includes('batch')) return 'Loop through items';
+  if (type.includes('merge')) return 'Merge data from branches';
+  if (type.includes('set')) return 'Set field values';
+  if (type.includes('code')) return 'Run custom code';
+  
+  return 'Workflow node';
 }
 
 export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPreview = false, enableRealTimeUpdates = false }: WorkflowCanvasProps) {
@@ -419,8 +489,8 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
 
     const flowNodes: Node[] = workflow.nodes.map((node: any, index: number) => {
       const isFirst = index === 0;
-      const x = isFirst ? 250 : 250 + (index * 350);
-      const y = 250;
+      const x = 250; // Keep X constant for vertical layout
+      const y = isFirst ? 100 : 100 + (index * 200); // Increment Y for vertical layout
 
       return {
         id: node.id,
@@ -430,10 +500,10 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
           label: node.name,
           type: node.type,
           nodeType: node.type.split('.').pop(),
-          description: node.parameters?.text || node.parameters?.channelId || '',
+          description: node.parameters?.text || node.parameters?.message || node.parameters?.channelId || getNodeDescription(node.type),
           parameters: node.parameters,
           rawNode: node,
-          executionStatus: nodeStatusMap.get(node.name),
+          executionStatus: nodeStatusMap.get(node.name) || 'pending',
           isPreview: isPreview, // Pass preview mode to node
         },
       };
@@ -453,14 +523,14 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
           sourceHandle: 'output',
           targetHandle: 'input',
           type: 'smoothstep',
-          animated: true,
+          animated: i === 0, // Only animate first edge
           style: {
-            stroke: '#8b5cf6',
-            strokeWidth: 2,
+            stroke: '#94a3b8',
+            strokeWidth: 1.5,
           },
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: '#8b5cf6',
+            color: '#94a3b8',
           },
         });
       }
@@ -481,14 +551,14 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
                 sourceHandle: 'output',
                 targetHandle: 'input',
                 type: 'smoothstep',
-                animated: true,
+                animated: flowEdges.length === 0, // Only animate first edge
                 style: {
-                  stroke: '#8b5cf6',
-                  strokeWidth: 2,
+                  stroke: '#94a3b8',
+                  strokeWidth: 1.5,
                 },
                 markerEnd: {
                   type: MarkerType.ArrowClosed,
-                  color: '#8b5cf6',
+                  color: '#94a3b8',
                 },
               };
               flowEdges.push(edge);
@@ -625,8 +695,11 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
         minZoom={0.5}
         maxZoom={1.5}
         defaultEdgeOptions={{
-          animated: !isPreview,
-          style: { strokeWidth: 2 },
+          animated: false,
+          style: { 
+            strokeWidth: 1.5,
+            stroke: '#94a3b8'
+          },
         }}
         className="bg-transparent"
       >
@@ -635,44 +708,12 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
           const controlNode = nodes.find(n => n.id === group.id);
           if (!controlNode) return null;
           
-          // Calculate bounding box for the group
-          const groupNodes = nodes.filter(n => group.nodes.includes(n.id));
-          if (groupNodes.length === 0) return null;
-          
-          const minX = Math.min(...groupNodes.map(n => n.position.x));
-          const maxX = Math.max(...groupNodes.map(n => n.position.x + 220)); // 220 is node width
-          const minY = Math.min(...groupNodes.map(n => n.position.y));
-          const maxY = Math.max(...groupNodes.map(n => n.position.y + 100)); // approx node height
-          
-          const width = maxX - minX + 40;
-          const height = maxY - minY + 40;
-          const x = minX - 20;
-          const y = minY - 40; // Extra space for label
-          
-          // Color based on control flow type
-          const colors = {
-            loop: 'border-indigo-500/40 bg-indigo-500/5',
-            if: 'border-yellow-500/40 bg-yellow-500/5',
-            switch: 'border-cyan-500/40 bg-cyan-500/5',
-            merge: 'border-green-500/40 bg-green-500/5'
-          };
-          
           return (
-            <div
+            <ControlFlowContainer 
               key={group.id}
-              className={`absolute border-2 rounded-xl ${colors[group.type as keyof typeof colors]} pointer-events-none`}
-              style={{
-                left: x,
-                top: y,
-                width,
-                height,
-                zIndex: -1
-              }}
-            >
-              <div className="absolute -top-6 left-2 px-2 py-1 bg-background/90 border border-border rounded text-xs font-medium">
-                {group.condition || group.type.toUpperCase()}
-              </div>
-            </div>
+              group={group}
+              nodes={nodes}
+            />
           );
         })}
         <Background

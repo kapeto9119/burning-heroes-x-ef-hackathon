@@ -6,7 +6,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Background } from '@/components/layout/Background';
 import { getClientToken } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, Trash2, Clock, CheckCircle, XCircle, Loader2, Maximize2, Eye, RotateCcw, Webhook, Copy, Radio, BarChart3, List, Download, Timer, Zap } from 'lucide-react';
+import { Play, Pause, Trash2, Clock, CheckCircle, XCircle, Loader2, Maximize2, Eye, RotateCcw, Webhook, Copy, Radio, BarChart3, List, Download, Timer, Zap, Edit } from 'lucide-react';
 import { getWorkflows, activateWorkflow, getWorkflowExecutions, executeWorkflow } from '@/app/actions/workflows';
 import { useRouter } from 'next/navigation';
 import { WorkflowCanvas } from '@/components/workflow/WorkflowCanvas';
@@ -312,6 +312,18 @@ export default function WorkflowsPage() {
                           variant="outline"
                           onClick={(e) => {
                             e.stopPropagation();
+                            router.push(`/workflows/${workflow.workflowId || workflow.id}/edit`);
+                          }}
+                          className="border-primary text-primary hover:bg-primary/10"
+                        >
+                          <Edit className="w-4 h-4 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
                             router.push(`/workflows/${workflow.workflowId || workflow.id}/test`);
                           }}
                         >
@@ -469,6 +481,15 @@ export default function WorkflowsPage() {
                 })()}
               </div>
               <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => router.push(`/workflows/${previewWorkflow.id || previewWorkflow.workflowId}/edit`)}
+                  className="border-primary text-primary hover:bg-primary/10"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Workflow
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
