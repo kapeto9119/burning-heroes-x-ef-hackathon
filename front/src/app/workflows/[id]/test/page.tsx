@@ -502,48 +502,56 @@ export default function WorkflowTestPage() {
                       No test executions yet
                     </p>
                   ) : (
-                    executionHistory.map((exec) => (
-                      <button
-                        key={exec.id}
-                        onClick={() => setCurrentExecution(exec)}
-                        className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                          currentExecution?.id === exec.id
-                            ? 'bg-primary/10 border-primary'
-                            : 'bg-accent/20 border-border hover:bg-accent/40'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2">
-                            {exec.status === 'success' ? (
-                              <CheckCircle className="w-4 h-4 text-green-500" />
-                            ) : exec.status === 'error' ? (
-                              <XCircle className="w-4 h-4 text-red-500" />
-                            ) : (
-                              <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
-                            )}
-                            <span className="text-sm font-medium capitalize">
-                              {exec.status}
+                    executionHistory.map((exec) => {
+                      // Safety check: if finishedAt exists but status is 'running', 
+                      // treat it as completed (fix for stale status)
+                      const actualStatus = exec.finishedAt && exec.status === 'running' 
+                        ? (exec.error ? 'error' : 'success')
+                        : exec.status;
+
+                      return (
+                        <button
+                          key={exec.id}
+                          onClick={() => setCurrentExecution(exec)}
+                          className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                            currentExecution?.id === exec.id
+                              ? 'bg-primary/10 border-primary'
+                              : 'bg-accent/20 border-border hover:bg-accent/40'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              {actualStatus === 'success' ? (
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                              ) : actualStatus === 'error' ? (
+                                <XCircle className="w-4 h-4 text-red-500" />
+                              ) : (
+                                <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                              )}
+                              <span className="text-sm font-medium capitalize">
+                                {actualStatus}
+                              </span>
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(exec.startedAt).toLocaleTimeString()}
                             </span>
                           </div>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(exec.startedAt).toLocaleTimeString()}
-                          </span>
-                        </div>
-                        {exec.finishedAt && (
-                          <div className="text-xs text-muted-foreground">
-                            Duration: {Math.round(
-                              (new Date(exec.finishedAt).getTime() - 
-                               new Date(exec.startedAt).getTime())
-                            )}ms
-                          </div>
-                        )}
-                        {exec.error && (
-                          <div className="text-xs text-red-500 mt-1 truncate">
-                            {exec.error}
-                          </div>
-                        )}
-                      </button>
-                    ))
+                          {exec.finishedAt && (
+                            <div className="text-xs text-muted-foreground">
+                              Duration: {Math.round(
+                                (new Date(exec.finishedAt).getTime() - 
+                                 new Date(exec.startedAt).getTime())
+                              )}ms
+                            </div>
+                          )}
+                          {exec.error && (
+                            <div className="text-xs text-red-500 mt-1 truncate">
+                              {exec.error}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })
                   )}
                 </div>
               </motion.div>

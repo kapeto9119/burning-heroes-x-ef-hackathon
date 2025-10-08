@@ -193,9 +193,21 @@ export class N8nApiClient {
           });
         }
 
+        // Determine execution status
+        // Check both finished flag and stoppedAt to avoid stale "running" states
+        const hasFinished = execution.finished || execution.stoppedAt || execution.data?.finished;
+        const hasError = execution.data?.resultData?.error;
+        
+        let status: 'success' | 'error' | 'running';
+        if (hasFinished) {
+          status = hasError ? 'error' : 'success';
+        } else {
+          status = 'running';
+        }
+
         return {
           id: execution.id,
-          status: execution.finished ? (execution.data?.resultData?.error ? 'error' : 'success') : 'running',
+          status,
           startedAt: new Date(execution.startedAt),
           finishedAt: execution.stoppedAt ? new Date(execution.stoppedAt) : undefined,
           data: execution.data,

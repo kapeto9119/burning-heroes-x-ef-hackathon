@@ -172,17 +172,31 @@ export default function WorkflowEditorPage() {
         
         // Convert workflow nodes to ReactFlow format
         if (data.data.nodes && data.data.nodes.length > 0) {
-          const flowNodes: Node[] = data.data.nodes.map((node: any, index: number) => ({
-            id: node.id,
-            type: 'custom',
-            position: node.position || { x: 250, y: 100 + index * 200 },
-            data: {
-              label: node.name,
-              nodeType: node.type,
-              description: node.parameters?.text || node.parameters?.message || 'Workflow node',
-              ...node.parameters,
-            },
-          }));
+          const flowNodes: Node[] = data.data.nodes.map((node: any, index: number) => {
+            // Convert n8n position format [x, y] to ReactFlow {x, y}
+            let position = { x: 250, y: 100 + index * 200 };
+            if (node.position) {
+              if (Array.isArray(node.position)) {
+                // n8n format: [x, y]
+                position = { x: node.position[0], y: node.position[1] };
+              } else if (typeof node.position === 'object') {
+                // Already ReactFlow format
+                position = node.position;
+              }
+            }
+            
+            return {
+              id: node.id,
+              type: 'custom',
+              position,
+              data: {
+                label: node.name,
+                nodeType: node.type,
+                description: node.parameters?.text || node.parameters?.message || 'Workflow node',
+                ...node.parameters,
+              },
+            };
+          });
 
           setNodes(flowNodes);
 
@@ -490,147 +504,193 @@ export default function WorkflowEditorPage() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-background">
-      <Background />
+    <div className="min-h-screen relative overflow-hidden bg-background text-foreground">
+      <div className="fixed inset-0 w-full h-full">
+        <Background />
+      </div>
       
-      <div className="relative z-10 h-screen flex flex-col">
+      <div className="relative z-10">
         <Navbar />
 
-        {/* Editor Header */}
-        <div className="bg-background/80 backdrop-blur-xl border-b border-border px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="container mx-auto px-6 py-8 max-w-[1800px]">
+          {/* Editor Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
             <Button
               variant="ghost"
-              size="sm"
               onClick={() => router.push('/workflows')}
+              className="mb-4"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
+              Back to Workflows
             </Button>
-            <div>
-              <h1 className="text-lg font-semibold">{workflow?.name || 'Workflow Editor'}</h1>
-              <p className="text-xs text-muted-foreground">
-                {nodes.length} nodes • {edges.length} connections
-              </p>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">Edit Workflow</h1>
+                <p className="text-muted-foreground">{workflow?.name || 'Workflow Editor'}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {nodes.length} nodes • {edges.length} connections
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {selectedNode && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDeleteNode}
+                    className="border-red-500 text-red-500 hover:bg-red-500/10"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Node
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTest}
+                  disabled={nodes.length === 0}
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Test
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={isSaving || saveSuccess || nodes.length === 0}
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : saveSuccess ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Saved!
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="flex items-center gap-2">
-            {selectedNode && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDeleteNode}
-                className="border-red-500 text-red-500 hover:bg-red-500/10"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete Node
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleTest}
-              disabled={nodes.length === 0}
-            >
-              <Play className="w-4 h-4 mr-2" />
-              Test
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={isSaving || saveSuccess || nodes.length === 0}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : saveSuccess ? (
-                <>
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Saved!
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-
-        {/* Editor Content */}
-        <div className="flex-1 flex">
-          {/* Node Palette */}
-          <NodePalette
-            nodes={availableNodes}
-            isLoading={isLoadingNodes}
-            onSearch={searchNodes}
-          />
-
-          {/* Canvas */}
-          <div className="flex-1 relative">
-            <style jsx global>{`
-              .react-flow__node.snapping {
-                box-shadow: 0 0 20px 4px rgba(139, 92, 246, 0.6) !important;
-                transition: box-shadow 0.2s ease-in-out;
-              }
-            `}</style>
-            <ReactFlow
-              nodes={nodes.map(node => ({
-                ...node,
-                className: node.id === snappingNodeId ? 'snapping' : '',
-              }))}
-              edges={edges}
-              onNodesChange={handleNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onDrop={onDrop}
-              onDragOver={onDragOver}
-              onNodeClick={handleNodeClick}
-              nodeTypes={nodeTypes}
-              defaultEdgeOptions={{
-                animated: false,
-                type: 'smoothstep',
-                style: {
-                  strokeWidth: 1.5,
-                  stroke: '#94a3b8'
-                },
-                markerEnd: {
-                  type: MarkerType.ArrowClosed,
-                  color: '#94a3b8',
-                },
-              }}
-              fitView
-            >
-              <RFBackground variant={BackgroundVariant.Dots} gap={16} size={1} />
-              <Controls />
-              <MiniMap />
-            </ReactFlow>
-
-            {/* Empty State */}
-            {nodes.length === 0 && (
+          {/* Editor Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Node Palette - Left Column */}
+            <div className="lg:col-span-1">
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="backdrop-blur-xl bg-background/40 rounded-2xl border border-border overflow-hidden sticky top-6"
+                style={{ maxHeight: 'calc(100vh - 200px)' }}
               >
-                <div className="text-center space-y-2">
-                  <p className="text-lg font-semibold">Start Building</p>
+                <NodePalette
+                  nodes={availableNodes}
+                  isLoading={isLoadingNodes}
+                  onSearch={searchNodes}
+                />
+              </motion.div>
+            </div>
+
+            {/* Canvas - Right Column */}
+            <div className="lg:col-span-3">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="backdrop-blur-xl bg-background/40 rounded-2xl border border-border overflow-hidden"
+              >
+                <div className="p-4 border-b border-border">
+                  <h2 className="font-semibold">Workflow Canvas</h2>
                   <p className="text-sm text-muted-foreground">
-                    Drag nodes from the palette to add them to your workflow
+                    Drag nodes from the palette and connect them to build your workflow
                   </p>
                 </div>
+                <div className="h-[700px] relative">
+                  <style jsx global>{`
+                    .react-flow__node.snapping {
+                      box-shadow: 0 0 20px 4px rgba(139, 92, 246, 0.6) !important;
+                      transition: box-shadow 0.2s ease-in-out;
+                    }
+                  `}</style>
+                  <ReactFlow
+                    nodes={nodes.map(node => ({
+                      ...node,
+                      className: node.id === snappingNodeId ? 'snapping' : '',
+                    }))}
+                    edges={edges}
+                    onNodesChange={handleNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                    onDrop={onDrop}
+                    onDragOver={onDragOver}
+                    onNodeClick={handleNodeClick}
+                    nodeTypes={nodeTypes}
+                    nodesDraggable={true}
+                    nodesConnectable={true}
+                    elementsSelectable={true}
+                    defaultEdgeOptions={{
+                      animated: false,
+                      type: 'smoothstep',
+                      style: {
+                        strokeWidth: 1.5,
+                        stroke: '#94a3b8'
+                      },
+                      markerEnd: {
+                        type: MarkerType.ArrowClosed,
+                        color: '#94a3b8',
+                      },
+                    }}
+                    fitView
+                    fitViewOptions={{ padding: 0.2 }}
+                  >
+                    <RFBackground variant={BackgroundVariant.Dots} gap={16} size={1} />
+                    <Controls />
+                    <MiniMap />
+                  </ReactFlow>
+
+                  {/* Empty State */}
+                  {nodes.length === 0 && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    >
+                      <div className="text-center space-y-2">
+                        <p className="text-lg font-semibold">Start Building</p>
+                        <p className="text-sm text-muted-foreground">
+                          Drag nodes from the palette to add them to your workflow
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
               </motion.div>
-            )}
+            </div>
           </div>
 
           {/* Node Configuration Panel */}
           <AnimatePresence>
             {showConfigPanel && selectedNode && (
-              <NodeConfigPanel
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="fixed right-6 top-24 z-50 w-96"
+              >
+                <div className="backdrop-blur-xl bg-background/95 rounded-2xl border border-border shadow-2xl">
+                  <NodeConfigPanel
                 node={selectedNode}
                 nodeDefinition={availableNodes 
                   ? [
@@ -648,8 +708,10 @@ export default function WorkflowEditorPage() {
                   setShowConfigPanel(false);
                   setSelectedNode(null);
                 }}
-                onGetDetails={getNodeDetails}
-              />
+                    onGetDetails={getNodeDetails}
+                  />
+                </div>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   CreditCard,
   TrendingUp,
@@ -11,10 +12,14 @@ import {
   Calendar,
   DollarSign,
   Activity,
+  Loader2,
 } from "lucide-react";
 import { getClientToken } from "@/lib/auth";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { Navbar } from "@/components/layout/Navbar";
+import { Background } from "@/components/layout/Background";
+import { Button } from "@/components/ui/button";
 
 interface UsageData {
   plan_tier: string;
@@ -180,16 +185,25 @@ export default function BillingPage() {
   // Show auth modal if not authenticated
   if (!isAuthenticated && !authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-white mb-4">Authentication Required</h1>
-          <p className="text-gray-300 mb-6">Please log in to view your billing information</p>
-          <button
-            onClick={() => setShowAuthModal(true)}
-            className="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-lg font-semibold transition-all"
-          >
-            Log In
-          </button>
+      <div className="min-h-screen relative overflow-hidden bg-background text-foreground">
+        <div className="fixed inset-0 w-full h-full">
+          <Background />
+        </div>
+        <div className="relative z-10">
+          <Navbar />
+          <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center backdrop-blur-xl bg-background/40 rounded-2xl border border-border p-12"
+            >
+              <h1 className="text-3xl font-bold mb-4">Authentication Required</h1>
+              <p className="text-muted-foreground mb-6">Please log in to view your billing information</p>
+              <Button onClick={() => setShowAuthModal(true)}>
+                Log In
+              </Button>
+            </motion.div>
+          </div>
         </div>
         <AuthModal
           isOpen={showAuthModal}
@@ -204,262 +218,317 @@ export default function BillingPage() {
 
   if (loading || authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading billing data...</div>
+      <div className="min-h-screen relative overflow-hidden bg-background text-foreground">
+        <div className="fixed inset-0 w-full h-full">
+          <Background />
+        </div>
+        <div className="relative z-10">
+          <Navbar />
+          <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!usage) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
-        <div className="text-white text-xl">Failed to load billing data</div>
+      <div className="min-h-screen relative overflow-hidden bg-background text-foreground">
+        <div className="fixed inset-0 w-full h-full">
+          <Background />
+        </div>
+        <div className="relative z-10">
+          <Navbar />
+          <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center backdrop-blur-xl bg-background/40 rounded-2xl border border-border p-12"
+            >
+              <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
+              <p className="text-xl">Failed to load billing data</p>
+            </motion.div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 py-20 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2">
-              Billing & Usage
-            </h1>
-            <p className="text-gray-300">
-              Manage your subscription and track usage
-            </p>
-          </div>
-          {billingConfigured && (
-            <button
-              onClick={openBillingPortal}
-              disabled={openingPortal}
-              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-lg font-semibold transition-all"
-            >
-              <CreditCard className="w-5 h-5" />
-              {openingPortal ? "Opening..." : "Manage Billing"}
-              <ExternalLink className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+    <div className="min-h-screen relative overflow-hidden bg-background text-foreground">
+      <div className="fixed inset-0 w-full h-full">
+        <Background />
+      </div>
 
-        {/* Billing Not Configured Notice */}
-        {!billingConfigured && (
-          <div className="mb-8 bg-blue-500/20 border border-blue-500/50 rounded-lg p-6">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-6 h-6 text-blue-400 flex-shrink-0 mt-0.5" />
+      <div className="relative z-10">
+        <Navbar />
+
+        <div className="container mx-auto px-6 py-12 max-w-7xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8"
+          >
+            {/* Header */}
+            <div className="flex justify-between items-center">
               <div>
-                <h3 className="text-blue-200 font-semibold mb-2">Billing Not Configured</h3>
-                <p className="text-blue-300/80 text-sm">
-                  Payment processing is currently not configured on this instance. You're using the free tier with default limits.
-                  Contact your administrator to set up billing and unlock premium features.
+                <h1 className="text-4xl font-bold mb-2">
+                  Billing & Usage
+                </h1>
+                <p className="text-muted-foreground">
+                  Manage your subscription and track usage
                 </p>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Warnings */}
-        {usage.warnings && usage.warnings.length > 0 && (
-          <div className="mb-8 space-y-3">
-            {usage.warnings.map((warning, idx) => (
-              <div
-                key={idx}
-                className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-4 flex items-start gap-3"
-              >
-                <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-yellow-200">{warning}</p>
-                  {billingConfigured && (
-                    <button
-                      onClick={() => router.push("/pricing")}
-                      className="text-yellow-400 hover:text-yellow-300 text-sm font-semibold mt-2 underline"
-                    >
-                      Upgrade Now →
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Current Plan */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8 border border-white/20">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-2">
-                Current Plan
-              </h2>
-              <div className="flex items-center gap-3">
-                <span
-                  className={`${getPlanBadgeColor(
-                    usage.plan_tier
-                  )} text-white px-4 py-1 rounded-full text-sm font-bold uppercase`}
+              {billingConfigured && (
+                <Button
+                  onClick={openBillingPortal}
+                  disabled={openingPortal}
+                  variant="outline"
                 >
-                  {usage.plan_tier}
-                </span>
-                <span className="text-gray-400 text-sm">
-                  Resets{" "}
-                  {new Date(usage.current_period_end).toLocaleDateString()}
-                </span>
-              </div>
+                  <CreditCard className="w-5 h-5 mr-2" />
+                  {openingPortal ? "Opening..." : "Manage Billing"}
+                  <ExternalLink className="w-4 h-4 ml-2" />
+                </Button>
+              )}
             </div>
-            {billingConfigured && (
-              <button
-                onClick={() => router.push("/pricing")}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
+
+            {/* Billing Not Configured Notice */}
+            {!billingConfigured && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="backdrop-blur-xl bg-blue-500/10 border border-blue-500/30 rounded-2xl p-6"
               >
-                Upgrade Plan
-              </button>
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-6 h-6 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-semibold mb-2">Billing Not Configured</h3>
+                    <p className="text-muted-foreground text-sm">
+                      Payment processing is currently not configured on this instance. You're using the free tier with default limits.
+                      Contact your administrator to set up billing and unlock premium features.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
             )}
-          </div>
 
-          {/* Usage Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Executions */}
-            <div className="bg-white/5 rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-gray-400 text-sm">Executions</p>
-                  <p className="text-white text-2xl font-bold">
-                    {Number(usage.executions_used).toLocaleString()} /{" "}
-                    {Number(usage.executions_limit).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
-                <div
-                  className={`h-2 rounded-full transition-all ${getUsageColor(
-                    Number(usage.usage_percentage) || 0
-                  )}`}
-                  style={{ width: `${Math.min(Number(usage.usage_percentage) || 0, 100)}%` }}
-                />
-              </div>
-              <p className="text-gray-400 text-sm mt-2">
-                {(Number(usage.usage_percentage) || 0).toFixed(1)}% used
-              </p>
-            </div>
-
-            {/* Active Workflows */}
-            <div className="bg-white/5 rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-gray-400 text-sm">Active Workflows</p>
-                  <p className="text-white text-2xl font-bold">
-                    {Number(usage.active_workflows_count)} /{" "}
-                    {Number(usage.active_workflows_limit) === 999
-                      ? "∞"
-                      : Number(usage.active_workflows_limit)}
-                  </p>
-                </div>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
-                <div
-                  className="h-2 rounded-full bg-purple-500 transition-all"
-                  style={{
-                    width:
-                      Number(usage.active_workflows_limit) === 999
-                        ? "0%"
-                        : `${Math.min(
-                            (Number(usage.active_workflows_count) /
-                              Number(usage.active_workflows_limit)) *
-                              100,
-                            100
-                          )}%`,
-                  }}
-                />
-              </div>
-              <p className="text-gray-400 text-sm mt-2">
-                {Number(usage.active_workflows_limit) === 999
-                  ? "Unlimited"
-                  : `${Number(usage.active_workflows_count)} active`}
-              </p>
-            </div>
-
-            {/* AI Cost */}
-            <div className="bg-white/5 rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-green-400" />
-                </div>
-                <div>
-                  <p className="text-gray-400 text-sm">AI Cost This Period</p>
-                  <p className="text-white text-2xl font-bold">
-                    ${(Number(usage.total_ai_cost_this_period) || 0).toFixed(2)}
-                  </p>
-                </div>
-              </div>
-              <p className="text-gray-400 text-sm">Included in your plan</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Billing History */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-            <Calendar className="w-6 h-6" />
-            Billing History
-          </h2>
-
-          {history.length === 0 ? (
-            <div className="text-center py-12">
-              <TrendingUp className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400">No billing history yet</p>
-              <p className="text-gray-500 text-sm mt-2">
-                Your payment history will appear here
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {history.map((invoice) => (
-                <div
-                  key={invoice.id}
-                  className="bg-white/5 rounded-lg p-4 flex items-center justify-between hover:bg-white/10 transition-all"
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`w-2 h-2 rounded-full ${
-                        invoice.status === "paid"
-                          ? "bg-green-400"
-                          : "bg-yellow-400"
-                      }`}
-                    />
+            {/* Warnings */}
+            {usage.warnings && usage.warnings.length > 0 && (
+              <div className="space-y-3">
+                {usage.warnings.map((warning, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 + idx * 0.05 }}
+                    className="backdrop-blur-xl bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4 flex items-start gap-3"
+                  >
+                    <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-white font-semibold">
-                        ${Number(invoice.amount_usd).toFixed(2)} -{" "}
-                        {invoice.plan_tier.toUpperCase()}
-                      </p>
-                      <p className="text-gray-400 text-sm">
-                        {new Date(invoice.paid_at).toLocaleDateString()}
+                      <p>{warning}</p>
+                      {billingConfigured && (
+                        <Button
+                          variant="link"
+                          onClick={() => router.push("/pricing")}
+                          className="text-yellow-500 hover:text-yellow-600 p-0 h-auto mt-2"
+                        >
+                          Upgrade Now →
+                        </Button>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {/* Current Plan */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="backdrop-blur-xl bg-background/40 rounded-2xl p-8 border border-border"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">
+                    Current Plan
+                  </h2>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`${getPlanBadgeColor(
+                        usage.plan_tier
+                      )} text-white px-4 py-1 rounded-full text-sm font-bold uppercase`}
+                    >
+                      {usage.plan_tier}
+                    </span>
+                    <span className="text-muted-foreground text-sm">
+                      Resets{" "}
+                      {new Date(usage.current_period_end).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+                {billingConfigured && (
+                  <Button
+                    onClick={() => router.push("/pricing")}
+                  >
+                    Upgrade Plan
+                  </Button>
+                )}
+              </div>
+
+              {/* Usage Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Executions */}
+                <div className="bg-accent/30 rounded-xl p-6 border border-border">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                      <Zap className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-sm">Executions</p>
+                      <p className="text-2xl font-bold">
+                        {Number(usage.executions_used).toLocaleString()} /{" "}
+                        {Number(usage.executions_limit).toLocaleString()}
                       </p>
                     </div>
                   </div>
-                  {invoice.invoice_url && (
-                    <a
-                      href={invoice.invoice_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-purple-400 hover:text-purple-300 flex items-center gap-1 text-sm"
-                    >
-                      View Invoice
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  )}
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${getUsageColor(
+                        Number(usage.usage_percentage) || 0
+                      )}`}
+                      style={{ width: `${Math.min(Number(usage.usage_percentage) || 0, 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-muted-foreground text-sm mt-2">
+                    {(Number(usage.usage_percentage) || 0).toFixed(1)}% used
+                  </p>
                 </div>
-              ))}
-            </div>
-          )}
+
+                {/* Active Workflows */}
+                <div className="bg-accent/30 rounded-xl p-6 border border-border">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                      <Activity className="w-5 h-5 text-purple-500" />
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-sm">Active Workflows</p>
+                      <p className="text-2xl font-bold">
+                        {Number(usage.active_workflows_count)} /{" "}
+                        {Number(usage.active_workflows_limit) === 999
+                          ? "∞"
+                          : Number(usage.active_workflows_limit)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div
+                      className="h-2 rounded-full bg-purple-500 transition-all"
+                      style={{
+                        width:
+                          Number(usage.active_workflows_limit) === 999
+                            ? "0%"
+                            : `${Math.min(
+                                (Number(usage.active_workflows_count) /
+                                  Number(usage.active_workflows_limit)) *
+                                  100,
+                                100
+                              )}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-muted-foreground text-sm mt-2">
+                    {Number(usage.active_workflows_limit) === 999
+                      ? "Unlimited"
+                      : `${Number(usage.active_workflows_count)} active`}
+                  </p>
+                </div>
+
+                {/* AI Cost */}
+                <div className="bg-accent/30 rounded-xl p-6 border border-border">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                      <DollarSign className="w-5 h-5 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-sm">AI Cost This Period</p>
+                      <p className="text-2xl font-bold">
+                        ${(Number(usage.total_ai_cost_this_period) || 0).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground text-sm">Included in your plan</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Billing History */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="backdrop-blur-xl bg-background/40 rounded-2xl p-8 border border-border"
+            >
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <Calendar className="w-6 h-6" />
+                Billing History
+              </h2>
+
+              {history.length === 0 ? (
+                <div className="text-center py-12">
+                  <TrendingUp className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No billing history yet</p>
+                  <p className="text-muted-foreground text-sm mt-2">
+                    Your payment history will appear here
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {history.map((invoice) => (
+                    <div
+                      key={invoice.id}
+                      className="bg-accent/30 rounded-lg p-4 flex items-center justify-between hover:bg-accent/50 transition-all border border-border"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            invoice.status === "paid"
+                              ? "bg-green-500"
+                              : "bg-yellow-500"
+                          }`}
+                        />
+                        <div>
+                          <p className="font-semibold">
+                            ${Number(invoice.amount_usd).toFixed(2)} -{" "}
+                            {invoice.plan_tier.toUpperCase()}
+                          </p>
+                          <p className="text-muted-foreground text-sm">
+                            {new Date(invoice.paid_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      {invoice.invoice_url && (
+                        <a
+                          href={invoice.invoice_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:text-primary/80 flex items-center gap-1 text-sm"
+                        >
+                          View Invoice
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
         </div>
       </div>
-      
+
       {/* Auth Modal */}
       <AuthModal
         isOpen={showAuthModal}
