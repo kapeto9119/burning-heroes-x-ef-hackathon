@@ -87,7 +87,7 @@ export function NodePalette({ nodes, isLoading, onNodeSelect, onSearch }: NodePa
 
   if (isLoading) {
     return (
-      <div className="w-80 h-full bg-background border-r border-border flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center">
         <div className="text-center space-y-2">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
           <p className="text-sm text-muted-foreground">Loading nodes...</p>
@@ -99,7 +99,7 @@ export function NodePalette({ nodes, isLoading, onNodeSelect, onSearch }: NodePa
   const displayNodes = searchResults || nodes;
 
   return (
-    <div className="w-80 h-full bg-background border-r border-border flex flex-col">
+    <div className="w-full h-full flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-border">
         <h2 className="text-lg font-semibold mb-3">Node Palette</h2>

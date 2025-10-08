@@ -371,20 +371,18 @@ export default function WorkflowEditorPage() {
       const nodeDataStr = event.dataTransfer.getData('nodeData');
 
       if (!type || !nodeDataStr) {
+        console.log('Missing drag data');
+        return;
+      }
+
+      if (!reactFlowInstance) {
+        console.log('ReactFlow instance not ready');
         return;
       }
 
       const nodeData = JSON.parse(nodeDataStr);
       
-      // Get the ReactFlow wrapper element
-      const reactFlowWrapper = document.querySelector('.react-flow');
-      if (!reactFlowWrapper) return;
-      
-      const reactFlowBounds = reactFlowWrapper.getBoundingClientRect();
-      
       // Convert screen coordinates to flow coordinates
-      if (!reactFlowInstance) return;
-      
       const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
@@ -402,9 +400,10 @@ export default function WorkflowEditorPage() {
         },
       };
 
+      console.log('Adding node at position:', position);
       setNodes((nds) => nds.concat(newNode));
     },
-    [setNodes]
+    [reactFlowInstance, setNodes]
   );
 
   const handleSave = async () => {
@@ -567,12 +566,12 @@ export default function WorkflowEditorPage() {
       <div className="relative z-10">
         <Navbar />
 
-        <div className="container mx-auto px-6 py-8 max-w-[1800px] h-screen overflow-hidden flex flex-col">
+        <div className="container mx-auto px-6 py-6 max-w-[1800px] h-screen overflow-hidden flex flex-col">
           {/* Editor Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
+            className="mb-4 flex-shrink-0"
           >
             <Button
               variant="ghost"
@@ -585,9 +584,9 @@ export default function WorkflowEditorPage() {
 
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold mb-2">Edit Workflow</h1>
-                <p className="text-muted-foreground">{workflow?.name || 'Workflow Editor'}</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <h1 className="text-2xl font-bold mb-1">Edit Workflow</h1>
+                <p className="text-sm text-muted-foreground">{workflow?.name || 'Workflow Editor'}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {nodes.length} nodes • {edges.length} connections
                 </p>
               </div>
@@ -640,7 +639,7 @@ export default function WorkflowEditorPage() {
           </motion.div>
 
           {/* Editor Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1 overflow-hidden min-h-0">
             {/* Node Palette - Left Column */}
             <div className="lg:col-span-1 overflow-hidden">
               <motion.div
@@ -658,17 +657,17 @@ export default function WorkflowEditorPage() {
             </div>
 
             {/* Canvas - Right Column */}
-            <div className="lg:col-span-3 overflow-hidden">
+            <div className="lg:col-span-3 overflow-hidden relative">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
                 className="backdrop-blur-xl bg-background/40 rounded-2xl border border-border overflow-hidden h-full flex flex-col"
               >
-                <div className="p-4 border-b border-border flex-shrink-0">
-                  <h2 className="font-semibold">Workflow Canvas</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Drag nodes from the palette and connect them to build your workflow
+                <div className="p-3 border-b border-border flex-shrink-0">
+                  <h2 className="font-semibold text-sm">Workflow Canvas</h2>
+                  <p className="text-xs text-muted-foreground">
+                    Drag nodes • Click edges to select • Drag from handles to reconnect
                   </p>
                 </div>
                 <div className="flex-1 relative">
@@ -711,6 +710,7 @@ export default function WorkflowEditorPage() {
                     nodesDraggable={true}
                     nodesConnectable={true}
                     elementsSelectable={true}
+                    reconnectRadius={20}
                     defaultEdgeOptions={{
                       animated: false,
                       type: 'smoothstep',
@@ -751,16 +751,16 @@ export default function WorkflowEditorPage() {
             </div>
           </div>
 
-          {/* Node Configuration Panel */}
+          {/* Node Configuration Panel - Inside Canvas */}
           <AnimatePresence>
             {showConfigPanel && selectedNode && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                className="fixed right-6 top-24 z-50 w-96"
-              >
-                <div className="backdrop-blur-xl bg-background/95 rounded-2xl border border-border shadow-2xl">
+              <div className="absolute right-4 top-4 bottom-4 w-80 z-50 pointer-events-none">
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className="backdrop-blur-xl bg-background/95 rounded-2xl border border-border shadow-2xl h-full overflow-auto pointer-events-auto"
+                >
                   <NodeConfigPanel
                 node={selectedNode}
                 nodeDefinition={availableNodes 
@@ -781,8 +781,8 @@ export default function WorkflowEditorPage() {
                 }}
                     onGetDetails={getNodeDetails}
                   />
-                </div>
-              </motion.div>
+                </motion.div>
+              </div>
             )}
           </AnimatePresence>
         </div>
