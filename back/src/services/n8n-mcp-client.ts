@@ -335,6 +335,7 @@ export class N8nMCPClient {
 
   /**
    * Get mock node details (fallback)
+   * Enhanced with user-friendly descriptions and better field definitions
    */
   private getMockNodeDetails(nodeType: string): MCPNodeDetails | null {
     const mockDetails: Record<string, MCPNodeDetails> = {
@@ -342,10 +343,36 @@ export class N8nMCPClient {
         name: 'Slack',
         type: 'n8n-nodes-base.slack',
         properties: {
-          resource: { type: 'string', options: ['message', 'channel', 'user'] },
-          operation: { type: 'string', options: ['post', 'update', 'delete'] },
-          channel: { type: 'string', required: true },
-          text: { type: 'string', required: true }
+          resource: { 
+            type: 'select', 
+            options: ['message', 'channel', 'user'],
+            description: 'What do you want to work with?',
+            required: true
+          },
+          operation: { 
+            type: 'select', 
+            options: ['post', 'update', 'delete'],
+            description: 'What action do you want to perform?',
+            required: true
+          },
+          select: {
+            type: 'select',
+            options: ['channel', 'user'],
+            description: 'Send to a channel or user?',
+            required: true
+          },
+          channelId: { 
+            type: 'string', 
+            required: true,
+            description: 'The channel to send to (e.g., #general)',
+            placeholder: '#general'
+          },
+          text: { 
+            type: 'text', 
+            required: true,
+            description: 'The message you want to send',
+            placeholder: 'Your message here...'
+          }
         },
         operations: ['postMessage', 'updateMessage', 'deleteMessage'],
         credentials: ['slackApi']
@@ -354,9 +381,24 @@ export class N8nMCPClient {
         name: 'Webhook',
         type: 'n8n-nodes-base.webhook',
         properties: {
-          httpMethod: { type: 'string', options: ['GET', 'POST', 'PUT', 'DELETE'] },
-          path: { type: 'string', required: true },
-          responseMode: { type: 'string', options: ['onReceived', 'lastNode'] }
+          httpMethod: { 
+            type: 'select', 
+            options: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+            description: 'Which HTTP method to accept',
+            required: true
+          },
+          path: { 
+            type: 'string', 
+            required: true,
+            description: 'The URL path for this webhook',
+            placeholder: 'my-webhook'
+          },
+          responseMode: { 
+            type: 'select', 
+            options: ['onReceived', 'lastNode'],
+            description: 'When to respond to the webhook',
+            required: true
+          }
         },
         operations: ['receive'],
         credentials: []
@@ -365,24 +407,130 @@ export class N8nMCPClient {
         name: 'Gmail',
         type: 'n8n-nodes-base.gmail',
         properties: {
-          resource: { type: 'string', options: ['message', 'draft', 'label'] },
-          operation: { type: 'string', options: ['send', 'get', 'getAll'] },
-          to: { type: 'string', required: true },
-          subject: { type: 'string', required: true },
-          message: { type: 'string', required: true }
+          resource: { 
+            type: 'select', 
+            options: ['message', 'draft', 'label'],
+            description: 'What do you want to work with?',
+            required: true
+          },
+          operation: { 
+            type: 'select', 
+            options: ['send', 'get', 'getAll'],
+            description: 'What action do you want to perform?',
+            required: true
+          },
+          to: { 
+            type: 'string', 
+            required: true,
+            description: 'Recipient email address',
+            placeholder: 'recipient@example.com'
+          },
+          subject: { 
+            type: 'string', 
+            required: true,
+            description: 'Email subject line',
+            placeholder: 'Your subject'
+          },
+          message: { 
+            type: 'text', 
+            required: true,
+            description: 'Email body content',
+            placeholder: 'Your message...'
+          }
         },
         operations: ['sendMessage', 'getMessage'],
         credentials: ['gmailOAuth2']
+      },
+      'n8n-nodes-base.emailSend': {
+        name: 'Send Email',
+        type: 'n8n-nodes-base.emailSend',
+        properties: {
+          fromEmail: {
+            type: 'string',
+            required: true,
+            description: 'Sender email address',
+            placeholder: 'sender@example.com'
+          },
+          toEmail: {
+            type: 'string',
+            required: true,
+            description: 'Recipient email address',
+            placeholder: 'recipient@example.com'
+          },
+          subject: {
+            type: 'string',
+            required: true,
+            description: 'Email subject',
+            placeholder: 'Your subject'
+          },
+          text: {
+            type: 'text',
+            required: true,
+            description: 'Email message',
+            placeholder: 'Your message...'
+          }
+        },
+        operations: ['send'],
+        credentials: ['smtp']
+      },
+      'n8n-nodes-base.httpRequest': {
+        name: 'HTTP Request',
+        type: 'n8n-nodes-base.httpRequest',
+        properties: {
+          method: {
+            type: 'select',
+            options: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+            description: 'HTTP method to use',
+            required: true
+          },
+          url: {
+            type: 'string',
+            required: true,
+            description: 'The URL to make the request to',
+            placeholder: 'https://api.example.com/endpoint'
+          },
+          authentication: {
+            type: 'select',
+            options: ['none', 'basicAuth', 'headerAuth', 'oAuth2'],
+            description: 'Authentication method',
+            required: true
+          }
+        },
+        operations: ['request'],
+        credentials: []
       },
       'n8n-nodes-base.postgres': {
         name: 'Postgres',
         type: 'n8n-nodes-base.postgres',
         properties: {
-          operation: { type: 'string', options: ['executeQuery', 'insert', 'update', 'delete'] },
-          query: { type: 'string', required: true }
+          operation: { 
+            type: 'select', 
+            options: ['executeQuery', 'insert', 'update', 'delete'],
+            description: 'What database operation to perform',
+            required: true
+          },
+          query: { 
+            type: 'text', 
+            required: true,
+            description: 'SQL query to execute',
+            placeholder: 'SELECT * FROM table LIMIT 10'
+          }
         },
         operations: ['executeQuery', 'insert', 'update'],
         credentials: ['postgres']
+      },
+      'n8n-nodes-base.if': {
+        name: 'IF',
+        type: 'n8n-nodes-base.if',
+        properties: {
+          conditions: {
+            type: 'object',
+            description: 'Conditions to evaluate',
+            required: true
+          }
+        },
+        operations: ['condition'],
+        credentials: []
       }
     };
 

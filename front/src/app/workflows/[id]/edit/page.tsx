@@ -158,6 +158,54 @@ export default function WorkflowEditorPage() {
     custom: CustomEditorNode,
   }), []);
 
+  // Helper: Get default parameters for a node type
+  const getDefaultParameters = (nodeType: string): any => {
+    const defaults: Record<string, any> = {
+      'n8n-nodes-base.slack': {
+        resource: 'message',
+        operation: 'post',
+        select: 'channel',
+        channelId: '#general',
+        text: 'Hello from workflow!'
+      },
+      'n8n-nodes-base.gmail': {
+        resource: 'message',
+        operation: 'send',
+        to: '',
+        subject: 'Message from workflow',
+        message: ''
+      },
+      'n8n-nodes-base.emailSend': {
+        fromEmail: 'noreply@example.com',
+        toEmail: '',
+        subject: 'Notification',
+        text: ''
+      },
+      'n8n-nodes-base.webhook': {
+        httpMethod: 'POST',
+        path: `webhook-${Date.now()}`,
+        responseMode: 'onReceived'
+      },
+      'n8n-nodes-base.httpRequest': {
+        method: 'GET',
+        url: '',
+        authentication: 'none'
+      },
+      'n8n-nodes-base.postgres': {
+        operation: 'executeQuery',
+        query: 'SELECT * FROM table LIMIT 10'
+      },
+      'n8n-nodes-base.if': {
+        conditions: {
+          boolean: [],
+          number: [],
+          string: []
+        }
+      }
+    };
+    return defaults[nodeType] || {};
+  };
+
   // Track edge update lifecycle for reconnection by drag
   const edgeUpdateSuccessful = useRef(true);
 
@@ -234,7 +282,7 @@ export default function WorkflowEditorPage() {
                 label: node.name,
                 nodeType: node.type,
                 description: node.parameters?.text || node.parameters?.message || 'Workflow node',
-                ...node.parameters,
+                parameters: node.parameters || {},
               },
             };
           });
@@ -535,6 +583,7 @@ export default function WorkflowEditorPage() {
           nodeType: nodeData.type,
           icon: nodeData.icon,
           description: nodeData.description || 'Workflow node',
+          parameters: getDefaultParameters(nodeData.type),
         },
       };
       setNodes((nds) => nds.concat(tempNode));
@@ -573,6 +622,7 @@ export default function WorkflowEditorPage() {
           nodeType: nodeData.type,
           icon: nodeData.icon,
           description: nodeData.description || 'Workflow node',
+          parameters: getDefaultParameters(nodeData.type),
         },
       };
       setHasUnsavedChanges(true);
@@ -678,7 +728,7 @@ export default function WorkflowEditorPage() {
         name: node.data.label,
         type: node.data.nodeType || 'n8n-nodes-base.set',
         position: [node.position.x, node.position.y],
-        parameters: {},
+        parameters: node.data.parameters || {},
       }));
 
       // Convert edges to connections
@@ -747,6 +797,7 @@ export default function WorkflowEditorPage() {
   };
 
   const handleNodeConfigSave = (nodeId: string, parameters: any) => {
+    setHasUnsavedChanges(true);
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === nodeId) {
@@ -867,7 +918,7 @@ export default function WorkflowEditorPage() {
       <div className="relative z-10">
         <Navbar />
 
-        <div className="container mx-auto px-6 py-6 max-w-[1800px] h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
+        <div className="container mx-auto px-6 py-6 max-w-[1800px] h-[calc(100vh-4rem)] overflow-hidden flex flex-col">
           {/* Editor Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
