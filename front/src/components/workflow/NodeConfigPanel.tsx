@@ -56,18 +56,64 @@ export function NodeConfigPanel({
     }, 500);
   };
 
+  // Helper: Get user-friendly field label
+  const getFieldLabel = (fieldName: string): string => {
+    const labels: Record<string, string> = {
+      'channelId': 'Channel',
+      'toEmail': 'To Email',
+      'fromEmail': 'From Email',
+      'httpMethod': 'Method',
+      'responseMode': 'Response Mode',
+      'resource': 'What to do',
+      'operation': 'Action',
+    };
+    return labels[fieldName] || fieldName.charAt(0).toUpperCase() + fieldName.slice(1).replace(/([A-Z])/g, ' $1');
+  };
+
+  // Helper: Get user-friendly placeholder
+  const getFieldPlaceholder = (fieldName: string, fieldConfig: any): string => {
+    if (fieldConfig.placeholder) return fieldConfig.placeholder;
+    
+    const placeholders: Record<string, string> = {
+      'channelId': 'e.g., #general or #alerts',
+      'text': 'Your message here...',
+      'message': 'Your message here...',
+      'to': 'recipient@example.com',
+      'toEmail': 'recipient@example.com',
+      'fromEmail': 'sender@example.com',
+      'subject': 'Email subject',
+      'url': 'https://api.example.com/endpoint',
+      'path': 'webhook-path',
+      'query': 'SELECT * FROM table',
+    };
+    return placeholders[fieldName] || `Enter ${getFieldLabel(fieldName).toLowerCase()}`;
+  };
+
   const renderField = (fieldName: string, fieldConfig: any) => {
     const value = parameters[fieldName] || '';
+    const placeholder = getFieldPlaceholder(fieldName, fieldConfig);
 
     switch (fieldConfig.type) {
       case 'string':
       case 'text':
+        // Use textarea for longer text fields
+        if (fieldName === 'text' || fieldName === 'message' || fieldName === 'query') {
+          return (
+            <textarea
+              value={value}
+              onChange={(e) => setParameters({ ...parameters, [fieldName]: e.target.value })}
+              placeholder={placeholder}
+              rows={4}
+              className="w-full px-3 py-2 bg-accent border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            />
+          );
+        }
         return (
           <input
             type="text"
             value={value}
             onChange={(e) => setParameters({ ...parameters, [fieldName]: e.target.value })}
-            placeholder={fieldConfig.placeholder || ''}
+            placeholder={placeholder}
             className="w-full px-3 py-2 bg-accent border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         );
@@ -78,7 +124,7 @@ export function NodeConfigPanel({
             type="password"
             value={value}
             onChange={(e) => setParameters({ ...parameters, [fieldName]: e.target.value })}
-            placeholder={fieldConfig.placeholder || ''}
+            placeholder={placeholder}
             className="w-full px-3 py-2 bg-accent border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         );
@@ -88,8 +134,8 @@ export function NodeConfigPanel({
           <input
             type="number"
             value={value}
-            onChange={(e) => setParameters({ ...parameters, [fieldName]: parseInt(e.target.value) })}
-            placeholder={fieldConfig.placeholder || ''}
+            onChange={(e) => setParameters({ ...parameters, [fieldName]: parseInt(e.target.value) || 0 })}
+            placeholder={placeholder}
             className="w-full px-3 py-2 bg-accent border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         );
@@ -101,7 +147,7 @@ export function NodeConfigPanel({
             onChange={(e) => setParameters({ ...parameters, [fieldName]: e.target.value })}
             className="w-full px-3 py-2 bg-accent border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
-            <option value="">Select...</option>
+            <option value="">Choose an option...</option>
             {(fieldConfig.options || []).map((option: string) => (
               <option key={option} value={option}>
                 {option}
@@ -115,7 +161,7 @@ export function NodeConfigPanel({
           <textarea
             value={value}
             onChange={(e) => setParameters({ ...parameters, [fieldName]: e.target.value })}
-            placeholder={fieldConfig.placeholder || ''}
+            placeholder={placeholder}
             rows={4}
             className="w-full px-3 py-2 bg-accent border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
@@ -130,7 +176,7 @@ export function NodeConfigPanel({
               onChange={(e) => setParameters({ ...parameters, [fieldName]: e.target.checked })}
               className="w-4 h-4 rounded border-border"
             />
-            <span className="text-sm">Enable</span>
+            <span className="text-sm">Enable this option</span>
           </label>
         );
 
@@ -140,6 +186,7 @@ export function NodeConfigPanel({
             type="text"
             value={value}
             onChange={(e) => setParameters({ ...parameters, [fieldName]: e.target.value })}
+            placeholder={placeholder}
             className="w-full px-3 py-2 bg-accent border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         );
@@ -199,7 +246,7 @@ export function NodeConfigPanel({
             {Object.entries(nodeDetails.properties).map(([fieldName, fieldConfig]: [string, any]) => (
               <div key={fieldName}>
                 <label className="block text-sm font-medium mb-2">
-                  {fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}
+                  {getFieldLabel(fieldName)}
                   {fieldConfig.required && <span className="text-red-500 ml-1">*</span>}
                 </label>
                 {renderField(fieldName, fieldConfig)}
@@ -227,29 +274,62 @@ export function NodeConfigPanel({
           </>
         ) : (
           <div className="space-y-4">
-            <div className="p-3 bg-accent/30 rounded-lg border border-border">
-              <p className="text-xs text-muted-foreground">
-                Node configuration schema not available. You can still set custom parameters below.
-              </p>
-            </div>
+            {nodeDefinition && (
+              <div className="p-3 bg-accent/30 rounded-lg border border-border">
+                <div className="flex items-start gap-2">
+                  <Info className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-muted-foreground">{nodeDefinition.description}</p>
+                </div>
+              </div>
+            )}
 
-            {/* Basic configuration */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Node Name</label>
-              <input
-                type="text"
-                value={node.data.label}
-                readOnly
-                className="w-full px-3 py-2 bg-accent/50 border border-border rounded-lg text-sm"
-              />
-            </div>
+            {/* Show existing parameters from defaults */}
+            {Object.keys(parameters).length > 0 && (
+              <>
+                <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                    💡 Configure your node settings below
+                  </p>
+                </div>
 
+                {Object.entries(parameters).map(([key, value]) => {
+                  if (key === 'description') return null; // Skip description field
+                  
+                  return (
+                    <div key={key}>
+                      <label className="block text-sm font-medium mb-2">
+                        {getFieldLabel(key)}
+                      </label>
+                      {key === 'text' || key === 'message' || key === 'query' ? (
+                        <textarea
+                          value={value as string || ''}
+                          onChange={(e) => setParameters({ ...parameters, [key]: e.target.value })}
+                          placeholder={getFieldPlaceholder(key, {})}
+                          rows={4}
+                          className="w-full px-3 py-2 bg-accent border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={value as string || ''}
+                          onChange={(e) => setParameters({ ...parameters, [key]: e.target.value })}
+                          placeholder={getFieldPlaceholder(key, {})}
+                          className="w-full px-3 py-2 bg-accent border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </>
+            )}
+
+            {/* Description field */}
             <div>
-              <label className="block text-sm font-medium mb-2">Description</label>
+              <label className="block text-sm font-medium mb-2">Notes (Optional)</label>
               <textarea
                 value={parameters.description || ''}
                 onChange={(e) => setParameters({ ...parameters, description: e.target.value })}
-                placeholder="Add a description..."
+                placeholder="Add notes about this node..."
                 rows={3}
                 className="w-full px-3 py-2 bg-accent border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               />
