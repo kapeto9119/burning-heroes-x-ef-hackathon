@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { getClientToken } from "@/lib/auth";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthModal } from "@/components/auth/AuthModal";
-import { Sparkles, Copy, Trash2, Play, Clock, Edit2, Maximize2, Eye, RotateCcw, Webhook, Radio, BarChart3, List, Download, Timer, Zap, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Sparkles, Copy, Trash2, Play, Clock, Edit2, Maximize2, Eye, RotateCcw, Webhook, Radio, BarChart3, List, Download, Timer, Zap, CheckCircle, XCircle, Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -15,13 +15,14 @@ import { Background } from "@/components/layout/Background";
 import { useWorkflow } from "@/contexts/WorkflowContext";
 import { ScheduleDialog } from "@/components/ScheduleDialog";
 import { NewWorkflowDialog } from "@/components/NewWorkflowDialog";
-import { getWorkflows, getWorkflowExecutions, executeWorkflow } from '@/app/actions/workflows';
+import { getWorkflows, getWorkflowExecutions, executeWorkflow, deployWorkflow } from '@/app/actions/workflows';
 import { WorkflowCanvas } from '@/components/workflow/WorkflowCanvas';
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
 import { NodeDataInspector } from '@/components/execution/NodeDataInspector';
 import { getTimeUntilNextRun, cronToHuman } from '@/lib/schedule-utils';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { WorkflowModals } from '@/components/platform/WorkflowModals';
+import { DeploySuccessModal } from '@/components/platform/DeploySuccessModal';
 
 export default function PlatformPage() {
   const router = useRouter();
@@ -40,6 +41,10 @@ export default function PlatformPage() {
   const [executionFilter, setExecutionFilter] = useState<'all' | 'success' | 'error'>('all');
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [showExecutionsModal, setShowExecutionsModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [editingWorkflow, setEditingWorkflow] = useState<any>(null);
+  const [testingWorkflow, setTestingWorkflow] = useState<any>(null);
   
   // Legacy platform context (for sidebar)
   const {
@@ -56,11 +61,17 @@ export default function PlatformPage() {
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingName, setEditingName] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
+  const [hasNameChanged, setHasNameChanged] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [schedulingWorkflowId, setSchedulingWorkflowId] = useState<
     string | null
   >(null);
   const [showNewWorkflowDialog, setShowNewWorkflowDialog] = useState(false);
+  const [deployingWorkflowId, setDeployingWorkflowId] = useState<string | null>(null);
+  const [showDeploySuccessModal, setShowDeploySuccessModal] = useState(false);
+  const [deployedWorkflowName, setDeployedWorkflowName] = useState('');
+  const [deploymentResult, setDeploymentResult] = useState<any>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   
   // WebSocket for real-time updates
@@ -175,19 +186,116 @@ export default function PlatformPage() {
     if (workflow) {
       setEditingName(workflow.name);
       setIsEditingTitle(true);
+      setHasNameChanged(false);
     }
   };
 
-  const saveTitle = () => {
-    if (editingName.trim() && selectedWorkflowId) {
-      updateWorkflow(selectedWorkflowId, { name: editingName.trim() });
+  const saveTitle = async () => {
+    if (!editingName.trim() || !selectedWorkflowId) {
+      setIsEditingTitle(false);
+      return;
     }
-    setIsEditingTitle(false);
+
+    setIsSavingName(true);
+    try {
+      const token = getClientToken();
+      const workflow = workflows.find((w) => w.id === selectedWorkflowId);
+      const workflowId = (workflow as any)?.workflowId || workflow?.id;
+
+      if (!workflowId) {
+        throw new Error('Workflow ID not found');
+      }
+
+      // Update via API
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/workflows/${workflowId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: editingName.trim(),
+          }),
+        }
+      );
+
+      const result = await response.json();
+      if (result.success) {
+        // Update local state
+        updateWorkflow(selectedWorkflowId, { name: editingName.trim() });
+        // Reload deployed workflows to sync
+        await loadDeployedWorkflows();
+      } else {
+        alert('Failed to save workflow name: ' + result.error);
+      }
+    } catch (error: any) {
+      alert('Error saving workflow name: ' + error.message);
+    } finally {
+      setIsSavingName(false);
+      setIsEditingTitle(false);
+    }
   };
 
   const cancelEditTitle = () => {
     setIsEditingTitle(false);
     setEditingName("");
+    setHasNameChanged(false);
+  };
+
+  // Deploy workflow handler
+  const handleDeployWorkflow = async (workflowId: string) => {
+    try {
+      setDeployingWorkflowId(workflowId);
+      const token = getClientToken();
+      
+      if (!token) {
+        setShowAuthModal(true);
+        return;
+      }
+
+      // Get the workflow data from API to ensure we have full n8n structure
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/workflows/${workflowId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const workflowResult = await response.json();
+      if (!workflowResult.success) {
+        alert('Failed to load workflow: ' + workflowResult.error);
+        return;
+      }
+
+      const workflow = workflowResult.data;
+      console.log('[Platform] Deploying workflow:', workflow.name);
+      
+      // Deploy to n8n
+      const result = await deployWorkflow(workflow, token);
+      
+      if (result.success) {
+        console.log('[Platform] Deployment successful:', result.data);
+        
+        // Show success modal
+        setDeployedWorkflowName(workflow.name);
+        setDeploymentResult(result.data);
+        setShowDeploySuccessModal(true);
+        
+        // Reload deployed workflows
+        await loadDeployedWorkflows();
+      } else {
+        alert('❌ Deployment failed: ' + result.error);
+      }
+    } catch (error: any) {
+      console.error('[Platform] Deployment error:', error);
+      alert('❌ Error deploying workflow: ' + error.message);
+    } finally {
+      setDeployingWorkflowId(null);
+    }
   };
 
   // Focus input when editing starts
@@ -325,7 +433,7 @@ export default function PlatformPage() {
           transition={{ duration: 0.4 }}
         >
           <div className="container mx-auto h-[90%] max-w-[1600px]">
-            <div className="grid grid-cols-[280px_1fr] gap-6 h-full">
+            <div className="grid grid-cols-[360px_1fr] gap-6 h-full">
               {/* Left Sidebar - Workflow List */}
               <div className="flex flex-col h-full backdrop-blur-xl bg-background/40 rounded-2xl border border-border shadow-2xl overflow-hidden">
                 <div className="p-4 border-b border-border">
@@ -396,6 +504,23 @@ export default function PlatformPage() {
                           </div>
                         </button>
                         <div className="flex items-center gap-1 pr-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeployWorkflow(workflow.id);
+                            }}
+                            disabled={deployingWorkflowId === workflow.id}
+                            className="h-7 w-7 p-0 hover:bg-green-500/20 hover:text-green-500"
+                            title="Deploy to n8n"
+                          >
+                            {deployingWorkflowId === workflow.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Zap className="w-3 h-3" />
+                            )}
+                          </Button>
                           <Button
                             size="sm"
                             variant="ghost"
@@ -480,18 +605,36 @@ export default function PlatformPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 group">
                             {isEditingTitle ? (
-                              <input
-                                ref={titleInputRef}
-                                type="text"
-                                value={editingName}
-                                onChange={(e) => setEditingName(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") saveTitle();
-                                  if (e.key === "Escape") cancelEditTitle();
-                                }}
-                                onBlur={saveTitle}
-                                className="text-lg font-semibold bg-transparent border-none focus:outline-none focus:ring-0 p-0 w-full"
-                              />
+                              <div className="flex items-center gap-2 flex-1">
+                                <input
+                                  ref={titleInputRef}
+                                  type="text"
+                                  value={editingName}
+                                  onChange={(e) => {
+                                    setEditingName(e.target.value);
+                                    const workflow = workflows.find((w) => w.id === selectedWorkflowId);
+                                    setHasNameChanged(e.target.value !== workflow?.name);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" && hasNameChanged) saveTitle();
+                                    if (e.key === "Escape") cancelEditTitle();
+                                  }}
+                                  disabled={isSavingName}
+                                  className="text-lg font-semibold bg-transparent border-none focus:outline-none focus:ring-0 p-0 flex-1"
+                                />
+                                {isSavingName ? (
+                                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                                ) : hasNameChanged ? (
+                                  <Button
+                                    size="sm"
+                                    onClick={saveTitle}
+                                    className="h-7 px-3"
+                                  >
+                                    <Save className="w-3 h-3 mr-1" />
+                                    Save
+                                  </Button>
+                                ) : null}
+                              </div>
                             ) : (
                               <>
                                 <h2 className="text-lg font-semibold">
@@ -524,11 +667,14 @@ export default function PlatformPage() {
                               const wf = deployedWorkflows.find(w => 
                                 w.id === selectedWorkflowId || w.workflowId === selectedWorkflowId
                               );
-                              if (wf) handleViewExecutions(wf);
+                              if (wf) {
+                                setEditingWorkflow(wf);
+                                setShowEditModal(true);
+                              }
                             }}
                           >
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Logs
+                            <Edit2 className="w-4 h-4 mr-2" />
+                            Edit
                           </Button>
                           <Button
                             size="sm"
@@ -538,13 +684,41 @@ export default function PlatformPage() {
                                 w.id === selectedWorkflowId || w.workflowId === selectedWorkflowId
                               );
                               if (wf) {
-                                router.push(`/workflows/${wf.workflowId || wf.id}/test`);
+                                setTestingWorkflow(wf);
+                                setShowTestModal(true);
                               }
                             }}
                             className="bg-gradient-to-r from-purple-600/10 to-pink-600/10 hover:from-purple-600/20 hover:to-pink-600/20 border-purple-500/30"
                           >
                             <Zap className="w-4 h-4 mr-2" />
                             Test
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeployWorkflow(selectedWorkflowId)}
+                            disabled={deployingWorkflowId === selectedWorkflowId}
+                            className="bg-gradient-to-r from-green-600/10 to-emerald-600/10 hover:from-green-600/20 hover:to-emerald-600/20 border-green-500/30"
+                          >
+                            {deployingWorkflowId === selectedWorkflowId ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <Zap className="w-4 h-4 mr-2" />
+                            )}
+                            Deploy
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const wf = deployedWorkflows.find(w => 
+                                w.id === selectedWorkflowId || w.workflowId === selectedWorkflowId
+                              );
+                              if (wf) handleViewExecutions(wf);
+                            }}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Logs
                           </Button>
                           <Button
                             size="sm"
@@ -559,6 +733,7 @@ export default function PlatformPage() {
                             <Play className="w-4 h-4 mr-2" />
                             Run
                           </Button>
+                          {/* Preview Modal - Not needed anymore since Edit/Test modals are full-size
                           <Button
                             size="sm"
                             variant="outline"
@@ -571,6 +746,7 @@ export default function PlatformPage() {
                           >
                             <Maximize2 className="w-4 h-4" />
                           </Button>
+                          */}
                         </div>
                       </div>
 
@@ -703,6 +879,22 @@ export default function PlatformPage() {
         autoRefresh={autoRefresh}
         setAutoRefresh={setAutoRefresh}
         onExportExecutions={handleExportExecutions}
+        showEditModal={showEditModal}
+        setShowEditModal={setShowEditModal}
+        editingWorkflow={editingWorkflow}
+        setEditingWorkflow={setEditingWorkflow}
+        showTestModal={showTestModal}
+        setShowTestModal={setShowTestModal}
+        testingWorkflow={testingWorkflow}
+        setTestingWorkflow={setTestingWorkflow}
+      />
+
+      {/* Deploy Success Modal */}
+      <DeploySuccessModal
+        isOpen={showDeploySuccessModal}
+        onClose={() => setShowDeploySuccessModal(false)}
+        workflowName={deployedWorkflowName}
+        deploymentData={deploymentResult}
       />
     </div>
   );

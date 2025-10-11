@@ -89,13 +89,22 @@ export async function deployWorkflow(workflow: N8nWorkflow, token?: string) {
       return { success: false, error: 'Authentication token required' };
     }
 
+    // Clean workflow object - only send n8n-required fields
+    const cleanWorkflow: N8nWorkflow = {
+      name: workflow.name,
+      nodes: workflow.nodes,
+      connections: workflow.connections,
+      active: workflow.active ?? false,
+      settings: workflow.settings || {}
+    };
+
     const response = await fetch(`${API_URL}/api/deploy`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({ workflow }),
+      body: JSON.stringify({ workflow: cleanWorkflow }),
     });
 
     const data = await response.json();

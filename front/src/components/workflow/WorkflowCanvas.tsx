@@ -20,9 +20,10 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, XCircle, Loader2, Clock, Save, Edit3, Volume2, VolumeX } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Clock, Save, Edit3, Volume2, VolumeX, Info } from 'lucide-react';
 import { getNodeVisual, isControlFlowNode, getControlFlowType } from '@/lib/nodeVisuals';
 import { useWebSocket, NodeEvent } from '@/hooks/useWebSocket';
+import { useNodes } from '@/hooks/useNodes';
 
 // Control Flow Container Component that properly transforms with viewport
 function ControlFlowContainer({ group, nodes }: { group: any, nodes: Node[] }) {
@@ -84,51 +85,51 @@ function CustomNode({ data }: any) {
   const visual = getNodeVisual(data.type, data.label);
   const Icon = visual.icon;
 
-  // Get node color based on type (pastel colors like reference)
+  // Get node color based on type (with dark mode support)
   const getNodeColor = () => {
     const type = data.type.toLowerCase();
     
     // Trigger nodes - Blue
     if (type.includes('webhook') || type.includes('trigger') || type.includes('manual')) {
-      return 'border-blue-200 bg-blue-50';
+      return 'border-blue-300 bg-blue-100 dark:border-blue-700 dark:bg-blue-950';
     }
     // Schedule nodes - Purple
     if (type.includes('schedule') || type.includes('cron')) {
-      return 'border-purple-200 bg-purple-50';
+      return 'border-purple-300 bg-purple-100 dark:border-purple-700 dark:bg-purple-950';
     }
     // Communication (Email, Slack, etc) - Green
     if (type.includes('email') || type.includes('mail') || type.includes('gmail')) {
-      return 'border-green-200 bg-green-50';
+      return 'border-green-300 bg-green-100 dark:border-green-700 dark:bg-green-950';
     }
     if (type.includes('slack') || type.includes('discord')) {
-      return 'border-emerald-200 bg-emerald-50';
+      return 'border-emerald-300 bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-950';
     }
     // Social/Professional networks - Purple
     if (type.includes('linkedin') || type.includes('twitter') || type.includes('facebook')) {
-      return 'border-purple-200 bg-purple-50';
+      return 'border-purple-300 bg-purple-100 dark:border-purple-700 dark:bg-purple-950';
     }
     // CRM & Business - Blue
     if (type.includes('salesforce') || type.includes('crm') || type.includes('hubspot')) {
-      return 'border-blue-200 bg-blue-50';
+      return 'border-blue-300 bg-blue-100 dark:border-blue-700 dark:bg-blue-950';
     }
     // Data & Database - Cyan
     if (type.includes('postgres') || type.includes('mysql') || type.includes('database')) {
-      return 'border-cyan-200 bg-cyan-50';
+      return 'border-cyan-300 bg-cyan-100 dark:border-cyan-700 dark:bg-cyan-950';
     }
     // HTTP & API - Orange
     if (type.includes('http') || type.includes('api')) {
-      return 'border-orange-200 bg-orange-50';
+      return 'border-orange-300 bg-orange-100 dark:border-orange-700 dark:bg-orange-950';
     }
     // AI nodes - Pink
     if (type.includes('openai') || type.includes('ai')) {
-      return 'border-pink-200 bg-pink-50';
+      return 'border-pink-300 bg-pink-100 dark:border-pink-700 dark:bg-pink-950';
     }
     // Control flow - Yellow
     if (type.includes('if') || type.includes('switch') || type.includes('merge')) {
-      return 'border-yellow-200 bg-yellow-50';
+      return 'border-yellow-300 bg-yellow-100 dark:border-yellow-700 dark:bg-yellow-950';
     }
     // Default - Gray
-    return 'border-gray-200 bg-gray-50';
+    return 'border-gray-300 bg-gray-100 dark:border-gray-700 dark:bg-gray-900';
   };
   
   // Status border overlay (only when executing)
@@ -185,7 +186,7 @@ function CustomNode({ data }: any) {
       />
       
       <div className={`
-        px-4 py-3 rounded-lg border-2 shadow-md bg-white
+        px-4 py-3 rounded-lg border-2 shadow-md bg-white dark:bg-gray-950
         ${getNodeColor()}
         ${getStatusBorder()}
         hover:shadow-lg transition-all duration-200
@@ -196,8 +197,8 @@ function CustomNode({ data }: any) {
         {/* Header with icon and status icon */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <Icon className="w-4 h-4 flex-shrink-0" />
-            <span className="font-medium text-sm break-words">{data.label}</span>
+            <Icon className="w-4 h-4 flex-shrink-0 text-foreground" />
+            <span className="font-medium text-sm break-words text-foreground">{data.label}</span>
           </div>
           {/* Status icon (top right, small) */}
           {nodeStatus === 'success' && (
@@ -215,14 +216,14 @@ function CustomNode({ data }: any) {
         </div>
         
         {/* Description - Always show */}
-        <p className="text-xs text-gray-600 mb-2">
+        <p className="text-xs text-muted-foreground mb-2">
           {data.description || 'Workflow node'}
         </p>
         
         {/* Status Badge (bottom, like reference) */}
         {nodeStatus && (
           <div className={`
-            inline-flex px-2 py-1 rounded text-xs border bg-white
+            inline-flex px-2 py-1 rounded text-xs border bg-white dark:bg-gray-900
             ${nodeStatus === 'completed' || nodeStatus === 'success' 
               ? 'text-green-700 border-green-300' 
               : nodeStatus === 'running' 
@@ -293,9 +294,14 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
     }
     return false;
   });
+  const [nodeDetails, setNodeDetails] = useState<any>(null); // MCP node details
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   
   // WebSocket for real-time updates
   const { addEventListener, subscribeToWorkflow, unsubscribeFromWorkflow } = useWebSocket();
+  
+  // Node details fetching via MCP
+  const { getNodeDetails } = useNodes();
 
   // Save sound preference to localStorage
   useEffect(() => {
@@ -314,6 +320,29 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
     setIsEditingNode(false);
     setEditedParameters({});
   }, [selectedNode?.id]);
+
+  // Fetch node details from MCP when a node is selected
+  useEffect(() => {
+    if (!selectedNode || !getNodeDetails) {
+      setNodeDetails(null);
+      return;
+    }
+
+    const fetchDetails = async () => {
+      setIsLoadingDetails(true);
+      try {
+        const details = await getNodeDetails(selectedNode.data.type);
+        setNodeDetails(details);
+      } catch (error) {
+        console.error('Failed to fetch node details:', error);
+        setNodeDetails(null);
+      } finally {
+        setIsLoadingDetails(false);
+      }
+    };
+
+    fetchDetails();
+  }, [selectedNode?.id, selectedNode?.data.type, getNodeDetails]);
 
   // Subscribe to workflow for real-time updates
   useEffect(() => {
@@ -937,16 +966,78 @@ export function WorkflowCanvas({ workflow, isGenerating, latestExecution, isPrev
               {/* Regular parameters for non-schedule nodes or when not editing */}
               {!selectedNode.data.type.includes('schedule') && selectedNode.data.parameters && Object.keys(selectedNode.data.parameters).length > 0 && (
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground">Parameters</label>
-                  <div className="mt-2 space-y-2 max-h-48 overflow-y-auto">
-                    {Object.entries(selectedNode.data.parameters).map(([key, value]: any) => (
-                      <div key={key} className="bg-accent/30 px-2 py-1.5 rounded">
-                        <div className="text-xs font-medium text-foreground">{key}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5 break-all">
-                          {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-medium text-muted-foreground">Configuration</label>
+                    {isLoadingDetails && (
+                      <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="mt-2 space-y-2 max-h-64 overflow-y-auto">
+                    {Object.entries(selectedNode.data.parameters).map(([key, value]: any) => {
+                      // Try to find parameter definition from MCP details
+                      const paramDef = Array.isArray(nodeDetails?.properties) 
+                        ? nodeDetails.properties.find((p: any) => 
+                            p.name === key || p.displayName === key
+                          )
+                        : null;
+                      
+                      return (
+                        <div key={key} className="bg-accent/30 px-3 py-2 rounded-lg border border-border/50">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <div className="text-xs font-semibold text-foreground">
+                                  {paramDef?.displayName || key}
+                                </div>
+                                {paramDef?.required && (
+                                  <span className="text-xs text-red-500">*</span>
+                                )}
+                              </div>
+                              {paramDef?.description && (
+                                <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                                  {paramDef.description}
+                                </div>
+                              )}
+                            </div>
+                            {paramDef && (
+                              <div className="flex-shrink-0">
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary font-mono">
+                                  {paramDef.type}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="mt-2 text-xs bg-background/50 px-2 py-1.5 rounded border border-border/30 font-mono break-all">
+                            {typeof value === 'object' ? (
+                              <pre className="whitespace-pre-wrap">{JSON.stringify(value, null, 2)}</pre>
+                            ) : (
+                              <span className="text-foreground">{String(value)}</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Show MCP node description if available */}
+                  {nodeDetails?.description && (
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <div className="flex items-start gap-2">
+                        <Info className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                        <div className="text-xs text-muted-foreground leading-relaxed">
+                          {nodeDetails.description}
                         </div>
                       </div>
-                    ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Show message if no parameters */}
+              {!selectedNode.data.type.includes('schedule') && (!selectedNode.data.parameters || Object.keys(selectedNode.data.parameters).length === 0) && (
+                <div className="bg-accent/20 px-3 py-2 rounded-lg border border-border/50">
+                  <div className="text-xs text-muted-foreground text-center">
+                    No parameters configured for this node
                   </div>
                 </div>
               )}

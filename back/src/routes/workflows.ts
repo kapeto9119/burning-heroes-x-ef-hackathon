@@ -103,7 +103,7 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient, authService: Auth
    * POST /api/workflows
    * Create a new workflow
    */
-  router.post('/', async (req: Request, res: Response) => {
+  router.post('/', authMiddleware, async (req: Request, res: Response) => {
     try {
       const workflow: N8nWorkflow = req.body;
       const userId = req.user?.userId;
@@ -149,7 +149,7 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient, authService: Auth
    * PUT /api/workflows/:id
    * Update an existing workflow
    */
-  router.put('/:id', async (req: Request, res: Response) => {
+  router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const updatedWorkflow: N8nWorkflow = req.body;
@@ -193,7 +193,7 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient, authService: Auth
    * DELETE /api/workflows/:id
    * Delete a workflow
    */
-  router.delete('/:id', async (req: Request, res: Response) => {
+  router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -229,7 +229,7 @@ export function createWorkflowsRouter(mcpClient: N8nMCPClient, authService: Auth
    * POST /api/workflows/:id/validate
    * Validate a workflow
    */
-  router.post('/:id/validate', async (req: Request, res: Response) => {
+  router.post('/:id/validate', authMiddleware, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
