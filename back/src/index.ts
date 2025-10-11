@@ -23,6 +23,7 @@ import { createWorkflowsRouter } from "./routes/workflows";
 import { createAuthRouter } from "./routes/auth";
 import { createDeployRouter } from "./routes/deploy";
 import { createVoiceRouter } from "./routes/voice";
+import { createPipecatRouter } from "./routes/pipecat";
 import { createOAuthRouter } from "./routes/oauth";
 import { createCredentialsRouter } from "./routes/credentials";
 import { createN8nWebhookRouter } from "./routes/n8n-webhooks";
@@ -186,6 +187,7 @@ app.use("/api/auth", createAuthRouter(authService));
 app.use("/api/chat", createChatRouter(aiService, mcpClient, workflowGenerator, authService));
 app.use("/api/workflows", createWorkflowsRouter(mcpClient, authService));
 app.use("/api/voice", createVoiceRouter(vapiService, platformKnowledge));
+app.use("/api/pipecat", createPipecatRouter(workflowGenerator));
 app.use(
   "/api/oauth",
   createOAuthRouter(oauthService, credentialRepository, authService)

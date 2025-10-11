@@ -37,7 +37,9 @@ import { WorkflowCanvas } from "@/components/workflow/WorkflowCanvas";
 import { VoiceButton } from "@/components/voice/VoiceButton";
 import { VoiceVisualizer } from "@/components/voice/VoiceVisualizer";
 import { VoiceTranscript } from "@/components/voice/VoiceTranscript";
+import { VoiceProviderToggle } from "@/components/voice/VoiceProviderToggle";
 import { useVapi } from "@/hooks/useVapi";
+import { usePipecat } from "@/hooks/usePipecat";
 import { getClientToken } from "@/lib/auth";
 import * as React from "react";
 
@@ -205,7 +207,44 @@ export default function EditorPage() {
   // No longer blocking unauthenticated users - they get preview mode
   const isPreviewMode = !isAuthenticated;
 
+  // Voice provider selection
+  const [voiceProvider, setVoiceProvider] = useState<'vapi' | 'pipecat'>('pipecat');
+
+  // Workflow generation callback (shared by both providers)
+  const handleWorkflowGenerated = useCallback((workflow: any) => {
+    setWorkflow(workflow);
+    setDeploymentStatus("idle");
+
+    // Add a message to show workflow was created
+    const workflowMessage = {
+      id: `workflow_${Date.now()}`,
+      text: `✅ Workflow created! It has ${
+        workflow?.nodes?.length || 0
+      } nodes. Ready to save or deploy?`,
+      isUser: false,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, workflowMessage]);
+  }, []);
+
   // Vapi voice AI integration
+  const vapiHook = useVapi({
+    publicKey: process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || "",
+    assistantId: process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID || "",
+    userId: user?.id,
+    onWorkflowGenerated: handleWorkflowGenerated,
+    onWorkflowUpdated: (workflow) => setWorkflow(workflow),
+    onDeployReady: () => handleDeployClick(),
+  });
+
+  // Pipecat voice AI integration
+  const pipecatHook = usePipecat({
+    userId: user?.id,
+    onWorkflowGenerated: handleWorkflowGenerated,
+    onAgentSwitch: (agent) => console.log('[Editor] Agent switched to:', agent),
+  });
+
+  // Use the selected provider's hook
   const {
     callStatus,
     transcripts,
@@ -215,33 +254,7 @@ export default function EditorPage() {
     stopCall,
     clearTranscripts,
     isConnected,
-  } = useVapi({
-    publicKey: process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || "",
-    assistantId: process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID || "",
-    userId: user?.id, // Pass authenticated user ID to Vapi
-    onWorkflowGenerated: (workflow) => {
-      setWorkflow(workflow);
-      setDeploymentStatus("idle");
-
-      // Add a message to show workflow was created
-      const workflowMessage = {
-        id: `workflow_${Date.now()}`,
-        text: `✅ Workflow created! It has ${
-          workflow?.nodes?.length || 0
-        } nodes. Ready to save or deploy?`,
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, workflowMessage]);
-    },
-    onWorkflowUpdated: (workflow) => {
-      setWorkflow(workflow);
-    },
-    onDeployReady: (workflow) => {
-      // Use the same deploy flow as the button - checks credentials first
-      handleDeployClick();
-    },
-  });
+  } = voiceProvider === 'vapi' ? vapiHook : pipecatHook;
 
   // Sync voice transcripts to messages (unified conversation)
   useEffect(() => {
@@ -813,14 +826,24 @@ export default function EditorPage() {
                 {/* Input Area */}
                 <div className="border-t border-border p-4 bg-accent/30">
                   {voiceMode ? (
-                    <div className="flex items-center justify-center gap-4">
-                      <VoiceButton
-                        isConnected={isConnected}
-                        isListening={isListening}
-                        isSpeaking={isSpeaking}
-                        onToggle={handleVoiceToggle}
-                        disabled={callStatus.status === "connecting"}
+                    <div className="flex flex-col items-center justify-center gap-4 py-2">
+                      <VoiceProviderToggle
+                        provider={voiceProvider}
+                        onProviderChange={setVoiceProvider}
+                        disabled={isConnected}
                       />
+                      <div className="relative">
+                        <VoiceButton
+                          isConnected={isConnected}
+                          isListening={isListening}
+                          isSpeaking={isSpeaking}
+                          onToggle={handleVoiceToggle}
+                          disabled={callStatus.status === "connecting"}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {voiceProvider === 'vapi' ? 'Vapi' : 'Pipecat Multi-Agent'}
+                      </p>
                     </div>
                   ) : (
                     <div className="flex items-end gap-3 bg-background rounded-xl border border-border p-3">
