@@ -35,7 +35,7 @@ import { getNodeVisual } from '@/lib/nodeVisuals';
 import { useMemo } from 'react';
 
 // Custom styled node component matching WorkflowCanvas design
-function CustomEditorNode({ data }: any) {
+function CustomEditorNode({ data, selected, id }: any) {
   const visual = getNodeVisual(data.nodeType || '', data.label);
   const Icon = visual.icon;
   
@@ -43,36 +43,36 @@ function CustomEditorNode({ data }: any) {
     const type = (data.nodeType || '').toLowerCase();
     
     if (type.includes('webhook') || type.includes('trigger') || type.includes('manual')) {
-      return 'border-blue-200 bg-blue-50';
+      return selected ? 'border-blue-400 bg-blue-100' : 'border-blue-200 bg-blue-50';
     }
     if (type.includes('schedule') || type.includes('cron')) {
-      return 'border-purple-200 bg-purple-50';
+      return selected ? 'border-purple-400 bg-purple-100' : 'border-purple-200 bg-purple-50';
     }
     if (type.includes('email') || type.includes('mail') || type.includes('gmail')) {
-      return 'border-green-200 bg-green-50';
+      return selected ? 'border-green-400 bg-green-100' : 'border-green-200 bg-green-50';
     }
     if (type.includes('slack') || type.includes('discord')) {
-      return 'border-emerald-200 bg-emerald-50';
+      return selected ? 'border-emerald-400 bg-emerald-100' : 'border-emerald-200 bg-emerald-50';
     }
     if (type.includes('linkedin') || type.includes('twitter') || type.includes('facebook')) {
-      return 'border-purple-200 bg-purple-50';
+      return selected ? 'border-purple-400 bg-purple-100' : 'border-purple-200 bg-purple-50';
     }
     if (type.includes('salesforce') || type.includes('crm') || type.includes('hubspot')) {
-      return 'border-blue-200 bg-blue-50';
+      return selected ? 'border-blue-400 bg-blue-100' : 'border-blue-200 bg-blue-50';
     }
     if (type.includes('postgres') || type.includes('mysql') || type.includes('database')) {
-      return 'border-cyan-200 bg-cyan-50';
+      return selected ? 'border-cyan-400 bg-cyan-100' : 'border-cyan-200 bg-cyan-50';
     }
     if (type.includes('http') || type.includes('api')) {
-      return 'border-orange-200 bg-orange-50';
+      return selected ? 'border-orange-400 bg-orange-100' : 'border-orange-200 bg-orange-50';
     }
     if (type.includes('openai') || type.includes('ai')) {
-      return 'border-pink-200 bg-pink-50';
+      return selected ? 'border-pink-400 bg-pink-100' : 'border-pink-200 bg-pink-50';
     }
     if (type.includes('if') || type.includes('switch') || type.includes('merge')) {
-      return 'border-yellow-200 bg-yellow-50';
+      return selected ? 'border-yellow-400 bg-yellow-100' : 'border-yellow-200 bg-yellow-50';
     }
-    return 'border-gray-200 bg-gray-50';
+    return selected ? 'border-gray-400 bg-gray-100' : 'border-gray-200 bg-gray-50';
   };
 
   return (
@@ -94,8 +94,9 @@ function CustomEditorNode({ data }: any) {
       />
       
       <div className={`
-        px-4 py-3 rounded-lg border-2 shadow-md bg-white
+        px-4 py-3 rounded-lg shadow-md bg-white
         ${getNodeColor()}
+        ${selected ? 'border-4' : 'border-2'}
         hover:shadow-lg transition-all duration-200
         w-full relative cursor-grab active:cursor-grabbing
       `}>
@@ -866,6 +867,17 @@ export default function WorkflowEditorPage() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in input fields
+      const target = e.target as HTMLElement;
+      const isInputField = target.tagName === 'INPUT' || 
+                          target.tagName === 'TEXTAREA' || 
+                          target.contentEditable === 'true' ||
+                          target.closest('[contenteditable="true"]');
+      
+      if (isInputField) {
+        return; // Don't handle keyboard shortcuts when typing
+      }
+
       // Delete key - delete selected node or edges
       if (e.key === 'Delete' || e.key === 'Backspace') {
         if (selectedNode) {
@@ -1057,21 +1069,25 @@ export default function WorkflowEditorPage() {
                     }
                     /* Larger node handles for easier grabbing */
                     .react-flow__handle {
-                      width: 12px !important;
-                      height: 12px !important;
-                      border: 2px solid #8b5cf6 !important;
+                      width: 16px !important;
+                      height: 16px !important;
+                      border: 3px solid #8b5cf6 !important;
                       background: #ffffff !important;
-                      box-shadow: 0 0 0 2px rgba(139,92,246,0.15);
+                      box-shadow: 0 0 0 4px rgba(139,92,246,0.15);
+                      opacity: 0.8 !important;
                     }
                     .react-flow__handle:hover {
                       background: #f5f3ff !important; /* light purple */
-                      box-shadow: 0 0 0 4px rgba(139,92,246,0.2);
+                      box-shadow: 0 0 0 6px rgba(139,92,246,0.3);
+                      opacity: 1 !important;
+                      transform: scale(1.1);
                     }
                   `}</style>
                   <ReactFlow
                     nodes={nodes.map(node => ({
                       ...node,
-                      className: node.id === snappingNodeId ? 'snapping' : '',
+                      className: node.id === snappingNodeId ? 'snapping' : 
+                                selectedNode?.id === node.id ? 'selected' : '',
                     }))}
                     edges={edges.map(edge => ({
                       ...edge,
