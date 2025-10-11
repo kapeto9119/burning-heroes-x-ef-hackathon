@@ -21,7 +21,64 @@ export function NodeConfigPanel({
   onClose,
   onGetDetails 
 }: NodeConfigPanelProps) {
-  const [parameters, setParameters] = useState<any>(node.data.parameters || {});
+  // Helper: Get default parameters for a node type
+  const getDefaultParameters = (nodeType: string): any => {
+    const defaults: Record<string, any> = {
+      'n8n-nodes-base.slack': {
+        resource: 'message',
+        operation: 'post',
+        select: 'channel',
+        channelId: '#general',
+        text: 'Hello from workflow!'
+      },
+      'n8n-nodes-base.gmail': {
+        resource: 'message',
+        operation: 'send',
+        to: '',
+        subject: 'Message from workflow',
+        message: ''
+      },
+      'n8n-nodes-base.emailSend': {
+        fromEmail: 'noreply@example.com',
+        toEmail: '',
+        subject: 'Notification',
+        text: ''
+      },
+      'n8n-nodes-base.webhook': {
+        httpMethod: 'POST',
+        path: `webhook-${Date.now()}`,
+        responseMode: 'onReceived'
+      },
+      'n8n-nodes-base.httpRequest': {
+        method: 'GET',
+        url: '',
+        authentication: 'none'
+      },
+      'n8n-nodes-base.postgres': {
+        operation: 'executeQuery',
+        query: 'SELECT * FROM table LIMIT 10'
+      },
+      'n8n-nodes-base.salesforce': {
+        resource: 'lead',
+        operation: 'getAll'
+      },
+      'n8n-nodes-base.googleSheets': {
+        resource: 'spreadsheet',
+        operation: 'read'
+      }
+    };
+    return defaults[nodeType] || {};
+  };
+
+  // Initialize parameters with defaults if empty
+  const initialParams = node.data.parameters && Object.keys(node.data.parameters).length > 0
+    ? node.data.parameters
+    : getDefaultParameters(node.data.nodeType);
+
+  console.log('[NodeConfigPanel] Node:', node.data.label, 'Type:', node.data.nodeType);
+  console.log('[NodeConfigPanel] Initial parameters:', initialParams);
+
+  const [parameters, setParameters] = useState<any>(initialParams);
   const [nodeDetails, setNodeDetails] = useState<any>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -34,14 +91,27 @@ export function NodeConfigPanel({
   }, [node.data.nodeType]);
 
   const loadNodeDetails = async () => {
-    if (!onGetDetails || !node.data.nodeType) return;
+    if (!onGetDetails || !node.data.nodeType) {
+      setIsLoadingDetails(false);
+      return;
+    }
 
     setIsLoadingDetails(true);
     try {
+      console.log('[NodeConfigPanel] 📡 Loading schema for:', node.data.nodeType);
       const details = await onGetDetails(node.data.nodeType);
+      
+      if (details && details.properties && Object.keys(details.properties).length > 0) {
+        console.log('[NodeConfigPanel] ✅ Using MCP schema -', Object.keys(details.properties).length, 'properties');
+      } else {
+        console.log('[NodeConfigPanel] 🔄 Using fallback UI with default parameters');
+      }
+      
       setNodeDetails(details);
     } catch (error) {
-      console.error('Failed to load node details:', error);
+      console.error('[NodeConfigPanel] ❌ Failed to load schema:', error);
+      // Set to null to trigger fallback UI
+      setNodeDetails(null);
     } finally {
       setIsLoadingDetails(false);
     }
@@ -232,7 +302,7 @@ export function NodeConfigPanel({
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
-        ) : nodeDetails && nodeDetails.properties ? (
+        ) : nodeDetails && nodeDetails.properties && Object.keys(nodeDetails.properties).length > 0 ? (
           <>
             {nodeDefinition && (
               <div className="p-3 bg-accent/30 rounded-lg border border-border">

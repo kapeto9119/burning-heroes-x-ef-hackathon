@@ -296,11 +296,12 @@ export class N8nMCPClient {
     await this.ensureConnected();
 
     if (this.useMockData) {
+      console.log(`[MCP Client] 🔄 Using FALLBACK mock data for: ${nodeType}`);
       return this.getMockNodeDetails(nodeType);
     }
 
     try {
-      console.log(`[MCP Client] Getting node essentials: ${nodeType}`);
+      console.log(`[MCP Client] 🌐 Fetching from MCP server: ${nodeType}`);
       
       const result = await this.client!.callTool({
         name: 'get_node_essentials',
@@ -316,19 +317,23 @@ export class N8nMCPClient {
         const textContent = result.content.find(c => c.type === 'text');
         if (textContent && 'text' in textContent) {
           const parsed = JSON.parse(textContent.text);
-          console.log(`[MCP Client] Parsed data for ${nodeType}:`, JSON.stringify(parsed, null, 2));
-          
           const mapped = this.mapToNodeDetails(parsed);
-          console.log(`[MCP Client] Mapped node details for ${nodeType}:`, JSON.stringify(mapped, null, 2));
+          const propCount = Object.keys(mapped.properties || {}).length;
+          
+          if (propCount > 0) {
+            console.log(`[NodePalette] ✅ MCP SUCCESS - Mapped ${propCount} properties from n8n (${parsed.nodeType || parsed.name})`);
+          } else {
+            console.log(`[NodePalette] ⚠️ MCP returned data but no properties found for ${nodeType}`);
+          }
           
           return mapped;
         }
       }
 
-      console.warn(`[MCP Client] No valid content found for ${nodeType}`);
-      return null;
+      console.warn(`[MCP Client] ⚠️ No valid content found for ${nodeType}, using fallback`);
+      return this.getMockNodeDetails(nodeType);
     } catch (error) {
-      console.error('[MCP Client] Node details error:', error);
+      console.error('[MCP Client] ❌ MCP error, falling back to mock data:', error);
       return this.getMockNodeDetails(nodeType);
     }
   }
@@ -539,12 +544,48 @@ export class N8nMCPClient {
 
   /**
    * Map MCP node data to our details format
+   * Converts essentialProperties OR requiredProperties array to properties object
    */
   private mapToNodeDetails(mcpData: any): MCPNodeDetails {
+    // MCP returns either essentialProperties or requiredProperties as an array
+    // We need to convert it to an object for our UI
+    const properties: any = {};
+    
+    // Try essentialProperties first (from get_node_essentials)
+    if (mcpData.essentialProperties && Array.isArray(mcpData.essentialProperties)) {
+      mcpData.essentialProperties.forEach((prop: any) => {
+        properties[prop.value] = {
+          type: prop.type || 'string',
+          required: prop.required || false,
+          description: prop.description || prop.label || '',
+          placeholder: prop.placeholder || '',
+          options: prop.options || undefined
+        };
+      });
+    }
+    // Fall back to requiredProperties (from get_node_info)
+    else if (mcpData.requiredProperties && Array.isArray(mcpData.requiredProperties)) {
+      console.log(`[MCP Client] Using requiredProperties (${mcpData.requiredProperties.length} props)`);
+      console.log(`[MCP Client] First property example:`, JSON.stringify(mcpData.requiredProperties[0], null, 2));
+      
+      mcpData.requiredProperties.forEach((prop: any) => {
+        console.log(`[MCP Client] Mapping property: ${prop.name} (${prop.type})`);
+        properties[prop.name] = {
+          type: prop.type || 'string',
+          required: prop.required || false,
+          description: prop.description || prop.displayName || '',
+          placeholder: prop.placeholder || '',
+          options: prop.options || undefined
+        };
+      });
+      
+      console.log(`[MCP Client] Properties object keys:`, Object.keys(properties));
+    }
+    
     return {
       name: mcpData.displayName || mcpData.name,
       type: mcpData.name,
-      properties: mcpData.properties || {},
+      properties,
       operations: mcpData.operations || [],
       credentials: mcpData.credentials || [],
       examples: mcpData.examples || undefined

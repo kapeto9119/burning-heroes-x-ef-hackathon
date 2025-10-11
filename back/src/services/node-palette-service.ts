@@ -113,13 +113,23 @@ export class NodePaletteService {
 
   /**
    * Get node details (properties, credentials, operations)
+   * Uses MCP to get real n8n node schemas
    */
   async getNodeDetails(nodeType: string): Promise<any> {
     try {
+      console.log('[NodePalette] Fetching details for:', nodeType);
       const details = await this.mcpClient.getNodeDetails(nodeType);
-      return details;
+      
+      if (details) {
+        console.log('[NodePalette] ✅ Got MCP details for:', nodeType);
+        console.log('[NodePalette] Properties:', Object.keys(details.properties || {}));
+        return details;
+      } else {
+        console.log('[NodePalette] ⚠️ MCP returned null for:', nodeType);
+        return null;
+      }
     } catch (error) {
-      console.error('[NodePalette] Failed to get node details:', error);
+      console.error('[NodePalette] ❌ Failed to get node details:', error);
       return null;
     }
   }
