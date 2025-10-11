@@ -113,14 +113,46 @@ export class WorkflowGenerator {
         const sourceNode = nodes[i];
         const targetNode = actionNode;
         
-        if (!connections[sourceNode.name]) {
-          connections[sourceNode.name] = { main: [[]] };
+        // Check if the SOURCE node is a conditional node (IF/Switch) - needs multiple output branches
+        const isSourceIfNode = sourceNode.type === 'n8n-nodes-base.if';
+        const isSourceSwitchNode = sourceNode.type === 'n8n-nodes-base.switch';
+        
+        if (isSourceIfNode) {
+          // IF nodes need main[0] (true) and main[1] (false) arrays
+          if (!connections[sourceNode.name]) {
+            connections[sourceNode.name] = { main: [[], []] };
+          }
+          // Connect to TRUE branch (main[0])
+          connections[sourceNode.name].main[0].push({
+            node: targetNode.name,
+            type: 'main',
+            index: 0
+          });
+          // FALSE branch (main[1]) is left empty - users can connect nodes to it later
+          // This creates the visual representation of two paths
+        } else if (isSourceSwitchNode) {
+          // Switch nodes can have multiple outputs (typically 3-4)
+          if (!connections[sourceNode.name]) {
+            // Create 4 output branches for switch nodes
+            connections[sourceNode.name] = { main: [[], [], [], []] };
+          }
+          // Connect to first output branch
+          connections[sourceNode.name].main[0].push({
+            node: targetNode.name,
+            type: 'main',
+            index: 0
+          });
+        } else {
+          // Regular nodes have single output
+          if (!connections[sourceNode.name]) {
+            connections[sourceNode.name] = { main: [[]] };
+          }
+          connections[sourceNode.name].main[0].push({
+            node: targetNode.name,
+            type: 'main',
+            index: 0
+          });
         }
-        connections[sourceNode.name].main[0].push({
-          node: targetNode.name,
-          type: 'main',
-          index: 0
-        });
       }
     }
 
@@ -419,13 +451,31 @@ export class WorkflowGenerator {
       }
     }
     
-    // Fallback: Try to find the correct node type using MCP search
+    // Fallback: Try to find the correct node type using MCP search and get full details
     if (step.service) {
       try {
         const searchResults = await this.mcpClient.searchNodes(step.service, false);
         if (searchResults.length > 0) {
           // Use the first (most relevant) result
           nodeType = searchResults[0].nodeType;
+          
+          // Fetch full node details from MCP to get proper parameter schema
+          console.log(`[Workflow Generator] 📋 Fetching MCP details for: ${nodeType}`);
+          const nodeDetails = await this.mcpClient.getNodeDetails(nodeType);
+          
+          if (nodeDetails) {
+            // Build parameters using MCP schema
+            const parameters = this.buildParametersFromMCPSchema(nodeDetails, step);
+            
+            return {
+              id: this.generateNodeId(),
+              name: step.action || step.service,
+              type: nodeType,
+              position: [x, y],
+              parameters,
+              credentials: {}
+            };
+          }
         }
       } catch (error) {
         console.error(`[Workflow Generator] Error searching for node type:`, error);
@@ -440,6 +490,88 @@ export class WorkflowGenerator {
       parameters: step.config || {},
       credentials: {}
     };
+  }
+
+  /**
+   * Build node parameters from MCP schema
+   * Uses property definitions to create valid configuration
+   */
+  private buildParametersFromMCPSchema(nodeDetails: any, step: any): any {
+    const parameters: any = {};
+    
+    // Start with step config if provided
+    if (step.config) {
+      Object.assign(parameters, step.config);
+    }
+    
+    // Add required parameters from MCP schema with defaults
+    if (nodeDetails.properties && Array.isArray(nodeDetails.properties)) {
+      for (const prop of nodeDetails.properties) {
+        // Skip if already configured
+        if (parameters[prop.name] !== undefined) {
+          continue;
+        }
+        
+        // Add required parameters with sensible defaults
+        if (prop.required) {
+          parameters[prop.name] = this.getDefaultValueForProperty(prop, step);
+        }
+      }
+    }
+    
+    console.log(`[Workflow Generator] ✅ Built parameters for ${nodeDetails.name}:`, Object.keys(parameters));
+    return parameters;
+  }
+
+  /**
+   * Get default value for a property based on its type and context
+   */
+  private getDefaultValueForProperty(prop: any, step: any): any {
+    // Try to infer from step data
+    const stepData = step.data || {};
+    
+    // Common parameter mappings
+    const parameterMappings: Record<string, any> = {
+      'resource': step.resource || 'message',
+      'operation': step.operation || 'send',
+      'to': stepData.to || '={{ $json.email }}',
+      'toEmail': stepData.to || '={{ $json.email }}',
+      'from': stepData.from || 'noreply@example.com',
+      'fromEmail': stepData.from || 'noreply@example.com',
+      'subject': stepData.subject || '={{ $json.subject }}',
+      'message': stepData.message || '={{ $json.message }}',
+      'text': stepData.text || '={{ $json.text }}',
+      'body': stepData.body || '={{ $json.body }}',
+      'channelId': stepData.channel || '#general',
+      'channel': stepData.channel || '#general',
+      'url': stepData.url || '',
+      'method': stepData.method || 'GET',
+      'query': stepData.query || 'SELECT * FROM table LIMIT 10',
+      'returnAll': false,
+      'limit': 10
+    };
+    
+    // Check if we have a mapping
+    if (parameterMappings[prop.name] !== undefined) {
+      return parameterMappings[prop.name];
+    }
+    
+    // Default based on type
+    switch (prop.type) {
+      case 'string':
+        return prop.default || '';
+      case 'number':
+        return prop.default || 0;
+      case 'boolean':
+        return prop.default || false;
+      case 'options':
+        return prop.options?.[0]?.value || prop.default || '';
+      case 'collection':
+      case 'fixedCollection':
+        return prop.default || {};
+      default:
+        return prop.default || '';
+    }
   }
 
   /**

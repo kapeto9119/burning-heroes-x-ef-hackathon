@@ -1,12 +1,37 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { WorkflowCanvas } from '@/components/workflow/WorkflowCanvas';
 import { NodeDataInspector } from '@/components/execution/NodeDataInspector';
 import { getTimeUntilNextRun, cronToHuman } from '@/lib/schedule-utils';
-import { Eye, RotateCcw, Play, Zap, Webhook, Clock, Timer, Radio, Copy, CheckCircle, XCircle, Loader2, Download } from 'lucide-react';
+import { Eye, RotateCcw, Play, Zap, Webhook, Clock, Timer, Radio, Copy, CheckCircle, XCircle, Loader2, Download, Save, Trash2, ArrowLeft, FileJson, Sparkles, AlertCircle, Edit2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import ReactFlow, {
+  Node,
+  Edge,
+  Connection,
+  addEdge,
+  useNodesState,
+  useEdgesState,
+  Background as RFBackground,
+  BackgroundVariant,
+  Controls,
+  MiniMap,
+  MarkerType,
+  Position,
+  Handle,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+import { NodePalette } from '@/components/workflow/NodePalette';
+import { NodeConfigPanel } from '@/components/workflow/NodeConfigPanel';
+import { useNodes } from '@/hooks/useNodes';
+import { getNodeVisual } from '@/lib/nodeVisuals';
+import { getClientToken } from '@/lib/auth';
+import { executeWorkflow, getWorkflowExecutions } from '@/app/actions/workflows';
+import { EditWorkflowModal } from './EditWorkflowModal';
+import { TestWorkflowModal } from './TestWorkflowModal';
 
 interface WorkflowModalsProps {
   previewWorkflow: any;
@@ -29,6 +54,15 @@ interface WorkflowModalsProps {
   autoRefresh: boolean;
   setAutoRefresh: (refresh: boolean) => void;
   onExportExecutions: () => void;
+  
+  showEditModal: boolean;
+  setShowEditModal: (show: boolean) => void;
+  editingWorkflow: any;
+  setEditingWorkflow: (wf: any) => void;
+  showTestModal: boolean;
+  setShowTestModal: (show: boolean) => void;
+  testingWorkflow: any;
+  setTestingWorkflow: (wf: any) => void;
 }
 
 export function WorkflowModals({
@@ -51,6 +85,14 @@ export function WorkflowModals({
   autoRefresh,
   setAutoRefresh,
   onExportExecutions,
+  showEditModal,
+  setShowEditModal,
+  editingWorkflow,
+  setEditingWorkflow,
+  showTestModal,
+  setShowTestModal,
+  testingWorkflow,
+  setTestingWorkflow,
 }: WorkflowModalsProps) {
   const router = useRouter();
 
@@ -62,7 +104,7 @@ export function WorkflowModals({
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-background border border-border rounded-2xl overflow-hidden max-w-7xl w-full shadow-2xl h-[85vh] flex flex-col"
+            className="bg-background border border-border rounded-2xl overflow-hidden max-w-[92vw] w-full shadow-2xl h-[88vh] flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
@@ -373,6 +415,33 @@ export function WorkflowModals({
             )}
           </motion.div>
         </div>
+      )}
+
+      {/* Edit Workflow Modal */}
+      {showEditModal && editingWorkflow && (
+        <EditWorkflowModal
+          workflow={editingWorkflow}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingWorkflow(null);
+          }}
+          onSave={() => {
+            onLoadWorkflows();
+            setShowEditModal(false);
+            setEditingWorkflow(null);
+          }}
+        />
+      )}
+
+      {/* Test Workflow Modal */}
+      {showTestModal && testingWorkflow && (
+        <TestWorkflowModal
+          workflow={testingWorkflow}
+          onClose={() => {
+            setShowTestModal(false);
+            setTestingWorkflow(null);
+          }}
+        />
       )}
     </>
   );

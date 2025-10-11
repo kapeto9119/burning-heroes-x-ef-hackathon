@@ -22,23 +22,34 @@ export function LoginForm({ onSwitchToRegister, onClose }: { onSwitchToRegister:
       await login(email, password);
       setSuccess(true);
       
-      // Close modal immediately
+      console.log('[LoginForm] Login successful, token should be set');
+      
+      // Wait a bit for auth context to update
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Close modal
       if (onClose) {
         onClose();
       }
       
-      // Show success briefly then redirect
-      setTimeout(() => {
+      // Only redirect if not already on editor page
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/editor') {
         // Check if there's a redirect URL in query params
         const params = new URLSearchParams(window.location.search);
         const redirect = params.get('redirect');
         
-        if (redirect) {
-          window.location.href = redirect;
-        } else {
-          router.push('/editor');
-        }
-      }, 100);
+        setTimeout(() => {
+          if (redirect) {
+            window.location.href = redirect;
+          } else {
+            router.push('/editor');
+          }
+        }, 100);
+      } else {
+        // Already on editor, don't refresh - just close modal and let state update
+        console.log('[LoginForm] Already on editor page, auth state updated without refresh');
+      }
     } catch (err: any) {
       setError(err.message || 'Invalid email or password. Please try again.');
       setIsLoading(false);

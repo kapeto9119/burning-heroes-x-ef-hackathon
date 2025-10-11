@@ -147,6 +147,26 @@ export default function EditorPage() {
   const [deploymentData, setDeploymentData] = useState<any>(null);
   const [showCelebration, setShowCelebration] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  
+  // Custom close handler
+  const handleAuthModalClose = () => {
+    console.log('[Editor] Auth modal closing');
+    setShowAuthModal(false);
+    
+    // Show success message if token is now available
+    setTimeout(() => {
+      const token = getClientToken();
+      if (token) {
+        const successMessage = {
+          id: Date.now().toString(),
+          text: `✅ Authentication successful! You can now save your workflow.`,
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, successMessage]);
+      }
+    }, 500);
+  };
   const [showInlineCredentialModal, setShowInlineCredentialModal] =
     useState(false);
   const [missingCredentials, setMissingCredentials] = useState<any[]>([]);
@@ -176,10 +196,10 @@ export default function EditorPage() {
   }, []);
 
   // Get authenticated user
-  const { user, isAuthenticated, isLoading, token: contextToken } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
-  // Prefer context token; fall back to centralized client token util
-  const getAuthToken = () => contextToken || getClientToken();
+  // Simple token getter - just like platform page does it!
+  const getAuthToken = () => getClientToken();
 
   // Auth guard - show preview mode if not authenticated
   // No longer blocking unauthenticated users - they get preview mode
@@ -342,16 +362,29 @@ export default function EditorPage() {
   const handleSaveClick = async () => {
     if (!workflow) return;
 
+    // Get fresh token
+    const token = getAuthToken();
+    
+    console.log('[Editor] Save attempt - isAuthenticated:', isAuthenticated, 'token from localStorage:', token ? 'present' : 'missing');
+    
     // Check if user is authenticated
-    if (!isAuthenticated) {
+    if (!token) {
+      console.error('[Editor] No authentication token available - showing login');
+      const errorMessage = {
+        id: Date.now().toString(),
+        text: `🔐 Please log in to save your workflow. Your work is safe and will be saved once you authenticate.`,
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
       setShowAuthModal(true);
       return;
     }
 
+    console.log('[Editor] Saving workflow with token (length:', token.length, ')');
     setIsSaving(true);
     try {
-      const token = getAuthToken();
-      const result = await saveWorkflow(workflow, token || undefined);
+      const result = await saveWorkflow(workflow, token);
 
       if (result.success) {
         setSaveSuccess(true);
@@ -369,13 +402,19 @@ export default function EditorPage() {
         throw new Error(result.error || "Failed to save workflow");
       }
     } catch (error: any) {
+      console.error('[Editor] Save error:', error);
       const errorMessage = {
         id: Date.now().toString(),
-        text: `❌ Failed to save workflow: ${error.message}`,
+        text: `❌ Failed to save workflow: ${error.message}. ${!token ? 'Please log in again.' : ''}`,
         isUser: false,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
+      
+      // If authentication error, show login modal
+      if (error.message?.includes('Authentication') || error.message?.includes('token')) {
+        setShowAuthModal(true);
+      }
     } finally {
       setIsSaving(false);
     }
@@ -1019,7 +1058,7 @@ export default function EditorPage() {
       {/* Auth Modal */}
       <AuthModal
         isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
+        onClose={handleAuthModalClose}
         initialMode="login"
       />
     </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Activity, CheckCircle, XCircle, Clock, Zap } from 'lucide-react';
 import { getUserStats, type UserStats } from '@/app/actions/workflows';
+import { getClientToken } from '@/lib/auth';
 
 interface StatCardProps {
   title: string;
@@ -68,7 +69,8 @@ export function AnalyticsDashboard() {
 
   const loadStats = async () => {
     setIsLoading(true);
-    const result = await getUserStats();
+    const token = getClientToken();
+    const result = await getUserStats(token || undefined);
     if (result.success) {
       setStats(result.data);
     }
