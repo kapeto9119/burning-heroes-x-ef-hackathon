@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Save, Trash2, Loader2, CheckCircle } from 'lucide-react';
@@ -11,6 +11,7 @@ import ReactFlow, {
   addEdge,
   useNodesState,
   useEdgesState,
+  useReactFlow,
   Background as RFBackground,
   BackgroundVariant,
   Controls,
@@ -113,7 +114,11 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [showNodePalette, setShowNodePalette] = useState(false);
   const [showConfigPanel, setShowConfigPanel] = useState(false);
+  const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const { project } = useReactFlow();
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
@@ -127,7 +132,9 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
     if (workflow?.nodes) {
       const loadedNodes = workflow.nodes.map((node: any, index: number) => {
         // Convert n8n position format [x, y] to ReactFlow {x, y}
-        let position = { x: 250, y: 100 + index * 200 };
+        // Default: spread nodes out more (300px horizontal, 250px vertical spacing)
+        let position = { x: 100 + (index % 3) * 400, y: 100 + Math.floor(index / 3) * 300 };
+        
         if (node.position) {
           if (Array.isArray(node.position)) {
             // n8n format: [x, y]
@@ -138,8 +145,11 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
           }
         }
         
+        // Use node.name as ID since n8n connections reference by name
+        const nodeId = node.name || node.id || `node-${index}`;
+        
         return {
-          id: node.id || `node-${index}`,
+          id: nodeId,
           type: 'custom',
           position,
           data: {
@@ -151,10 +161,14 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
         };
       });
       setNodes(loadedNodes);
+      
+      console.log('[EditWorkflow] Loaded nodes:', loadedNodes.map((n: any) => n.id));
 
       // Create edges from connections (handle both array and object formats)
       const loadedEdges: Edge[] = [];
       const connections = workflow.connections;
+      
+      console.log('[EditWorkflow] Connections:', connections);
       
       if (connections) {
         if (Array.isArray(connections)) {
@@ -176,17 +190,25 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
           // Object format: { nodeId: { main: [[{node, type, index}]] } }
           let edgeIdx = 0;
           Object.entries(connections).forEach(([sourceId, connData]: [string, any]) => {
-            if (connData?.main?.[0]) {
-              connData.main[0].forEach((target: any) => {
-                if (target.node) {
-                  loadedEdges.push({
-                    id: `edge-${edgeIdx++}`,
-                    source: sourceId,
-                    target: target.node,
-                    type: 'smoothstep',
-                    animated: false,
-                    style: { stroke: '#94a3b8', strokeWidth: 1.5 },
-                    markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+            console.log('[EditWorkflow] Processing connection from:', sourceId, connData);
+            
+            // Handle main connections (can have multiple output branches)
+            if (connData?.main) {
+              connData.main.forEach((outputBranch: any[], branchIndex: number) => {
+                if (outputBranch && Array.isArray(outputBranch)) {
+                  outputBranch.forEach((target: any) => {
+                    if (target?.node) {
+                      console.log('[EditWorkflow] Creating edge:', sourceId, '->', target.node);
+                      loadedEdges.push({
+                        id: `edge-${edgeIdx++}`,
+                        source: sourceId,
+                        target: target.node,
+                        type: 'smoothstep',
+                        animated: false,
+                        style: { stroke: '#94a3b8', strokeWidth: 1.5 },
+                        markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+                      });
+                    }
                   });
                 }
               });
@@ -194,6 +216,8 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
           });
         }
       }
+      
+      console.log('[EditWorkflow] Loaded edges:', loadedEdges);
       setEdges(loadedEdges);
     }
   }, [workflow]);
@@ -419,11 +443,27 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
                 <div className="absolute inset-0">
                   <ReactFlow
                     nodes={nodes}
-                    edges={edges}
+                    edges={edges.map(edge => {
+                      const isHovered = hoveredEdge === edge.id;
+                      return {
+                        ...edge,
+                        animated: isHovered,
+                        style: {
+                          strokeWidth: isHovered ? 2.5 : 1.5,
+                          stroke: isHovered ? '#3b82f6' : '#94a3b8',
+                        },
+                        markerEnd: {
+                          type: MarkerType.ArrowClosed,
+                          color: isHovered ? '#3b82f6' : '#94a3b8',
+                        },
+                      };
+                    })}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
                     onConnect={onConnect}
                     onNodeClick={handleNodeClick}
+                    onEdgeMouseEnter={(_, edge) => setHoveredEdge(edge.id)}
+                    onEdgeMouseLeave={() => setHoveredEdge(null)}
                     onPaneClick={() => {
                       setSelectedNode(null);
                       setShowConfigPanel(false);
