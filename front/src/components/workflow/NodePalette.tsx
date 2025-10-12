@@ -186,9 +186,9 @@ export function NodePalette({ nodes, isLoading, onNodeSelect, onSearch }: NodePa
                       transition={{ duration: 0.2 }}
                       className="space-y-2 overflow-hidden"
                     >
-                      {categoryNodes.map((node) => (
+                      {categoryNodes.map((node, index) => (
                         <NodeCard
-                          key={node.type}
+                          key={`${node.type}-${index}`}
                           node={node}
                           onDragStart={handleDragStart}
                           onClick={onNodeSelect}

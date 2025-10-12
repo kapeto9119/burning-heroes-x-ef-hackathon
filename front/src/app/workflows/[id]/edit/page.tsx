@@ -1,15 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { Navbar } from '@/components/layout/Navbar';
-import { Background } from '@/components/layout/Background';
-import { NodePalette } from '@/components/workflow/NodePalette';
-import { useNodes } from '@/hooks/useNodes';
-import { useAuth } from '@/contexts/AuthContext';
-import { getClientToken } from '@/lib/auth';
-import { Button } from '@/components/ui/button';
-import { Save, Play, ArrowLeft, Loader2, CheckCircle, Trash2, Clock } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { Navbar } from "@/components/layout/Navbar";
+import { Background } from "@/components/layout/Background";
+import { NodePalette } from "@/components/workflow/NodePalette";
+import { useNodes } from "@/hooks/useNodes";
+import { useAuth } from "@/contexts/AuthContext";
+import { getClientToken } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import {
+  Save,
+  Play,
+  ArrowLeft,
+  Loader2,
+  CheckCircle,
+  Trash2,
+  Clock,
+} from "lucide-react";
 import ReactFlow, {
   Node,
   Edge,
@@ -27,90 +35,152 @@ import ReactFlow, {
   Handle,
   Position,
   updateEdge,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
-import { motion, AnimatePresence } from 'framer-motion';
-import { NodeConfigPanel } from '@/components/workflow/NodeConfigPanel';
-import { getNodeVisual } from '@/lib/nodeVisuals';
-import { useMemo } from 'react';
+} from "reactflow";
+import "reactflow/dist/style.css";
+import { motion, AnimatePresence } from "framer-motion";
+import { NodeConfigPanel } from "@/components/workflow/NodeConfigPanel";
+import { getNodeVisual } from "@/lib/nodeVisuals";
+import { useMemo } from "react";
 
 // Custom styled node component matching WorkflowCanvas design
 function CustomEditorNode({ data, selected, id }: any) {
-  const visual = getNodeVisual(data.nodeType || '', data.label);
+  const visual = getNodeVisual(data.nodeType || "", data.label);
   const Icon = visual.icon;
-  
+
+  // Simple, clean node colors
   const getNodeColor = () => {
-    const type = (data.nodeType || '').toLowerCase();
-    
-    if (type.includes('webhook') || type.includes('trigger') || type.includes('manual')) {
-      return selected ? 'border-blue-400 bg-blue-100' : 'border-blue-200 bg-blue-50';
+    const type = (data.nodeType || "").toLowerCase();
+
+    // Trigger nodes - Blue
+    if (
+      type.includes("webhook") ||
+      type.includes("trigger") ||
+      type.includes("manual")
+    ) {
+      return selected
+        ? "border-blue-500 bg-blue-100 dark:border-blue-400 dark:bg-blue-900/40"
+        : "border-blue-300 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/40";
     }
-    if (type.includes('schedule') || type.includes('cron')) {
-      return selected ? 'border-purple-400 bg-purple-100' : 'border-purple-200 bg-purple-50';
+    // Schedule nodes - Purple
+    if (type.includes("schedule") || type.includes("cron")) {
+      return selected
+        ? "border-purple-500 bg-purple-100 dark:border-purple-400 dark:bg-purple-900/40"
+        : "border-purple-300 bg-purple-50 dark:border-purple-500 dark:bg-purple-900/40";
     }
-    if (type.includes('email') || type.includes('mail') || type.includes('gmail')) {
-      return selected ? 'border-green-400 bg-green-100' : 'border-green-200 bg-green-50';
+    // Email - Green
+    if (
+      type.includes("email") ||
+      type.includes("mail") ||
+      type.includes("gmail")
+    ) {
+      return selected
+        ? "border-green-500 bg-green-100 dark:border-green-400 dark:bg-green-900/40"
+        : "border-green-300 bg-green-50 dark:border-green-500 dark:bg-green-900/40";
     }
-    if (type.includes('slack') || type.includes('discord')) {
-      return selected ? 'border-emerald-400 bg-emerald-100' : 'border-emerald-200 bg-emerald-50';
+    // Slack/Discord - Teal
+    if (type.includes("slack") || type.includes("discord")) {
+      return selected
+        ? "border-teal-500 bg-teal-100 dark:border-teal-400 dark:bg-teal-900/40"
+        : "border-teal-300 bg-teal-50 dark:border-teal-500 dark:bg-teal-900/40";
     }
-    if (type.includes('linkedin') || type.includes('twitter') || type.includes('facebook')) {
-      return selected ? 'border-purple-400 bg-purple-100' : 'border-purple-200 bg-purple-50';
+    // Social networks - Indigo
+    if (
+      type.includes("linkedin") ||
+      type.includes("twitter") ||
+      type.includes("facebook")
+    ) {
+      return selected
+        ? "border-indigo-500 bg-indigo-100 dark:border-indigo-400 dark:bg-indigo-900/40"
+        : "border-indigo-300 bg-indigo-50 dark:border-indigo-500 dark:bg-indigo-900/40";
     }
-    if (type.includes('salesforce') || type.includes('crm') || type.includes('hubspot')) {
-      return selected ? 'border-blue-400 bg-blue-100' : 'border-blue-200 bg-blue-50';
+    // CRM - Sky blue
+    if (
+      type.includes("salesforce") ||
+      type.includes("crm") ||
+      type.includes("hubspot")
+    ) {
+      return selected
+        ? "border-sky-500 bg-sky-100 dark:border-sky-400 dark:bg-sky-900/40"
+        : "border-sky-300 bg-sky-50 dark:border-sky-500 dark:bg-sky-900/40";
     }
-    if (type.includes('postgres') || type.includes('mysql') || type.includes('database')) {
-      return selected ? 'border-cyan-400 bg-cyan-100' : 'border-cyan-200 bg-cyan-50';
+    // Database - Cyan
+    if (
+      type.includes("postgres") ||
+      type.includes("mysql") ||
+      type.includes("database")
+    ) {
+      return selected
+        ? "border-cyan-500 bg-cyan-100 dark:border-cyan-400 dark:bg-cyan-900/40"
+        : "border-cyan-300 bg-cyan-50 dark:border-cyan-500 dark:bg-cyan-900/40";
     }
-    if (type.includes('http') || type.includes('api')) {
-      return selected ? 'border-orange-400 bg-orange-100' : 'border-orange-200 bg-orange-50';
+    // HTTP/API - Orange
+    if (type.includes("http") || type.includes("api")) {
+      return selected
+        ? "border-orange-500 bg-orange-100 dark:border-orange-400 dark:bg-orange-900/40"
+        : "border-orange-300 bg-orange-50 dark:border-orange-500 dark:bg-orange-900/40";
     }
-    if (type.includes('openai') || type.includes('ai')) {
-      return selected ? 'border-pink-400 bg-pink-100' : 'border-pink-200 bg-pink-50';
+    // AI - Rose
+    if (type.includes("openai") || type.includes("ai")) {
+      return selected
+        ? "border-rose-500 bg-rose-100 dark:border-rose-400 dark:bg-rose-900/40"
+        : "border-rose-300 bg-rose-50 dark:border-rose-500 dark:bg-rose-900/40";
     }
-    if (type.includes('if') || type.includes('switch') || type.includes('merge')) {
-      return selected ? 'border-yellow-400 bg-yellow-100' : 'border-yellow-200 bg-yellow-50';
+    // Control flow - Amber
+    if (
+      type.includes("if") ||
+      type.includes("switch") ||
+      type.includes("merge")
+    ) {
+      return selected
+        ? "border-amber-500 bg-amber-100 dark:border-amber-400 dark:bg-amber-900/40"
+        : "border-amber-300 bg-amber-50 dark:border-amber-500 dark:bg-amber-900/40";
     }
-    return selected ? 'border-gray-400 bg-gray-100' : 'border-gray-200 bg-gray-50';
+    // Default - Slate
+    return selected
+      ? "border-slate-500 bg-slate-100 dark:border-slate-400 dark:bg-slate-800/40"
+      : "border-slate-300 bg-slate-50 dark:border-slate-500 dark:bg-slate-800/40";
   };
 
   return (
-    <div className="relative" style={{ minWidth: '220px', maxWidth: '400px' }}>
+    <div className="relative" style={{ minWidth: "220px", maxWidth: "400px" }}>
       <Handle
         type="target"
         position={Position.Top}
         id="input"
         className="w-3 h-3 !bg-gray-400 border-2 border-white"
-        style={{ top: '0px' }}
+        style={{ top: "0px" }}
       />
-      
+
       <Handle
         type="source"
         position={Position.Bottom}
         id="output"
         className="w-3 h-3 !bg-gray-400 border-2 border-white"
-        style={{ bottom: '0px' }}
+        style={{ bottom: "0px" }}
       />
-      
-      <div className={`
+
+      <div
+        className={`
         px-4 py-3 rounded-lg shadow-md bg-white
         ${getNodeColor()}
-        ${selected ? 'border-4' : 'border-2'}
+        ${selected ? "border-4" : "border-2"}
         hover:shadow-lg transition-all duration-200
         w-full relative cursor-grab active:cursor-grabbing
-      `}>
+      `}
+      >
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <Icon className="w-4 h-4 flex-shrink-0" />
-            <span className="font-medium text-sm break-words">{data.label}</span>
+            <span className="font-medium text-sm break-words">
+              {data.label}
+            </span>
           </div>
         </div>
-        
+
         <p className="text-xs text-gray-600 mb-2">
-          {data.description || 'Workflow node'}
+          {data.description || "Workflow node"}
         </p>
-        
+
         <div className="inline-flex px-2 py-1 rounded text-xs border bg-white text-gray-500 border-gray-300">
           pending
         </div>
@@ -124,7 +194,12 @@ export default function WorkflowEditorPage() {
   const params = useParams();
   const workflowId = params.id as string;
   const { user, isAuthenticated } = useAuth();
-  const { nodes: availableNodes, isLoading: isLoadingNodes, searchNodes, getNodeDetails } = useNodes();
+  const {
+    nodes: availableNodes,
+    isLoading: isLoadingNodes,
+    searchNodes,
+    getNodeDetails,
+  } = useNodes();
 
   const [workflow, setWorkflow] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -138,71 +213,79 @@ export default function WorkflowEditorPage() {
   const [snappingNodeId, setSnappingNodeId] = useState<string | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [initialWorkflowState, setInitialWorkflowState] = useState<{nodes: Node[], edges: Edge[]} | null>(null);
+  const [initialWorkflowState, setInitialWorkflowState] = useState<{
+    nodes: Node[];
+    edges: Edge[];
+  } | null>(null);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   // Track which original edge a node split so we can restore it when un-linking
-  const [splitEdgeByNode, setSplitEdgeByNode] = useState<Record<string, { sourceId: string; targetId: string } | undefined>>({});
+  const [splitEdgeByNode, setSplitEdgeByNode] = useState<
+    Record<string, { sourceId: string; targetId: string } | undefined>
+  >({});
   // Live DnD temp node id while dragging from palette
   const [tempDragNodeId, setTempDragNodeId] = useState<string | null>(null);
   // Track which node is being dragged
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
-  
+
   // Magnetic snap settings
   const SNAP_THRESHOLD = 80; // Distance in pixels to trigger snap
   const UNSNAP_THRESHOLD = 140; // Distance to original pair midpoint to auto-unlink
   const NODE_WIDTH = 220; // Approximate node width
   const NODE_HEIGHT = 120; // Approximate node height
   const VERTICAL_SPACING = 200; // Spacing between nodes vertically
-  
+
   // Memoize custom node types
-  const nodeTypes = useMemo(() => ({
-    custom: CustomEditorNode,
-  }), []);
+  const nodeTypes = useMemo(
+    () => ({
+      custom: CustomEditorNode,
+    }),
+    []
+  );
 
   // Helper: Get default parameters for a node type
   const getDefaultParameters = (nodeType: string): any => {
     const defaults: Record<string, any> = {
-      'n8n-nodes-base.slack': {
-        resource: 'message',
-        operation: 'post',
-        select: 'channel',
-        channelId: '#general',
-        text: 'Hello from workflow!'
+      "n8n-nodes-base.slack": {
+        resource: "message",
+        operation: "post",
+        select: "channel",
+        channelId: "#general",
+        text: "Hello from workflow!",
       },
-      'n8n-nodes-base.gmail': {
-        resource: 'message',
-        operation: 'send',
-        to: '',
-        subject: 'Message from workflow',
-        message: ''
+      "n8n-nodes-base.gmail": {
+        resource: "message",
+        operation: "send",
+        to: "",
+        subject: "Message from workflow",
+        message: "",
       },
-      'n8n-nodes-base.emailSend': {
-        fromEmail: 'noreply@example.com',
-        toEmail: '',
-        subject: 'Notification',
-        text: ''
+      "n8n-nodes-base.emailSend": {
+        fromEmail: "noreply@example.com",
+        toEmail: "",
+        subject: "Notification",
+        text: "",
       },
-      'n8n-nodes-base.webhook': {
-        httpMethod: 'POST',
+      "n8n-nodes-base.webhook": {
+        httpMethod: "POST",
         path: `webhook-${Date.now()}`,
-        responseMode: 'onReceived'
+        responseMode: "onReceived",
       },
-      'n8n-nodes-base.httpRequest': {
-        method: 'GET',
-        url: '',
-        authentication: 'none'
+      "n8n-nodes-base.httpRequest": {
+        method: "GET",
+        url: "",
+        authentication: "none",
       },
-      'n8n-nodes-base.postgres': {
-        operation: 'executeQuery',
-        query: 'SELECT * FROM table LIMIT 10'
+      "n8n-nodes-base.postgres": {
+        operation: "executeQuery",
+        query: "SELECT * FROM table LIMIT 10",
       },
-      'n8n-nodes-base.if': {
+      "n8n-nodes-base.if": {
         conditions: {
           boolean: [],
           number: [],
-          string: []
-        }
-      }
+          string: [],
+        },
+      },
     };
     return defaults[nodeType] || {};
   };
@@ -217,14 +300,20 @@ export default function WorkflowEditorPage() {
     const others: Edge[] = [];
     for (const e of list) {
       if (e.target === nodeId) {
-        if (!incoming) incoming = e; else continue;
+        if (!incoming) incoming = e;
+        else continue;
       } else if (e.source === nodeId) {
-        if (!outgoing) outgoing = e; else continue;
+        if (!outgoing) outgoing = e;
+        else continue;
       } else {
         others.push(e);
       }
       // keep pushed edges in place
-      if (others[others.length - 1] !== e && e.target !== nodeId && e.source !== nodeId) {
+      if (
+        others[others.length - 1] !== e &&
+        e.target !== nodeId &&
+        e.source !== nodeId
+      ) {
         // no-op
       }
     }
@@ -245,7 +334,7 @@ export default function WorkflowEditorPage() {
     try {
       setIsLoading(true);
       const token = getClientToken();
-      
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/workflows/${workflowId}`,
         {
@@ -259,80 +348,91 @@ export default function WorkflowEditorPage() {
 
       if (data.success && data.data) {
         setWorkflow(data.data);
-        
+
         // Convert workflow nodes to ReactFlow format
         if (data.data.nodes && data.data.nodes.length > 0) {
-          const flowNodes: Node[] = data.data.nodes.map((node: any, index: number) => {
-            // Convert n8n position format [x, y] to ReactFlow {x, y}
-            let position = { x: 250, y: 100 + index * 200 };
-            if (node.position) {
-              if (Array.isArray(node.position)) {
-                // n8n format: [x, y]
-                position = { x: node.position[0], y: node.position[1] };
-              } else if (typeof node.position === 'object') {
-                // Already ReactFlow format
-                position = node.position;
+          const flowNodes: Node[] = data.data.nodes.map(
+            (node: any, index: number) => {
+              // Convert n8n position format [x, y] to ReactFlow {x, y}
+              let position = { x: 250, y: 100 + index * 200 };
+              if (node.position) {
+                if (Array.isArray(node.position)) {
+                  // n8n format: [x, y]
+                  position = { x: node.position[0], y: node.position[1] };
+                } else if (typeof node.position === "object") {
+                  // Already ReactFlow format
+                  position = node.position;
+                }
               }
+
+              return {
+                id: node.id,
+                type: "custom",
+                position,
+                data: {
+                  label: node.name,
+                  nodeType: node.type,
+                  description:
+                    node.parameters?.text ||
+                    node.parameters?.message ||
+                    "Workflow node",
+                  parameters: node.parameters || {},
+                },
+              };
             }
-            
-            return {
-              id: node.id,
-              type: 'custom',
-              position,
-              data: {
-                label: node.name,
-                nodeType: node.type,
-                description: node.parameters?.text || node.parameters?.message || 'Workflow node',
-                parameters: node.parameters || {},
-              },
-            };
-          });
+          );
 
           setNodes(flowNodes);
-          
+
           // Store initial state for unsaved changes detection
           setInitialWorkflowState({ nodes: flowNodes, edges: [] });
 
           // Convert connections to edges
           const flowEdges: Edge[] = [];
           if (data.data.connections) {
-            Object.entries(data.data.connections).forEach(([sourceNode, connections]: any) => {
-              const sourceNodeData = data.data.nodes.find((n: any) => n.name === sourceNode);
-              
-              if (connections.main && connections.main[0]) {
-                connections.main[0].forEach((connection: any) => {
-                  const targetNodeData = data.data.nodes.find((n: any) => n.name === connection.node);
-                  
-                  if (sourceNodeData && targetNodeData) {
-                    flowEdges.push({
-                      id: `${sourceNodeData.id}-${targetNodeData.id}`,
-                      source: sourceNodeData.id,
-                      target: targetNodeData.id,
-                      type: 'smoothstep',
-                      animated: flowEdges.length === 0,
-                      style: {
-                        stroke: '#94a3b8',
-                        strokeWidth: 1.5,
-                      },
-                      markerEnd: {
-                        type: MarkerType.ArrowClosed,
-                        color: '#94a3b8',
-                      },
-                    });
-                  }
-                });
+            Object.entries(data.data.connections).forEach(
+              ([sourceNode, connections]: any) => {
+                const sourceNodeData = data.data.nodes.find(
+                  (n: any) => n.name === sourceNode
+                );
+
+                if (connections.main && connections.main[0]) {
+                  connections.main[0].forEach((connection: any) => {
+                    const targetNodeData = data.data.nodes.find(
+                      (n: any) => n.name === connection.node
+                    );
+
+                    if (sourceNodeData && targetNodeData) {
+                      flowEdges.push({
+                        id: `${sourceNodeData.id}-${targetNodeData.id}`,
+                        source: sourceNodeData.id,
+                        target: targetNodeData.id,
+                        type: "smoothstep",
+                        animated: flowEdges.length === 0,
+                        style: {
+                          stroke: "#94a3b8",
+                          strokeWidth: 1.5,
+                        },
+                        markerEnd: {
+                          type: MarkerType.ArrowClosed,
+                          color: "#94a3b8",
+                        },
+                      });
+                    }
+                  });
+                }
               }
-            });
+            );
           }
 
           setEdges(flowEdges);
-          
+
           // Update initial state with edges
           setInitialWorkflowState({ nodes: flowNodes, edges: flowEdges });
         }
       }
     } catch (error) {
-      console.error('Failed to load workflow:', error);
+      console.error("Failed to load workflow:", error);
     } finally {
       setIsLoading(false);
     }
@@ -344,7 +444,7 @@ export default function WorkflowEditorPage() {
       setHasUnsavedChanges(true);
       // Detect drag start/end
       changes.forEach((change) => {
-        if (change.type === 'position') {
+        if (change.type === "position") {
           if (change.dragging) {
             setDraggingNodeId(change.id);
           } else if (change.dragging === false) {
@@ -354,22 +454,26 @@ export default function WorkflowEditorPage() {
       });
       // Apply magnetic snapping to position changes
       const modifiedChanges = changes.map((change) => {
-        if (change.type === 'position' && change.dragging && change.position) {
+        if (change.type === "position" && change.dragging && change.position) {
           const draggedNode = nodes.find((n) => n.id === change.id);
           if (!draggedNode) return change;
 
           let snappedPosition = { ...change.position };
           let hasSnapped = false;
-          let insertBetween: { sourceId: string; targetId: string; edgeId: string } | null = null;
+          let insertBetween: {
+            sourceId: string;
+            targetId: string;
+            edgeId: string;
+          } | null = null;
 
           const draggedX = change.position!.x;
           const draggedY = change.position!.y;
 
           // Check all edges to see if we're near the midpoint (to insert between nodes)
           edges.forEach((edge) => {
-            const sourceNode = nodes.find(n => n.id === edge.source);
-            const targetNode = nodes.find(n => n.id === edge.target);
-            
+            const sourceNode = nodes.find((n) => n.id === edge.source);
+            const targetNode = nodes.find((n) => n.id === edge.target);
+
             // Skip if this edge involves the dragged node (we'll handle re-linking)
             if (!sourceNode || !targetNode) return;
             if (edge.source === change.id || edge.target === change.id) return;
@@ -404,12 +508,16 @@ export default function WorkflowEditorPage() {
             setTimeout(() => {
               setEdges((eds) => {
                 // Capture current pair (if node was already between two nodes)
-                const prevIncoming = eds.find(e => e.target === change.id);
-                const prevOutgoing = eds.find(e => e.source === change.id);
-                
+                const prevIncoming = eds.find((e) => e.target === change.id);
+                const prevOutgoing = eds.find((e) => e.source === change.id);
+
                 // Remove the edge we're inserting into and any existing edges tied to this node
-                let newEdges = eds.filter(e => e.id !== insertBetween!.edgeId);
-                newEdges = newEdges.filter(e => e.source !== change.id && e.target !== change.id);
+                let newEdges = eds.filter(
+                  (e) => e.id !== insertBetween!.edgeId
+                );
+                newEdges = newEdges.filter(
+                  (e) => e.source !== change.id && e.target !== change.id
+                );
 
                 // Add two new edges: source -> dragged node -> target
                 newEdges = [
@@ -418,19 +526,25 @@ export default function WorkflowEditorPage() {
                     id: `${insertBetween!.sourceId}-${change.id}`,
                     source: insertBetween!.sourceId,
                     target: change.id,
-                    type: 'smoothstep',
+                    type: "smoothstep",
                     animated: false,
-                    style: { stroke: '#94a3b8', strokeWidth: 1.5 },
-                    markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+                    style: { stroke: "#94a3b8", strokeWidth: 1.5 },
+                    markerEnd: {
+                      type: MarkerType.ArrowClosed,
+                      color: "#94a3b8",
+                    },
                   },
                   {
                     id: `${change.id}-${insertBetween!.targetId}`,
                     source: change.id,
                     target: insertBetween!.targetId,
-                    type: 'smoothstep',
+                    type: "smoothstep",
                     animated: false,
-                    style: { stroke: '#94a3b8', strokeWidth: 1.5 },
-                    markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+                    style: { stroke: "#94a3b8", strokeWidth: 1.5 },
+                    markerEnd: {
+                      type: MarkerType.ArrowClosed,
+                      color: "#94a3b8",
+                    },
                   },
                 ];
 
@@ -439,18 +553,28 @@ export default function WorkflowEditorPage() {
                   const a = prevIncoming.source;
                   const b = prevOutgoing.target;
                   // Avoid restoring if it's the same pair we're inserting into
-                  if (!(a === insertBetween!.sourceId && b === insertBetween!.targetId)) {
+                  if (
+                    !(
+                      a === insertBetween!.sourceId &&
+                      b === insertBetween!.targetId
+                    )
+                  ) {
                     // Ensure we don't duplicate the edge
-                    const exists = newEdges.some(e => e.source === a && e.target === b);
+                    const exists = newEdges.some(
+                      (e) => e.source === a && e.target === b
+                    );
                     if (!exists) {
                       newEdges.push({
                         id: `${a}-${b}`,
                         source: a,
                         target: b,
-                        type: 'smoothstep',
+                        type: "smoothstep",
                         animated: false,
-                        style: { stroke: '#94a3b8', strokeWidth: 1.5 },
-                        markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+                        style: { stroke: "#94a3b8", strokeWidth: 1.5 },
+                        markerEnd: {
+                          type: MarkerType.ArrowClosed,
+                          color: "#94a3b8",
+                        },
                       });
                     }
                   }
@@ -460,36 +584,56 @@ export default function WorkflowEditorPage() {
                 return normalizeEdgesForNode(newEdges, change.id);
               });
               // Remember which pair this node split now
-              setSplitEdgeByNode((m) => ({ ...m, [change.id]: { sourceId: insertBetween!.sourceId, targetId: insertBetween!.targetId } }));
+              setSplitEdgeByNode((m) => ({
+                ...m,
+                [change.id]: {
+                  sourceId: insertBetween!.sourceId,
+                  targetId: insertBetween!.targetId,
+                },
+              }));
             }, 100);
           }
 
           // If not snapping to any edge, and currently between two nodes, unlink when far enough and restore original A->B
           if (!hasSnapped) {
-            const incoming = edges.find(e => e.target === change.id);
-            const outgoing = edges.find(e => e.source === change.id);
+            const incoming = edges.find((e) => e.target === change.id);
+            const outgoing = edges.find((e) => e.source === change.id);
             if (incoming && outgoing) {
-              const sourceNode = nodes.find(n => n.id === incoming.source);
-              const targetNode = nodes.find(n => n.id === outgoing.target);
+              const sourceNode = nodes.find((n) => n.id === incoming.source);
+              const targetNode = nodes.find((n) => n.id === outgoing.target);
               if (sourceNode && targetNode) {
-                const midX = (sourceNode.position.x + targetNode.position.x) / 2;
-                const midY = (sourceNode.position.y + targetNode.position.y) / 2;
-                const distanceToMid = Math.hypot(draggedX - midX, draggedY - midY);
+                const midX =
+                  (sourceNode.position.x + targetNode.position.x) / 2;
+                const midY =
+                  (sourceNode.position.y + targetNode.position.y) / 2;
+                const distanceToMid = Math.hypot(
+                  draggedX - midX,
+                  draggedY - midY
+                );
                 if (distanceToMid > UNSNAP_THRESHOLD) {
                   setEdges((eds) => {
                     // Remove node's edges
-                    let next = eds.filter(e => e.source !== change.id && e.target !== change.id);
+                    let next = eds.filter(
+                      (e) => e.source !== change.id && e.target !== change.id
+                    );
                     // Restore A->B if missing
-                    const exists = next.some(e => e.source === incoming.source && e.target === outgoing.target);
+                    const exists = next.some(
+                      (e) =>
+                        e.source === incoming.source &&
+                        e.target === outgoing.target
+                    );
                     if (!exists) {
                       next = next.concat({
                         id: `${incoming.source}-${outgoing.target}`,
                         source: incoming.source,
                         target: outgoing.target,
-                        type: 'smoothstep',
+                        type: "smoothstep",
                         animated: false,
-                        style: { stroke: '#94a3b8', strokeWidth: 1.5 },
-                        markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+                        style: { stroke: "#94a3b8", strokeWidth: 1.5 },
+                        markerEnd: {
+                          type: MarkerType.ArrowClosed,
+                          color: "#94a3b8",
+                        },
                       });
                     }
                     return next;
@@ -520,8 +664,14 @@ export default function WorkflowEditorPage() {
       setEdges((eds) => {
         const next = addEdge(params, eds);
         // Enforce at most one incoming and one outgoing per node for both ends
-        const afterSource = normalizeEdgesForNode(next, params.source as string);
-        const afterBoth = normalizeEdgesForNode(afterSource, params.target as string);
+        const afterSource = normalizeEdgesForNode(
+          next,
+          params.source as string
+        );
+        const afterBoth = normalizeEdgesForNode(
+          afterSource,
+          params.target as string
+        );
         return afterBoth;
       });
     },
@@ -532,68 +682,88 @@ export default function WorkflowEditorPage() {
     edgeUpdateSuccessful.current = false;
   }, []);
 
-  const onEdgeUpdate = useCallback((oldEdge: Edge, newConnection: Connection) => {
-    setHasUnsavedChanges(true);
-    setEdges((eds) => {
-      const updated = updateEdge(oldEdge, newConnection, eds);
-      const afterSource = newConnection.source ? normalizeEdgesForNode(updated, newConnection.source) : updated;
-      const afterBoth = newConnection.target ? normalizeEdgesForNode(afterSource, newConnection.target) : afterSource;
-      return afterBoth;
-    });
-    edgeUpdateSuccessful.current = true;
-  }, [setEdges, normalizeEdgesForNode]);
-
-  const onEdgeUpdateEnd = useCallback((_: any, edge: Edge) => {
-    if (!edgeUpdateSuccessful.current) {
-      // if not reconnected, remove the edge
-      setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+  const onEdgeUpdate = useCallback(
+    (oldEdge: Edge, newConnection: Connection) => {
       setHasUnsavedChanges(true);
-    }
-    edgeUpdateSuccessful.current = true;
-  }, [setEdges]);
+      setEdges((eds) => {
+        const updated = updateEdge(oldEdge, newConnection, eds);
+        const afterSource = newConnection.source
+          ? normalizeEdgesForNode(updated, newConnection.source)
+          : updated;
+        const afterBoth = newConnection.target
+          ? normalizeEdgesForNode(afterSource, newConnection.target)
+          : afterSource;
+        return afterBoth;
+      });
+      edgeUpdateSuccessful.current = true;
+    },
+    [setEdges, normalizeEdgesForNode]
+  );
 
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+  const onEdgeUpdateEnd = useCallback(
+    (_: any, edge: Edge) => {
+      if (!edgeUpdateSuccessful.current) {
+        // if not reconnected, remove the edge
+        setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+        setHasUnsavedChanges(true);
+      }
+      edgeUpdateSuccessful.current = true;
+    },
+    [setEdges]
+  );
 
-    if (!reactFlowInstance) return;
+  const onDragOver = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
 
-    // Try to read node data from DataTransfer or window cache
-    let nodeDataStr = event.dataTransfer.getData('nodeData');
-    let nodeData: any | null = null;
-    if (nodeDataStr) {
-      try { nodeData = JSON.parse(nodeDataStr); } catch {}
-    }
-    // @ts-ignore
-    if (!nodeData && (window as any).__paletteDragNode) {
+      if (!reactFlowInstance) return;
+
+      // Try to read node data from DataTransfer or window cache
+      let nodeDataStr = event.dataTransfer.getData("nodeData");
+      let nodeData: any | null = null;
+      if (nodeDataStr) {
+        try {
+          nodeData = JSON.parse(nodeDataStr);
+        } catch {}
+      }
       // @ts-ignore
-      nodeData = (window as any).__paletteDragNode;
-    }
-    if (!nodeData) return;
+      if (!nodeData && (window as any).__paletteDragNode) {
+        // @ts-ignore
+        nodeData = (window as any).__paletteDragNode;
+      }
+      if (!nodeData) return;
 
-    const position = reactFlowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
 
-    if (!tempDragNodeId) {
-      const id = `temp-${Date.now()}`;
-      const tempNode: Node = {
-        id,
-        type: 'custom',
-        position,
-        data: {
-          label: nodeData.displayName,
-          nodeType: nodeData.type,
-          icon: nodeData.icon,
-          description: nodeData.description || 'Workflow node',
-          parameters: getDefaultParameters(nodeData.type),
-        },
-      };
-      setNodes((nds) => nds.concat(tempNode));
-      setTempDragNodeId(id);
-    } else {
-      // Update temp node position
-      setNodes((nds) => nds.map(n => n.id === tempDragNodeId ? { ...n, position } : n));
-    }
-  }, [reactFlowInstance, tempDragNodeId, setNodes]);
+      if (!tempDragNodeId) {
+        const id = `temp-${Date.now()}`;
+        const tempNode: Node = {
+          id,
+          type: "custom",
+          position,
+          data: {
+            label: nodeData.displayName,
+            nodeType: nodeData.type,
+            icon: nodeData.icon,
+            description: nodeData.description || "Workflow node",
+            parameters: getDefaultParameters(nodeData.type),
+          },
+        };
+        setNodes((nds) => nds.concat(tempNode));
+        setTempDragNodeId(id);
+      } else {
+        // Update temp node position
+        setNodes((nds) =>
+          nds.map((n) => (n.id === tempDragNodeId ? { ...n, position } : n))
+        );
+      }
+    },
+    [reactFlowInstance, tempDragNodeId, setNodes]
+  );
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
@@ -604,25 +774,30 @@ export default function WorkflowEditorPage() {
         setHasUnsavedChanges(true);
         setTempDragNodeId(null);
         // Clear cache
-        try { /* @ts-ignore */ delete (window as any).__paletteDragNode; } catch {}
+        try {
+          /* @ts-ignore */ delete (window as any).__paletteDragNode;
+        } catch {}
         return;
       }
 
       // Fallback: create from DataTransfer if no temp node was created
-      const type = event.dataTransfer.getData('application/reactflow');
-      const nodeDataStr = event.dataTransfer.getData('nodeData');
+      const type = event.dataTransfer.getData("application/reactflow");
+      const nodeDataStr = event.dataTransfer.getData("nodeData");
       if (!type || !nodeDataStr || !reactFlowInstance) return;
       const nodeData = JSON.parse(nodeDataStr);
-      const position = reactFlowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
       const newNode: Node = {
         id: `${nodeData.type}-${Date.now()}`,
-        type: 'custom',
+        type: "custom",
         position,
         data: {
           label: nodeData.displayName,
           nodeType: nodeData.type,
           icon: nodeData.icon,
-          description: nodeData.description || 'Workflow node',
+          description: nodeData.description || "Workflow node",
           parameters: getDefaultParameters(nodeData.type),
         },
       };
@@ -635,9 +810,11 @@ export default function WorkflowEditorPage() {
   const onDragLeaveCanvas = useCallback(() => {
     // Remove temp node if dragging leaves canvas without drop
     if (tempDragNodeId) {
-      setNodes((nds) => nds.filter(n => n.id !== tempDragNodeId));
+      setNodes((nds) => nds.filter((n) => n.id !== tempDragNodeId));
       setTempDragNodeId(null);
-      try { /* @ts-ignore */ delete (window as any).__paletteDragNode; } catch {}
+      try {
+        /* @ts-ignore */ delete (window as any).__paletteDragNode;
+      } catch {}
     }
   }, [tempDragNodeId, setNodes]);
 
@@ -650,7 +827,7 @@ export default function WorkflowEditorPage() {
       let modified = false;
 
       // Only check the node being dragged
-      const n = nodes.find(node => node.id === draggingNodeId);
+      const n = nodes.find((node) => node.id === draggingNodeId);
       if (!n) return prevEdges;
 
       {
@@ -670,18 +847,23 @@ export default function WorkflowEditorPage() {
           if (dist > UNSNAP_THRESHOLD) {
             modified = true;
             // remove n's edges
-            let updated = nextEdges.filter((e) => e.source !== n.id && e.target !== n.id);
+            let updated = nextEdges.filter(
+              (e) => e.source !== n.id && e.target !== n.id
+            );
             // restore A->B if missing
-            const exists = updated.some((e) => e.source === incoming.source && e.target === outgoing.target);
+            const exists = updated.some(
+              (e) =>
+                e.source === incoming.source && e.target === outgoing.target
+            );
             if (!exists) {
               updated = updated.concat({
                 id: `${incoming.source}-${outgoing.target}`,
                 source: incoming.source,
                 target: outgoing.target,
-                type: 'smoothstep',
+                type: "smoothstep",
                 animated: false,
-                style: { stroke: '#94a3b8', strokeWidth: 1.5 },
-                markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+                style: { stroke: "#94a3b8", strokeWidth: 1.5 },
+                markerEnd: { type: MarkerType.ArrowClosed, color: "#94a3b8" },
               });
             }
             nextEdges = updated;
@@ -692,7 +874,10 @@ export default function WorkflowEditorPage() {
         if (incoming && !outgoing) {
           const sourceNode = nodes.find((x) => x.id === incoming.source);
           if (!sourceNode) return prevEdges;
-          const dist = Math.hypot(n.position.x - sourceNode.position.x, n.position.y - sourceNode.position.y);
+          const dist = Math.hypot(
+            n.position.x - sourceNode.position.x,
+            n.position.y - sourceNode.position.y
+          );
           if (dist > UNSNAP_THRESHOLD) {
             modified = true;
             nextEdges = nextEdges.filter((e) => e.id !== incoming.id);
@@ -701,7 +886,10 @@ export default function WorkflowEditorPage() {
         if (!incoming && outgoing) {
           const targetNode = nodes.find((x) => x.id === outgoing.target);
           if (!targetNode) return prevEdges;
-          const dist = Math.hypot(n.position.x - targetNode.position.x, n.position.y - targetNode.position.y);
+          const dist = Math.hypot(
+            n.position.x - targetNode.position.x,
+            n.position.y - targetNode.position.y
+          );
           if (dist > UNSNAP_THRESHOLD) {
             modified = true;
             nextEdges = nextEdges.filter((e) => e.id !== outgoing.id);
@@ -727,7 +915,7 @@ export default function WorkflowEditorPage() {
       const n8nNodes = nodes.map((node) => ({
         id: node.id,
         name: node.data.label,
-        type: node.data.nodeType || 'n8n-nodes-base.set',
+        type: node.data.nodeType || "n8n-nodes-base.set",
         position: [node.position.x, node.position.y],
         parameters: node.data.parameters || {},
       }));
@@ -744,7 +932,7 @@ export default function WorkflowEditorPage() {
           if (targetNode) {
             connections[sourceNode.data.label].main[0].push({
               node: targetNode.data.label,
-              type: 'main',
+              type: "main",
               index: 0,
             });
           }
@@ -760,9 +948,9 @@ export default function WorkflowEditorPage() {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/workflows/${workflowId}`,
         {
-          method: 'PUT',
+          method: "PUT",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(updatedWorkflow),
@@ -778,11 +966,11 @@ export default function WorkflowEditorPage() {
         setInitialWorkflowState({ nodes, edges });
         setTimeout(() => setSaveSuccess(false), 3000);
       } else {
-        throw new Error(data.error || 'Failed to save');
+        throw new Error(data.error || "Failed to save");
       }
     } catch (error) {
-      console.error('Save error:', error);
-      alert('Failed to save workflow');
+      console.error("Save error:", error);
+      alert("Failed to save workflow");
     } finally {
       setIsSaving(false);
     }
@@ -819,35 +1007,36 @@ export default function WorkflowEditorPage() {
     if (selectedNode) {
       setHasUnsavedChanges(true);
       // Find edges connected to this node
-      const incomingEdge = edges.find(e => e.target === selectedNode.id);
-      const outgoingEdge = edges.find(e => e.source === selectedNode.id);
-      
+      const incomingEdge = edges.find((e) => e.target === selectedNode.id);
+      const outgoingEdge = edges.find((e) => e.source === selectedNode.id);
+
       // Remove the node and its edges
       setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
       setEdges((eds) => {
-        let newEdges = eds.filter((edge) => 
-          edge.source !== selectedNode.id && edge.target !== selectedNode.id
+        let newEdges = eds.filter(
+          (edge) =>
+            edge.source !== selectedNode.id && edge.target !== selectedNode.id
         );
-        
+
         // If this node was between two nodes, reconnect them
         if (incomingEdge && outgoingEdge) {
           newEdges.push({
             id: `${incomingEdge.source}-${outgoingEdge.target}`,
             source: incomingEdge.source,
             target: outgoingEdge.target,
-            type: 'smoothstep',
+            type: "smoothstep",
             animated: false,
             style: {
-              stroke: '#94a3b8',
+              stroke: "#94a3b8",
               strokeWidth: 1.5,
             },
             markerEnd: {
               type: MarkerType.ArrowClosed,
-              color: '#94a3b8',
+              color: "#94a3b8",
             },
           });
         }
-        
+
         return newEdges;
       });
       setSelectedNode(null);
@@ -869,17 +1058,18 @@ export default function WorkflowEditorPage() {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger shortcuts when typing in input fields
       const target = e.target as HTMLElement;
-      const isInputField = target.tagName === 'INPUT' || 
-                          target.tagName === 'TEXTAREA' || 
-                          target.contentEditable === 'true' ||
-                          target.closest('[contenteditable="true"]');
-      
+      const isInputField =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.contentEditable === "true" ||
+        target.closest('[contenteditable="true"]');
+
       if (isInputField) {
         return; // Don't handle keyboard shortcuts when typing
       }
 
       // Delete key - delete selected node or edges
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (e.key === "Delete" || e.key === "Backspace") {
         if (selectedNode) {
           e.preventDefault();
           handleDeleteNode();
@@ -887,24 +1077,26 @@ export default function WorkflowEditorPage() {
           e.preventDefault();
           // Delete selected edges
           setHasUnsavedChanges(true);
-          setEdges((eds) => eds.filter((edge) => !selectedEdges.includes(edge.id)));
+          setEdges((eds) =>
+            eds.filter((edge) => !selectedEdges.includes(edge.id))
+          );
           setSelectedEdges([]);
         }
       }
       // Escape key - close config panel
-      if (e.key === 'Escape' && showConfigPanel) {
+      if (e.key === "Escape" && showConfigPanel) {
         setShowConfigPanel(false);
         setSelectedNode(null);
       }
       // Cmd/Ctrl + S - save
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
         handleSave();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedNode, selectedEdges, showConfigPanel]);
 
   if (isLoading) {
@@ -926,7 +1118,7 @@ export default function WorkflowEditorPage() {
       <div className="fixed inset-0 w-full h-full">
         <Background />
       </div>
-      
+
       <div className="relative z-10">
         <Navbar />
 
@@ -941,7 +1133,7 @@ export default function WorkflowEditorPage() {
               variant="ghost"
               onClick={() => {
                 if (hasUnsavedChanges) setShowLeaveConfirm(true);
-                else router.push('/workflows');
+                else router.push("/workflows");
               }}
               className="mb-4"
             >
@@ -959,7 +1151,9 @@ export default function WorkflowEditorPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">{workflow?.name || 'Workflow Editor'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {workflow?.name || "Workflow Editor"}
+                </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {nodes.length} nodes • {edges.length} connections
                 </p>
@@ -1041,10 +1235,11 @@ export default function WorkflowEditorPage() {
                 <div className="p-3 border-b border-border flex-shrink-0">
                   <h2 className="font-semibold text-sm">Workflow Canvas</h2>
                   <p className="text-xs text-muted-foreground">
-                    Drag nodes • Click edges to select • Drag from handles to reconnect
+                    Drag nodes • Click edges to select • Drag from handles to
+                    reconnect
                   </p>
                 </div>
-                <div 
+                <div
                   className="flex-1 relative"
                   onDrop={onDrop}
                   onDragOver={onDragOver}
@@ -1073,29 +1268,37 @@ export default function WorkflowEditorPage() {
                       height: 16px !important;
                       border: 3px solid #8b5cf6 !important;
                       background: #ffffff !important;
-                      box-shadow: 0 0 0 4px rgba(139,92,246,0.15);
+                      box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
                       opacity: 0.8 !important;
                     }
                     .react-flow__handle:hover {
                       background: #f5f3ff !important; /* light purple */
-                      box-shadow: 0 0 0 6px rgba(139,92,246,0.3);
+                      box-shadow: 0 0 0 6px rgba(139, 92, 246, 0.3);
                       opacity: 1 !important;
                       transform: scale(1.1);
                     }
                   `}</style>
                   <ReactFlow
-                    nodes={nodes.map(node => ({
+                    nodes={nodes.map((node) => ({
                       ...node,
-                      className: node.id === snappingNodeId ? 'snapping' : 
-                                selectedNode?.id === node.id ? 'selected' : '',
+                      className:
+                        node.id === snappingNodeId
+                          ? "snapping"
+                          : selectedNode?.id === node.id
+                          ? "selected"
+                          : "",
                     }))}
-                    edges={edges.map(edge => ({
+                    edges={edges.map((edge) => ({
                       ...edge,
                       selected: selectedEdges.includes(edge.id),
                       style: {
                         ...edge.style,
-                        stroke: selectedEdges.includes(edge.id) ? '#8b5cf6' : '#94a3b8',
-                        strokeWidth: selectedEdges.includes(edge.id) ? 2.5 : 1.5,
+                        stroke: selectedEdges.includes(edge.id)
+                          ? "#8b5cf6"
+                          : "#94a3b8",
+                        strokeWidth: selectedEdges.includes(edge.id)
+                          ? 2.5
+                          : 1.5,
                       },
                     }))}
                     onNodesChange={handleNodesChange}
@@ -1123,21 +1326,25 @@ export default function WorkflowEditorPage() {
                     reconnectRadius={20}
                     defaultEdgeOptions={{
                       animated: false,
-                      type: 'smoothstep',
+                      type: "smoothstep",
                       updatable: true,
                       style: {
                         strokeWidth: 1.5,
-                        stroke: '#94a3b8'
+                        stroke: "#94a3b8",
                       },
                       markerEnd: {
                         type: MarkerType.ArrowClosed,
-                        color: '#94a3b8',
+                        color: "#94a3b8",
                       },
                     }}
                     fitView
                     fitViewOptions={{ padding: 0.2 }}
                   >
-                    <RFBackground variant={BackgroundVariant.Dots} gap={16} size={1} />
+                    <RFBackground
+                      variant={BackgroundVariant.Dots}
+                      gap={16}
+                      size={1}
+                    />
                     <Controls />
                     <MiniMap />
                   </ReactFlow>
@@ -1152,7 +1359,8 @@ export default function WorkflowEditorPage() {
                       <div className="text-center space-y-2">
                         <p className="text-lg font-semibold">Start Building</p>
                         <p className="text-sm text-muted-foreground">
-                          Drag nodes from the palette to add them to your workflow
+                          Drag nodes from the palette to add them to your
+                          workflow
                         </p>
                       </div>
                     </motion.div>
@@ -1160,60 +1368,78 @@ export default function WorkflowEditorPage() {
                 </div>
 
                 {/* Leave Confirm Modal */}
-          <AnimatePresence>
-            {showLeaveConfirm && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-              >
-                <motion.div
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.95, opacity: 0 }}
-                  className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-md p-6"
-                >
-                  <h3 className="text-lg font-semibold mb-2">Leave without saving?</h3>
-                  <p className="text-sm text-muted-foreground mb-6">You have unsaved changes. If you leave now, your edits will be lost.</p>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setShowLeaveConfirm(false)}>Cancel</Button>
-                    <Button variant="destructive" onClick={() => router.push('/workflows')}>Leave</Button>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <AnimatePresence>
+                  {showLeaveConfirm && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+                    >
+                      <motion.div
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.95, opacity: 0 }}
+                        className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-md p-6"
+                      >
+                        <h3 className="text-lg font-semibold mb-2">
+                          Leave without saving?
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-6">
+                          You have unsaved changes. If you leave now, your edits
+                          will be lost.
+                        </p>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowLeaveConfirm(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => router.push("/workflows")}
+                          >
+                            Leave
+                          </Button>
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-          {/* Node Configuration Panel - Inside Canvas Container */}
-          <AnimatePresence>
-            {showConfigPanel && selectedNode && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                className="absolute right-4 top-16 bottom-4 w-80 z-50 backdrop-blur-xl bg-background/95 rounded-2xl border border-border shadow-2xl overflow-auto"
-              >
-                <NodeConfigPanel
-                  node={selectedNode}
-                  nodeDefinition={availableNodes 
-                    ? [
-                        ...availableNodes.triggers,
-                        ...availableNodes.actions,
-                        ...availableNodes.logic,
-                        ...availableNodes.ai,
-                        ...availableNodes.database,
-                        ...availableNodes.communication,
-                      ].find(n => n.type === selectedNode.data.nodeType)
-                    : undefined
-                  }
-                  onSave={handleNodeConfigSave}
-                  onClose={() => {
-                    setShowConfigPanel(false);
-                    setSelectedNode(null);
-                  }}
-                  onGetDetails={getNodeDetails}
-                />
+                {/* Node Configuration Panel - Inside Canvas Container */}
+                <AnimatePresence>
+                  {showConfigPanel && selectedNode && (
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="absolute right-4 top-16 bottom-4 w-80 z-50 backdrop-blur-xl bg-background/95 rounded-2xl border border-border shadow-2xl overflow-auto"
+                    >
+                      <NodeConfigPanel
+                        node={selectedNode}
+                        nodeDefinition={
+                          availableNodes
+                            ? [
+                                ...availableNodes.triggers,
+                                ...availableNodes.actions,
+                                ...availableNodes.logic,
+                                ...availableNodes.ai,
+                                ...availableNodes.database,
+                                ...availableNodes.communication,
+                              ].find(
+                                (n) => n.type === selectedNode.data.nodeType
+                              )
+                            : undefined
+                        }
+                        onSave={handleNodeConfigSave}
+                        onClose={() => {
+                          setShowConfigPanel(false);
+                          setSelectedNode(null);
+                        }}
+                        onGetDetails={getNodeDetails}
+                      />
                     </motion.div>
                   )}
                 </AnimatePresence>

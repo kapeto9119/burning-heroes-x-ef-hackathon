@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, X, Zap, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { motion, AnimatePresence } from "framer-motion";
+import { CheckCircle, X, Zap, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface DeploySuccessModalProps {
   isOpen: boolean;
@@ -15,11 +15,11 @@ interface DeploySuccessModalProps {
   };
 }
 
-export function DeploySuccessModal({ 
-  isOpen, 
-  onClose, 
+export function DeploySuccessModal({
+  isOpen,
+  onClose,
   workflowName,
-  deploymentData 
+  deploymentData,
 }: DeploySuccessModalProps) {
   return (
     <AnimatePresence>
@@ -47,7 +47,7 @@ export function DeploySuccessModal({
               <div className="relative backdrop-blur-xl bg-background/95 border border-border rounded-2xl shadow-2xl overflow-hidden">
                 {/* Gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-transparent pointer-events-none" />
-                
+
                 {/* Close button */}
                 <motion.button
                   onClick={onClose}
@@ -88,42 +88,40 @@ export function DeploySuccessModal({
                     transition={{ delay: 0.4 }}
                     className="text-center text-muted-foreground mb-6"
                   >
-                    <span className="font-semibold text-foreground">"{workflowName}"</span> has been deployed to n8n and is ready to use.
+                    <span className="font-semibold text-foreground">
+                      "{workflowName}"
+                    </span>{" "}
+                    has been deployed successfully and is ready to use.
                   </motion.p>
 
-                  {/* Deployment details */}
-                  {deploymentData && (
+                  {/* Deployment details - Only show webhook URL if available */}
+                  {deploymentData?.webhookUrl && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.5 }}
                       className="space-y-3 mb-6"
                     >
-                      {deploymentData.n8nWorkflowId && (
-                        <div className="flex items-center justify-between p-3 bg-accent/50 rounded-lg border border-border/50">
-                          <span className="text-sm text-muted-foreground">n8n Workflow ID</span>
-                          <span className="text-sm font-mono text-foreground">{deploymentData.n8nWorkflowId}</span>
+                      <div className="p-3 bg-accent/50 rounded-lg border border-border/50">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-muted-foreground">
+                            Webhook URL
+                          </span>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(
+                                deploymentData.webhookUrl!
+                              );
+                            }}
+                            className="text-xs text-primary hover:text-primary/80 transition-colors"
+                          >
+                            Copy
+                          </button>
                         </div>
-                      )}
-                      
-                      {deploymentData.webhookUrl && (
-                        <div className="p-3 bg-accent/50 rounded-lg border border-border/50">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm text-muted-foreground">Webhook URL</span>
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(deploymentData.webhookUrl!);
-                              }}
-                              className="text-xs text-primary hover:text-primary/80 transition-colors"
-                            >
-                              Copy
-                            </button>
-                          </div>
-                          <code className="text-xs font-mono text-foreground break-all">
-                            {deploymentData.webhookUrl}
-                          </code>
-                        </div>
-                      )}
+                        <code className="text-xs font-mono text-foreground break-all">
+                          {deploymentData.webhookUrl}
+                        </code>
+                      </div>
                     </motion.div>
                   )}
 
@@ -132,23 +130,14 @@ export function DeploySuccessModal({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.6 }}
-                    className="flex gap-3"
+                    className="flex justify-center"
                   >
                     <Button
                       onClick={onClose}
-                      variant="outline"
-                      className="flex-1"
+                      className="min-w-[200px] bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
                     >
-                      Close
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        window.open(process.env.NEXT_PUBLIC_N8N_URL || 'http://localhost:5678', '_blank');
-                      }}
-                      className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
-                    >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Open in n8n
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Got it!
                     </Button>
                   </motion.div>
 
