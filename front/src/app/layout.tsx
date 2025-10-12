@@ -6,6 +6,7 @@ import { WorkflowProvider } from "@/contexts/WorkflowContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ToastProvider } from "@/components/ui/toast";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ReactFlowProviderWrapper } from "@/components/providers/ReactFlowProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +38,9 @@ export default function RootLayout({
           <ToastProvider>
             <AuthProvider>
               <ThemeProvider>
-                <WorkflowProvider>{children}</WorkflowProvider>
+                <ReactFlowProviderWrapper>
+                  <WorkflowProvider>{children}</WorkflowProvider>
+                </ReactFlowProviderWrapper>
               </ThemeProvider>
             </AuthProvider>
           </ToastProvider>

@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Save, Trash2, Loader2, CheckCircle } from 'lucide-react';
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Save, Trash2, Loader2, CheckCircle } from "lucide-react";
 import ReactFlow, {
   Node,
   Edge,
@@ -19,82 +19,123 @@ import ReactFlow, {
   MarkerType,
   Position,
   Handle,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
-import { NodePalette } from '@/components/workflow/NodePalette';
-import { NodeConfigPanel } from '@/components/workflow/NodeConfigPanel';
-import { useNodes } from '@/hooks/useNodes';
-import { getNodeVisual } from '@/lib/nodeVisuals';
-import { getClientToken } from '@/lib/auth';
+} from "reactflow";
+import "reactflow/dist/style.css";
+import { NodePalette } from "@/components/workflow/NodePalette";
+import { NodeConfigPanel } from "@/components/workflow/NodeConfigPanel";
+import { useNodes } from "@/hooks/useNodes";
+import { getNodeVisual } from "@/lib/nodeVisuals";
+import { getClientToken } from "@/lib/auth";
 
 // Custom styled node component
 function CustomEditorNode({ data, selected, id }: any) {
-  const visual = getNodeVisual(data.nodeType || '', data.label);
+  const visual = getNodeVisual(data.nodeType || "", data.label);
   const Icon = visual.icon;
-  
+
+  // Simple, clean node colors
   const getNodeColor = () => {
-    const type = (data.nodeType || '').toLowerCase();
-    
-    if (type.includes('webhook') || type.includes('trigger') || type.includes('manual')) {
-      return selected ? 'border-blue-400 bg-blue-100' : 'border-blue-200 bg-blue-50';
+    const type = (data.nodeType || "").toLowerCase();
+
+    // Trigger nodes - Blue
+    if (
+      type.includes("webhook") ||
+      type.includes("trigger") ||
+      type.includes("manual")
+    ) {
+      return selected
+        ? "border-blue-500 bg-blue-100 dark:border-blue-400 dark:bg-blue-900/40"
+        : "border-blue-300 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/40";
     }
-    if (type.includes('schedule') || type.includes('cron')) {
-      return selected ? 'border-purple-400 bg-purple-100' : 'border-purple-200 bg-purple-50';
+    // Schedule nodes - Purple
+    if (type.includes("schedule") || type.includes("cron")) {
+      return selected
+        ? "border-purple-500 bg-purple-100 dark:border-purple-400 dark:bg-purple-900/40"
+        : "border-purple-300 bg-purple-50 dark:border-purple-500 dark:bg-purple-900/40";
     }
-    if (type.includes('email') || type.includes('mail') || type.includes('gmail')) {
-      return selected ? 'border-green-400 bg-green-100' : 'border-green-200 bg-green-50';
+    // Email - Green
+    if (
+      type.includes("email") ||
+      type.includes("mail") ||
+      type.includes("gmail")
+    ) {
+      return selected
+        ? "border-green-500 bg-green-100 dark:border-green-400 dark:bg-green-900/40"
+        : "border-green-300 bg-green-50 dark:border-green-500 dark:bg-green-900/40";
     }
-    if (type.includes('slack') || type.includes('discord')) {
-      return selected ? 'border-emerald-400 bg-emerald-100' : 'border-emerald-200 bg-emerald-50';
+    // Slack/Discord - Teal
+    if (type.includes("slack") || type.includes("discord")) {
+      return selected
+        ? "border-teal-500 bg-teal-100 dark:border-teal-400 dark:bg-teal-900/40"
+        : "border-teal-300 bg-teal-50 dark:border-teal-500 dark:bg-teal-900/40";
     }
-    if (type.includes('http') || type.includes('api')) {
-      return selected ? 'border-orange-400 bg-orange-100' : 'border-orange-200 bg-orange-50';
+    // HTTP/API - Orange
+    if (type.includes("http") || type.includes("api")) {
+      return selected
+        ? "border-orange-500 bg-orange-100 dark:border-orange-400 dark:bg-orange-900/40"
+        : "border-orange-300 bg-orange-50 dark:border-orange-500 dark:bg-orange-900/40";
     }
-    if (type.includes('openai') || type.includes('ai')) {
-      return selected ? 'border-pink-400 bg-pink-100' : 'border-pink-200 bg-pink-50';
+    // AI - Rose
+    if (type.includes("openai") || type.includes("ai")) {
+      return selected
+        ? "border-rose-500 bg-rose-100 dark:border-rose-400 dark:bg-rose-900/40"
+        : "border-rose-300 bg-rose-50 dark:border-rose-500 dark:bg-rose-900/40";
     }
-    if (type.includes('if') || type.includes('switch') || type.includes('merge')) {
-      return selected ? 'border-yellow-400 bg-yellow-100' : 'border-yellow-200 bg-yellow-50';
+    // Control flow - Amber
+    if (
+      type.includes("if") ||
+      type.includes("switch") ||
+      type.includes("merge")
+    ) {
+      return selected
+        ? "border-amber-500 bg-amber-100 dark:border-amber-400 dark:bg-amber-900/40"
+        : "border-amber-300 bg-amber-50 dark:border-amber-500 dark:bg-amber-900/40";
     }
-    return selected ? 'border-gray-400 bg-gray-100' : 'border-gray-200 bg-gray-50';
+    // Default - Slate
+    return selected
+      ? "border-slate-500 bg-slate-100 dark:border-slate-400 dark:bg-slate-800/40"
+      : "border-slate-300 bg-slate-50 dark:border-slate-500 dark:bg-slate-800/40";
   };
 
   return (
-    <div className="relative" style={{ minWidth: '220px', maxWidth: '400px' }}>
+    <div className="relative" style={{ minWidth: "220px", maxWidth: "400px" }}>
       <Handle
         type="target"
         position={Position.Top}
         id="input"
         className="w-3 h-3 !bg-gray-400 border-2 border-white"
-        style={{ top: '0px' }}
+        style={{ top: "0px" }}
       />
-      
+
       <Handle
         type="source"
         position={Position.Bottom}
         id="output"
         className="w-3 h-3 !bg-gray-400 border-2 border-white"
-        style={{ bottom: '0px' }}
+        style={{ bottom: "0px" }}
       />
-      
-      <div className={`
+
+      <div
+        className={`
         px-4 py-3 rounded-lg shadow-md bg-white
         ${getNodeColor()}
-        ${selected ? 'border-4' : 'border-2'}
+        ${selected ? "border-4" : "border-2"}
         hover:shadow-lg transition-all duration-200
         w-full relative cursor-grab active:cursor-grabbing
-      `}>
+      `}
+      >
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <Icon className="w-4 h-4 flex-shrink-0" />
-            <span className="font-medium text-sm break-words">{data.label}</span>
+            <span className="font-medium text-sm break-words">
+              {data.label}
+            </span>
           </div>
         </div>
-        
+
         <p className="text-xs text-gray-600 mb-2">
-          {data.description || 'Workflow node'}
+          {data.description || "Workflow node"}
         </p>
-        
+
         <div className="inline-flex px-2 py-1 rounded text-xs border bg-white text-gray-500 border-gray-300">
           pending
         </div>
@@ -109,8 +150,17 @@ interface EditWorkflowModalProps {
   onSave?: (nodes: Node[], edges: Edge[]) => void;
 }
 
-export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowModalProps) {
-  const { nodes: availableNodes, isLoading: isLoadingNodes, searchNodes, getNodeDetails } = useNodes();
+export function EditWorkflowModal({
+  workflow,
+  onClose,
+  onSave,
+}: EditWorkflowModalProps) {
+  const {
+    nodes: availableNodes,
+    isLoading: isLoadingNodes,
+    searchNodes,
+    getNodeDetails,
+  } = useNodes();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -123,9 +173,12 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
 
-  const nodeTypes = useMemo(() => ({
-    custom: CustomEditorNode,
-  }), []);
+  const nodeTypes = useMemo(
+    () => ({
+      custom: CustomEditorNode,
+    }),
+    []
+  );
 
   // Load workflow nodes and edges
   useEffect(() => {
@@ -133,43 +186,52 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
       const loadedNodes = workflow.nodes.map((node: any, index: number) => {
         // Convert n8n position format [x, y] to ReactFlow {x, y}
         // Default: spread nodes out more (300px horizontal, 250px vertical spacing)
-        let position = { x: 100 + (index % 3) * 400, y: 100 + Math.floor(index / 3) * 300 };
-        
+        let position = {
+          x: 100 + (index % 3) * 400,
+          y: 100 + Math.floor(index / 3) * 300,
+        };
+
         if (node.position) {
           if (Array.isArray(node.position)) {
             // n8n format: [x, y]
             position = { x: node.position[0], y: node.position[1] };
-          } else if (typeof node.position === 'object') {
+          } else if (typeof node.position === "object") {
             // Already ReactFlow format
             position = node.position;
           }
         }
-        
+
         // Use node.name as ID since n8n connections reference by name
         const nodeId = node.name || node.id || `node-${index}`;
-        
+
         return {
           id: nodeId,
-          type: 'custom',
+          type: "custom",
           position,
           data: {
             label: node.name || node.type,
             nodeType: node.type,
-            description: node.parameters?.text || node.parameters?.message || 'Workflow node',
+            description:
+              node.parameters?.text ||
+              node.parameters?.message ||
+              "Workflow node",
             parameters: node.parameters || {},
           },
         };
       });
       setNodes(loadedNodes);
-      
-      console.log('[EditWorkflow] Loaded nodes:', loadedNodes.map((n: any) => n.id));
+
+      console.log(
+        "[EditWorkflow] Loaded nodes:",
+        loadedNodes.map((n: any) => n.id)
+      );
 
       // Create edges from connections (handle both array and object formats)
       const loadedEdges: Edge[] = [];
       const connections = workflow.connections;
-      
-      console.log('[EditWorkflow] Connections:', connections);
-      
+
+      console.log("[EditWorkflow] Connections:", connections);
+
       if (connections) {
         if (Array.isArray(connections)) {
           // Array format: [{source, destination}]
@@ -179,51 +241,68 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
                 id: `edge-${idx}`,
                 source: conn.source,
                 target: conn.destination,
-                type: 'smoothstep',
+                type: "smoothstep",
                 animated: false,
-                style: { stroke: '#94a3b8', strokeWidth: 1.5 },
-                markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+                style: { stroke: "#94a3b8", strokeWidth: 1.5 },
+                markerEnd: { type: MarkerType.ArrowClosed, color: "#94a3b8" },
               });
             }
           });
-        } else if (typeof connections === 'object') {
+        } else if (typeof connections === "object") {
           // Object format: { nodeId: { main: [[{node, type, index}]] } }
           let edgeIdx = 0;
-          Object.entries(connections).forEach(([sourceId, connData]: [string, any]) => {
-            console.log('[EditWorkflow] Processing connection from:', sourceId, connData);
-            
-            // Handle main connections (can have multiple output branches)
-            if (connData?.main) {
-              connData.main.forEach((outputBranch: any[], branchIndex: number) => {
-                if (outputBranch && Array.isArray(outputBranch)) {
-                  outputBranch.forEach((target: any) => {
-                    if (target?.node) {
-                      console.log('[EditWorkflow] Creating edge:', sourceId, '->', target.node);
-                      loadedEdges.push({
-                        id: `edge-${edgeIdx++}`,
-                        source: sourceId,
-                        target: target.node,
-                        type: 'smoothstep',
-                        animated: false,
-                        style: { stroke: '#94a3b8', strokeWidth: 1.5 },
-                        markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+          Object.entries(connections).forEach(
+            ([sourceId, connData]: [string, any]) => {
+              console.log(
+                "[EditWorkflow] Processing connection from:",
+                sourceId,
+                connData
+              );
+
+              // Handle main connections (can have multiple output branches)
+              if (connData?.main) {
+                connData.main.forEach(
+                  (outputBranch: any[], branchIndex: number) => {
+                    if (outputBranch && Array.isArray(outputBranch)) {
+                      outputBranch.forEach((target: any) => {
+                        if (target?.node) {
+                          console.log(
+                            "[EditWorkflow] Creating edge:",
+                            sourceId,
+                            "->",
+                            target.node
+                          );
+                          loadedEdges.push({
+                            id: `edge-${edgeIdx++}`,
+                            source: sourceId,
+                            target: target.node,
+                            type: "smoothstep",
+                            animated: false,
+                            style: { stroke: "#94a3b8", strokeWidth: 1.5 },
+                            markerEnd: {
+                              type: MarkerType.ArrowClosed,
+                              color: "#94a3b8",
+                            },
+                          });
+                        }
                       });
                     }
-                  });
-                }
-              });
+                  }
+                );
+              }
             }
-          });
+          );
         }
       }
-      
-      console.log('[EditWorkflow] Loaded edges:', loadedEdges);
+
+      console.log("[EditWorkflow] Loaded edges:", loadedEdges);
       setEdges(loadedEdges);
     }
   }, [workflow]);
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge({ ...params, type: 'smoothstep' }, eds)),
+    (params: Connection) =>
+      setEdges((eds) => addEdge({ ...params, type: "smoothstep" }, eds)),
     [setEdges]
   );
 
@@ -252,9 +331,12 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
   const handleDeleteNode = () => {
     if (selectedNode) {
       setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
-      setEdges((eds) => eds.filter((edge) => 
-        edge.source !== selectedNode.id && edge.target !== selectedNode.id
-      ));
+      setEdges((eds) =>
+        eds.filter(
+          (edge) =>
+            edge.source !== selectedNode.id && edge.target !== selectedNode.id
+        )
+      );
       setSelectedNode(null);
       setShowConfigPanel(false);
     }
@@ -282,7 +364,7 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
         }
         n8nConnections[edge.source].main[0].push({
           node: edge.target,
-          type: 'main',
+          type: "main",
           index: 0,
         });
       });
@@ -290,9 +372,9 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/workflows/${workflowId}`,
         {
-          method: 'PUT',
+          method: "PUT",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
@@ -310,10 +392,10 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
           if (onSave) onSave(nodes, edges);
         }, 1500);
       } else {
-        alert('Failed to save: ' + result.error);
+        alert("Failed to save: " + result.error);
       }
     } catch (error: any) {
-      alert('Error saving workflow: ' + error.message);
+      alert("Error saving workflow: " + error.message);
     } finally {
       setIsSaving(false);
     }
@@ -321,14 +403,14 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.dropEffect = "move";
   }, []);
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
 
-      const nodeDataStr = event.dataTransfer.getData('nodeData');
+      const nodeDataStr = event.dataTransfer.getData("nodeData");
       if (!nodeDataStr || !reactFlowInstance) return;
 
       const node = JSON.parse(nodeDataStr);
@@ -339,12 +421,12 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
 
       const newNode: Node = {
         id: `node-${Date.now()}`,
-        type: 'custom',
+        type: "custom",
         position,
         data: {
           label: node.displayName || node.name,
           nodeType: node.type,
-          description: node.description || '',
+          description: node.description || "",
           parameters: {},
         },
       };
@@ -365,7 +447,9 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
         <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
           <div>
             <h2 className="text-2xl font-bold">Edit Workflow</h2>
-            <p className="text-sm text-muted-foreground mt-1">{workflow?.name}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {workflow?.name}
+            </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {nodes.length} nodes • {edges.length} connections
             </p>
@@ -435,7 +519,7 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
                   Drag nodes from palette • Click to configure
                 </p>
               </div>
-              <div 
+              <div
                 className="flex-1 relative min-h-0"
                 onDrop={onDrop}
                 onDragOver={onDragOver}
@@ -443,18 +527,18 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
                 <div className="absolute inset-0">
                   <ReactFlow
                     nodes={nodes}
-                    edges={edges.map(edge => {
+                    edges={edges.map((edge) => {
                       const isHovered = hoveredEdge === edge.id;
                       return {
                         ...edge,
                         animated: isHovered,
                         style: {
                           strokeWidth: isHovered ? 2.5 : 1.5,
-                          stroke: isHovered ? '#3b82f6' : '#94a3b8',
+                          stroke: isHovered ? "#3b82f6" : "#94a3b8",
                         },
                         markerEnd: {
                           type: MarkerType.ArrowClosed,
-                          color: isHovered ? '#3b82f6' : '#94a3b8',
+                          color: isHovered ? "#3b82f6" : "#94a3b8",
                         },
                       };
                     })}
@@ -475,14 +559,21 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
                     elementsSelectable={true}
                     defaultEdgeOptions={{
                       animated: false,
-                      type: 'smoothstep',
-                      style: { strokeWidth: 1.5, stroke: '#94a3b8' },
-                      markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
+                      type: "smoothstep",
+                      style: { strokeWidth: 1.5, stroke: "#94a3b8" },
+                      markerEnd: {
+                        type: MarkerType.ArrowClosed,
+                        color: "#94a3b8",
+                      },
                     }}
                     fitView
                     fitViewOptions={{ padding: 0.2 }}
                   >
-                    <RFBackground variant={BackgroundVariant.Dots} gap={16} size={1} />
+                    <RFBackground
+                      variant={BackgroundVariant.Dots}
+                      gap={16}
+                      size={1}
+                    />
                     <Controls />
                     <MiniMap />
                   </ReactFlow>
@@ -511,16 +602,17 @@ export function EditWorkflowModal({ workflow, onClose, onSave }: EditWorkflowMod
                   >
                     <NodeConfigPanel
                       node={selectedNode}
-                      nodeDefinition={availableNodes 
-                        ? [
-                            ...availableNodes.triggers,
-                            ...availableNodes.actions,
-                            ...availableNodes.logic,
-                            ...availableNodes.ai,
-                            ...availableNodes.database,
-                            ...availableNodes.communication,
-                          ].find(n => n.type === selectedNode.data.nodeType)
-                        : undefined
+                      nodeDefinition={
+                        availableNodes
+                          ? [
+                              ...availableNodes.triggers,
+                              ...availableNodes.actions,
+                              ...availableNodes.logic,
+                              ...availableNodes.ai,
+                              ...availableNodes.database,
+                              ...availableNodes.communication,
+                            ].find((n) => n.type === selectedNode.data.nodeType)
+                          : undefined
                       }
                       onSave={handleNodeConfigSave}
                       onClose={() => {

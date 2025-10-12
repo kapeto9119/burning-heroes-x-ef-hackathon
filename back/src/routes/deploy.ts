@@ -30,79 +30,87 @@ export function createDeployRouter(
    * POST /api/deploy/save-draft
    * Save workflow as draft (no n8n deployment)
    */
-  router.post('/save-draft', authMiddleware, async (req: Request, res: Response) => {
-    try {
-      const { workflow }: { workflow: N8nWorkflow } = req.body;
-      const userId = req.user!.userId;
+  router.post(
+    "/save-draft",
+    authMiddleware,
+    async (req: Request, res: Response) => {
+      try {
+        const { workflow }: { workflow: N8nWorkflow } = req.body;
+        const userId = req.user!.userId;
 
-      if (!workflow || !workflow.nodes || workflow.nodes.length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid workflow'
-        } as ApiResponse);
-      }
-
-      console.log('[Save Draft] User', userId, 'saving draft:', workflow.name);
-
-      // Generate workflow ID
-      const workflowId = workflow.id || crypto.randomUUID();
-      
-      // Extract node types and required credentials
-      const nodeTypes = workflow.nodes.map(n => n.type);
-      const requiredCredentialTypes: string[] = [];
-      workflow.nodes.forEach(node => {
-        if (node.credentials && Object.keys(node.credentials).length > 0) {
-          Object.keys(node.credentials).forEach(credType => {
-            if (!requiredCredentialTypes.includes(credType)) {
-              requiredCredentialTypes.push(credType);
-            }
-          });
+        if (!workflow || !workflow.nodes || workflow.nodes.length === 0) {
+          return res.status(400).json({
+            success: false,
+            error: "Invalid workflow",
+          } as ApiResponse);
         }
-      });
-      
-      // Save to workflows table as draft (is_active = false, no n8n deployment)
-      await dbPool.query(
-        `INSERT INTO workflows (id, user_id, name, workflow_data, node_types, required_credential_types, is_active)
+
+        console.log(
+          "[Save Draft] User",
+          userId,
+          "saving draft:",
+          workflow.name
+        );
+
+        // Generate workflow ID
+        const workflowId = workflow.id || crypto.randomUUID();
+
+        // Extract node types and required credentials
+        const nodeTypes = workflow.nodes.map((n) => n.type);
+        const requiredCredentialTypes: string[] = [];
+        workflow.nodes.forEach((node) => {
+          if (node.credentials && Object.keys(node.credentials).length > 0) {
+            Object.keys(node.credentials).forEach((credType) => {
+              if (!requiredCredentialTypes.includes(credType)) {
+                requiredCredentialTypes.push(credType);
+              }
+            });
+          }
+        });
+
+        // Save to workflows table as draft (is_active = false, no n8n deployment)
+        await dbPool.query(
+          `INSERT INTO workflows (id, user_id, name, workflow_data, node_types, required_credential_types, is_active)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          ON CONFLICT (id) DO UPDATE SET
            workflow_data = EXCLUDED.workflow_data,
            node_types = EXCLUDED.node_types,
            required_credential_types = EXCLUDED.required_credential_types,
            updated_at = NOW()`,
-        [
-          workflowId,
-          userId,
-          workflow.name || 'Untitled Workflow',
-          JSON.stringify(workflow),
-          nodeTypes,
-          requiredCredentialTypes,
-          false // Draft - not active
-        ]
-      );
+          [
+            workflowId,
+            userId,
+            workflow.name || "Untitled Workflow",
+            JSON.stringify(workflow),
+            nodeTypes,
+            requiredCredentialTypes,
+            false, // Draft - not active
+          ]
+        );
 
-      res.json({
-        success: true,
-        message: 'Workflow saved as draft',
-        data: {
-          workflowId,
-          status: 'draft'
-        }
-      } as ApiResponse);
-
-    } catch (error: any) {
-      console.error('[Save Draft] Error:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message || 'Failed to save draft'
-      } as ApiResponse);
+        res.json({
+          success: true,
+          message: "Workflow saved as draft",
+          data: {
+            workflowId,
+            status: "draft",
+          },
+        } as ApiResponse);
+      } catch (error: any) {
+        console.error("[Save Draft] Error:", error);
+        res.status(500).json({
+          success: false,
+          error: error.message || "Failed to save draft",
+        } as ApiResponse);
+      }
     }
-  });
+  );
 
   /**
    * POST /api/deploy
    * Deploy a workflow to n8n
    */
-  router.post('/', authMiddleware, async (req: Request, res: Response) => {
+  router.post("/", authMiddleware, async (req: Request, res: Response) => {
     try {
       const { workflow }: { workflow: N8nWorkflow } = req.body;
       const userId = req.user!.userId;
@@ -117,12 +125,15 @@ export function createDeployRouter(
       console.log(
         `[Deploy] User ${userId} deploying workflow: ${workflow.name}`
       );
-      
+
       // Debug: Check what nodes we're receiving from frontend
-      console.log('[Deploy] Incoming workflow node types:', workflow.nodes.map((n: any) => ({
-        name: n.name,
-        type: n.type
-      })));
+      console.log(
+        "[Deploy] Incoming workflow node types:",
+        workflow.nodes.map((n: any) => ({
+          name: n.name,
+          type: n.type,
+        }))
+      );
 
       // Get user credentials from repository
       const userCredentials = await credentialRepo.findByUser(userId);
@@ -171,21 +182,24 @@ export function createDeployRouter(
 
       // Get webhook URL if workflow has webhook trigger
       // Search in workflowWithCredentials (the actual deployed workflow)
-      console.log('[Deploy] All node types in workflow:', workflowWithCredentials.nodes.map((n: any) => n.type));
-      
+      console.log(
+        "[Deploy] All node types in workflow:",
+        workflowWithCredentials.nodes.map((n: any) => n.type)
+      );
+
       const webhookNode = workflowWithCredentials.nodes.find(
         (node: any) => node.type === "n8n-nodes-base.webhook"
       );
 
-      console.log('[Deploy] Webhook node found:', webhookNode?.name);
-      console.log('[Deploy] Webhook node type:', webhookNode?.type);
-      console.log('[Deploy] Webhook path:', webhookNode?.parameters?.path);
+      console.log("[Deploy] Webhook node found:", webhookNode?.name);
+      console.log("[Deploy] Webhook node type:", webhookNode?.type);
+      console.log("[Deploy] Webhook path:", webhookNode?.parameters?.path);
 
       const webhookUrl = webhookNode?.parameters?.path
         ? n8nClient.getWebhookUrl(webhookNode.parameters.path as string)
         : undefined;
-      
-      console.log('[Deploy] Generated webhook URL:', webhookUrl);
+
+      console.log("[Deploy] Generated webhook URL:", webhookUrl);
 
       // First, save the workflow to the workflows table
       const workflowId = workflow.id || crypto.randomUUID();
@@ -204,13 +218,13 @@ export function createDeployRouter(
       });
 
       // Insert into workflows table
-      console.log('[Deploy] Saving workflow to database:', {
+      console.log("[Deploy] Saving workflow to database:", {
         workflowId,
         userId,
         name: workflow.name,
-        is_active: false
+        is_active: false,
       });
-      
+
       await dbPool.query(
         `INSERT INTO workflows (id, user_id, name, workflow_data, node_types, required_credential_types, is_active)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -229,11 +243,11 @@ export function createDeployRouter(
           false, // Not active yet
         ]
       );
-      
-      console.log('[Deploy] ✅ Workflow saved to database successfully');
+
+      console.log("[Deploy] ✅ Workflow saved to database successfully");
 
       // Now create the deployment record
-      console.log('[Deploy] Creating deployment record...');
+      console.log("[Deploy] Creating deployment record...");
       await deploymentRepo.create({
         workflowId,
         n8nWorkflowId,
@@ -242,7 +256,7 @@ export function createDeployRouter(
         status: "inactive", // Starts inactive, user activates manually
         deployedAt: new Date(),
       });
-      console.log('[Deploy] ✅ Deployment record created');
+      console.log("[Deploy] ✅ Deployment record created");
 
       const response: DeploymentResponse = {
         n8nWorkflowId,
@@ -250,7 +264,7 @@ export function createDeployRouter(
         status: "inactive",
         deployedAt: new Date(),
       };
-      console.log('[Deploy] Preparing response:', response);
+      console.log("[Deploy] Preparing response:", response);
 
       // Send deployment success email
       const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
@@ -284,7 +298,7 @@ export function createDeployRouter(
         })
         .catch((err) => console.error("[Deploy] Failed to send email:", err));
 
-      console.log('[Deploy] 🚀 Sending success response to frontend');
+      console.log("[Deploy] 🚀 Sending success response to frontend");
       res.json({
         success: true,
         data: {
@@ -294,7 +308,7 @@ export function createDeployRouter(
         message:
           "Workflow deployed successfully. Activate it to start running.",
       } as ApiResponse<DeploymentResponse>);
-      console.log('[Deploy] ✅ Response sent successfully');
+      console.log("[Deploy] ✅ Response sent successfully");
     } catch (error: any) {
       console.error("[Deploy] ❌ Error:", error);
       res.status(500).json({
@@ -371,8 +385,8 @@ export function createDeployRouter(
             success: true,
             data: {
               deployed: false,
-              workflowId
-            }
+              workflowId,
+            },
           } as ApiResponse);
         }
 
@@ -390,11 +404,10 @@ export function createDeployRouter(
             deployed: true,
             workflowId,
             n8nWorkflowId: deployment.n8nWorkflowId,
-            isActive: deployment.status === 'active',
-            deployedAt: deployment.deployedAt
-          }
+            isActive: deployment.status === "active",
+            deployedAt: deployment.deployedAt,
+          },
         } as ApiResponse);
-
       } catch (error: any) {
         console.error("[Status] Error:", error);
         res.status(500).json({
@@ -445,10 +458,116 @@ export function createDeployRouter(
           wsService.emitExecutionStarted(userId, workflowId, "pending");
         }
 
-        const result = await n8nClient.executeWorkflow(
-          deployment.n8nWorkflowId,
-          data
+        // First, verify the workflow exists and check if it has a Manual Trigger
+        console.log(
+          "[Execute] Checking if workflow exists in n8n:",
+          deployment.n8nWorkflowId
         );
+        try {
+          const workflowInfo = await n8nClient.getWorkflow(
+            deployment.n8nWorkflowId
+          );
+          console.log(
+            "[Execute] Workflow found, active status:",
+            workflowInfo.active
+          );
+
+          // Check if workflow has Manual Trigger (cannot be activated)
+          const hasManualTrigger = workflowInfo.nodes?.some(
+            (node: any) => node.type === "n8n-nodes-base.manualTrigger"
+          );
+
+          console.log("[Execute] Has Manual Trigger:", hasManualTrigger);
+
+          // Manual Trigger workflows cannot be activated, they can only be executed
+          // Other workflow types need to be activated first
+          if (!hasManualTrigger && !workflowInfo.active) {
+            console.log("[Execute] Activating workflow for execution...");
+            try {
+              await n8nClient.activateWorkflow(deployment.n8nWorkflowId);
+              console.log("[Execute] ✅ Workflow activated successfully");
+            } catch (activationError: any) {
+              // Some workflows may have configuration issues that prevent activation
+              // but can still be executed. Log warning and continue.
+              console.warn(
+                "[Execute] ⚠️  Could not activate workflow, but will try to execute anyway:",
+                activationError.message
+              );
+            }
+          } else if (hasManualTrigger) {
+            console.log(
+              "[Execute] Skipping activation (Manual Trigger workflows cannot be activated)"
+            );
+          } else {
+            console.log("[Execute] Workflow already active, ready to execute");
+          }
+        } catch (verifyError: any) {
+          console.error(
+            "[Execute] ❌ Failed to verify workflow exists:",
+            verifyError
+          );
+          throw new Error(`Workflow not found in n8n: ${verifyError.message}`);
+        }
+
+        // Execute workflow based on trigger type
+        let result;
+        const workflowInfo = await n8nClient.getWorkflow(
+          deployment.n8nWorkflowId
+        );
+        const hasWebhookTrigger = workflowInfo.nodes?.some(
+          (node: any) => node.type === "n8n-nodes-base.webhook"
+        );
+
+        if (hasWebhookTrigger && deployment.webhookUrl) {
+          // For webhook-triggered workflows, call the webhook URL directly
+          console.log(
+            "[Execute] Triggering workflow via webhook URL:",
+            deployment.webhookUrl
+          );
+
+          try {
+            const axios = require("axios");
+            const webhookResponse = await axios.post(
+              deployment.webhookUrl,
+              data || {},
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                timeout: 30000, // 30 second timeout
+              }
+            );
+
+            console.log("[Execute] ✅ Webhook triggered successfully");
+            console.log("[Execute] Webhook response:", webhookResponse.data);
+
+            // The webhook response might not include an execution ID immediately
+            // We'll need to fetch it from n8n's execution list
+            result = {
+              id: null, // Will be populated by polling executions
+              executionId: null,
+              data: webhookResponse.data,
+              triggeredViaWebhook: true,
+            };
+          } catch (webhookError: any) {
+            console.error(
+              "[Execute] ❌ Failed to trigger webhook:",
+              webhookError.message
+            );
+            throw new Error(
+              `Failed to trigger workflow webhook: ${webhookError.message}`
+            );
+          }
+        } else {
+          // For manual trigger workflows, use the execute API endpoint
+          console.log(
+            "[Execute] Using API execute endpoint (Manual Trigger workflow)"
+          );
+          result = await n8nClient.executeWorkflow(
+            deployment.n8nWorkflowId,
+            data
+          );
+        }
 
         // Start monitoring execution for real-time node updates
         if (executionMonitor && result.id) {
@@ -638,7 +757,7 @@ export function createDeployRouter(
         if (!deployment) {
           return res.status(404).json({
             success: false,
-            error: 'Workflow not deployed'
+            error: "Workflow not deployed",
           } as ApiResponse);
         }
 
@@ -646,37 +765,40 @@ export function createDeployRouter(
         if (deployment.userId !== userId) {
           return res.status(403).json({
             success: false,
-            error: 'Unauthorized'
+            error: "Unauthorized",
           } as ApiResponse);
         }
 
-        console.log(`[Activate] User ${userId} activating workflow ${workflowId}`);
+        console.log(
+          `[Activate] User ${userId} activating workflow ${workflowId}`
+        );
 
         // Get workflow data to check trigger type
         const workflowResult = await dbPool.query(
-          'SELECT workflow_data FROM workflows WHERE id = $1',
+          "SELECT workflow_data FROM workflows WHERE id = $1",
           [workflowId]
         );
-        
+
         if (!workflowResult.rows[0]) {
           return res.status(404).json({
             success: false,
-            error: 'Workflow not found'
+            error: "Workflow not found",
           } as ApiResponse);
         }
-        
+
         const workflowData = workflowResult.rows[0].workflow_data;
-        const hasManualTrigger = workflowData.nodes?.some((node: any) => 
-          node.type === 'n8n-nodes-base.manualTrigger'
+        const hasManualTrigger = workflowData.nodes?.some(
+          (node: any) => node.type === "n8n-nodes-base.manualTrigger"
         );
-        
+
         if (hasManualTrigger) {
           return res.status(400).json({
             success: false,
-            error: 'This workflow uses a Manual Trigger and cannot be activated. Use the "Execute" button to run it manually.',
+            error:
+              'This workflow uses a Manual Trigger and cannot be activated. Use the "Execute" button to run it manually.',
             data: {
-              hasManualTrigger: true
-            }
+              hasManualTrigger: true,
+            },
           } as ApiResponse);
         }
 
@@ -685,13 +807,13 @@ export function createDeployRouter(
 
         // Update deployment status
         await deploymentRepo.updateStatus(workflowId, "active");
-        
+
         // Update workflow is_active flag in workflows table
         await dbPool.query(
-          'UPDATE workflows SET is_active = true, updated_at = NOW() WHERE id = $1',
+          "UPDATE workflows SET is_active = true, updated_at = NOW() WHERE id = $1",
           [workflowId]
         );
-        console.log('[Activate] ✅ Workflow marked as active in database');
+        console.log("[Activate] ✅ Workflow marked as active in database");
 
         // Emit WebSocket event
         const wsService = (req.app as any).wsService;
@@ -722,57 +844,69 @@ export function createDeployRouter(
    * POST /api/deploy/:workflowId/execute
    * Manually execute a workflow (works with Manual Trigger)
    */
-  router.post('/:workflowId/execute', authMiddleware, async (req: Request, res: Response) => {
-    try {
-      const { workflowId } = req.params;
-      const userId = req.user!.userId;
-      const { inputData } = req.body;
+  router.post(
+    "/:workflowId/execute",
+    authMiddleware,
+    async (req: Request, res: Response) => {
+      try {
+        const { workflowId } = req.params;
+        const userId = req.user!.userId;
+        const { inputData } = req.body;
 
-      const deployment = await deploymentRepo.findByWorkflowId(workflowId);
+        const deployment = await deploymentRepo.findByWorkflowId(workflowId);
 
-      if (!deployment) {
-        return res.status(404).json({
-          success: false,
-          error: 'Workflow not deployed'
-        } as ApiResponse);
-      }
-
-      // Verify ownership
-      if (deployment.userId !== userId) {
-        return res.status(403).json({
-          success: false,
-          error: 'Unauthorized'
-        } as ApiResponse);
-      }
-
-      console.log(`[Execute] User ${userId} executing workflow ${workflowId}`);
-
-      // Execute the workflow
-      const executionResult = await n8nClient.executeWorkflow(deployment.n8nWorkflowId, inputData);
-
-      // Start monitoring this execution if monitor is available
-      if (executionMonitor && executionResult?.executionId) {
-        executionMonitor.startMonitoring(executionResult.executionId, userId, workflowId);
-      }
-
-      res.json({
-        success: true,
-        message: 'Workflow executed successfully',
-        data: {
-          executionId: executionResult?.executionId,
-          workflowId,
-          n8nWorkflowId: deployment.n8nWorkflowId
+        if (!deployment) {
+          return res.status(404).json({
+            success: false,
+            error: "Workflow not deployed",
+          } as ApiResponse);
         }
-      } as ApiResponse);
 
-    } catch (error: any) {
-      console.error('[Execute] Error:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message || 'Failed to execute workflow'
-      } as ApiResponse);
+        // Verify ownership
+        if (deployment.userId !== userId) {
+          return res.status(403).json({
+            success: false,
+            error: "Unauthorized",
+          } as ApiResponse);
+        }
+
+        console.log(
+          `[Execute] User ${userId} executing workflow ${workflowId}`
+        );
+
+        // Execute the workflow
+        const executionResult = await n8nClient.executeWorkflow(
+          deployment.n8nWorkflowId,
+          inputData
+        );
+
+        // Start monitoring this execution if monitor is available
+        if (executionMonitor && executionResult?.executionId) {
+          executionMonitor.startMonitoring(
+            executionResult.executionId,
+            userId,
+            workflowId
+          );
+        }
+
+        res.json({
+          success: true,
+          message: "Workflow executed successfully",
+          data: {
+            executionId: executionResult?.executionId,
+            workflowId,
+            n8nWorkflowId: deployment.n8nWorkflowId,
+          },
+        } as ApiResponse);
+      } catch (error: any) {
+        console.error("[Execute] Error:", error);
+        res.status(500).json({
+          success: false,
+          error: error.message || "Failed to execute workflow",
+        } as ApiResponse);
+      }
     }
-  });
+  );
 
   /**
    * POST /api/deploy/:workflowId/deactivate
@@ -1071,14 +1205,34 @@ async function mapUserCredentialsToWorkflow(
     "n8n-nodes-base.sendGrid": "sendgrid",
   };
 
+  console.log(
+    `[Deploy] Starting credential mapping for ${workflow.nodes.length} nodes`
+  );
+  console.log(
+    "[Deploy] Available credentials:",
+    Array.from(credentialMap.keys())
+  );
+
   const updatedNodes = await Promise.all(
     workflow.nodes.map(async (node) => {
       const service = nodeServiceMapping[node.type];
+      console.log(
+        `[Deploy] Processing node "${node.name}" (${node.type}) -> service: ${service}`
+      );
 
-      if (!service || !credentialMap.has(service)) {
-        // No credentials needed or not available for this node
+      if (!service) {
+        console.log(`[Deploy] No service mapping for node type: ${node.type}`);
         return node;
       }
+
+      if (!credentialMap.has(service)) {
+        console.log(
+          `[Deploy] ⚠️  No credentials found for service: ${service} (node: ${node.name})`
+        );
+        return node;
+      }
+
+      console.log(`[Deploy] ✅ Found credentials for ${service}`);
 
       try {
         const credential = credentialMap.get(service);
@@ -1120,7 +1274,7 @@ async function mapUserCredentialsToWorkflow(
           sendgrid: "sendGridApi",
         }[service];
 
-        return {
+        const updatedNode = {
           ...node,
           credentials: {
             [credentialType!]: {
@@ -1129,6 +1283,14 @@ async function mapUserCredentialsToWorkflow(
             },
           },
         };
+
+        console.log(`[Deploy] ✅ Attached credential to node "${node.name}":`, {
+          credentialType,
+          credentialId,
+          credentialName: `${userId.substring(0, 8)}_${service}`,
+        });
+
+        return updatedNode;
       } catch (error) {
         console.error(
           `[Deploy] Failed to create credential for ${service}:`,

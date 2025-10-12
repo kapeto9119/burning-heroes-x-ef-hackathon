@@ -156,13 +156,13 @@ export function Navbar() {
                           <button
                             onClick={() => {
                               setShowProfileMenu(false);
-                              router.push("/workflows");
+                              router.push("/platform");
                             }}
                             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors text-left cursor-pointer"
                           >
                             <Workflow className="w-4 h-4 text-muted-foreground" />
                             <span className="text-sm font-medium text-foreground">
-                              Workflows
+                              Platform
                             </span>
                           </button>
                           <button
