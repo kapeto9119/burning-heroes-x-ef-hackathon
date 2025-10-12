@@ -23,6 +23,7 @@ import { createWorkflowsRouter } from "./routes/workflows";
 import { createAuthRouter } from "./routes/auth";
 import { createDeployRouter } from "./routes/deploy";
 import { createVoiceRouter } from "./routes/voice";
+import { createPipecatRouter } from "./routes/pipecat";
 import { createOAuthRouter } from "./routes/oauth";
 import { createCredentialsRouter } from "./routes/credentials";
 import { createN8nWebhookRouter } from "./routes/n8n-webhooks";
@@ -181,10 +182,13 @@ app.get("/health", (req: Request, res: Response) => {
   });
 });
 
-// API Routes
+// API Routes (note: pipecat route added after WebSocket service is created)
 app.use("/api/auth", createAuthRouter(authService));
-app.use("/api/chat", createChatRouter(aiService, mcpClient, workflowGenerator, authService));
-app.use("/api/workflows", createWorkflowsRouter(mcpClient, authService));
+app.use(
+  "/api/chat",
+  createChatRouter(aiService, mcpClient, workflowGenerator, authService)
+);
+app.use("/api/workflows", createWorkflowsRouter(mcpClient, authService, pool));
 app.use("/api/voice", createVoiceRouter(vapiService, platformKnowledge));
 app.use(
   "/api/oauth",
@@ -219,7 +223,17 @@ if (n8nApiClient) {
   });
 }
 
-// 404 handler
+// Create HTTP server and WebSocket service BEFORE 404 handler
+const httpServer = createServer(app);
+const wsService = new WebSocketService(httpServer, authService);
+
+// Make wsService available globally for routes
+(app as any).wsService = wsService;
+
+// Add pipecat route now that WebSocket service is available
+app.use("/api/pipecat", createPipecatRouter(workflowGenerator, wsService));
+
+// 404 handler (MUST be after all routes)
 app.use((req: Request, res: Response) => {
   res.status(404).json({
     success: false,
@@ -239,26 +253,22 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-// Create HTTP server and WebSocket service
-const httpServer = createServer(app);
-const wsService = new WebSocketService(httpServer, authService);
-
-// Make wsService available globally for routes
-(app as any).wsService = wsService;
-
 // Initialize ExecutionMonitor for real-time node updates (after wsService is created)
 if (n8nApiClient) {
   const executionMonitor = new ExecutionMonitor(n8nApiClient, wsService);
   console.log("✅ Execution Monitor initialized");
-  
+
   // Update deploy router to use executionMonitor
   // We need to re-register the deploy router with executionMonitor
   if (app._router && app._router.stack) {
     app._router.stack = app._router.stack.filter((layer: any) => {
-      return !(layer.regexp && layer.regexp.test('/api/deploy'));
+      return !(layer.regexp && layer.regexp.test("/api/deploy"));
     });
   }
-  app.use("/api/deploy", createDeployRouter(n8nApiClient, authService, pool, executionMonitor));
+  app.use(
+    "/api/deploy",
+    createDeployRouter(n8nApiClient, authService, pool, executionMonitor)
+  );
 }
 
 // Start server

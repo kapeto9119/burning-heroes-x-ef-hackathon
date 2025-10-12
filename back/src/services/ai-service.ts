@@ -464,19 +464,26 @@ CRITICAL RULES:
 Respond with a JSON object containing:
 {
   "workflowName": "descriptive name",
-  "trigger": { "type": "webhook|schedule", "config": {} },
+  "trigger": { "type": "webhook", "config": {} },
   "steps": [
     { "action": "fetch_leads_from_salesforce", "service": "salesforce", "config": {...} },
     { "action": "generate_email_content", "service": "ai", "prompt": "...", "config": {...} },
     
-IMPORTANT: Use "webhook" trigger type for all on-demand workflows (default). Only use "schedule" if user explicitly requests scheduled execution (e.g., "every day at 9am", "hourly", "weekly").
+CRITICAL TRIGGER RULES:
+- ALWAYS use "webhook" trigger for ALL workflows by default
+- NEVER use "manual" trigger type - it causes deployment issues
+- Only use "schedule" if user explicitly requests scheduled execution (e.g., "every day at 9am", "hourly", "weekly")
+- For on-demand workflows (most common), ALWAYS use "webhook"
+
     { "action": "send_email", "service": "email", "config": {...} }
   ],
   "requiredCredentials": ["salesforce", "email"],
   "estimatedComplexity": "simple|medium|complex"
 }
 
-Remember: Only include steps the user actually requested!`;
+Remember: 
+1. Only include steps the user actually requested!
+2. ALWAYS use "webhook" trigger, NEVER "manual"`;
 
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o-mini",

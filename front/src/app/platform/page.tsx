@@ -6,7 +6,28 @@ import { useRouter } from "next/navigation";
 import { getClientToken } from "@/lib/auth";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthModal } from "@/components/auth/AuthModal";
-import { Sparkles, Copy, Trash2, Play, Clock, Edit2, Maximize2, Eye, RotateCcw, Webhook, Radio, BarChart3, List, Download, Timer, Zap, CheckCircle, XCircle, Loader2, Save } from "lucide-react";
+import {
+  Sparkles,
+  Copy,
+  Trash2,
+  Play,
+  Clock,
+  Edit2,
+  Maximize2,
+  Eye,
+  RotateCcw,
+  Webhook,
+  Radio,
+  BarChart3,
+  List,
+  Download,
+  Timer,
+  Zap,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Save,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -15,14 +36,21 @@ import { Background } from "@/components/layout/Background";
 import { useWorkflow } from "@/contexts/WorkflowContext";
 import { ScheduleDialog } from "@/components/ScheduleDialog";
 import { NewWorkflowDialog } from "@/components/NewWorkflowDialog";
-import { getWorkflows, getWorkflowExecutions, executeWorkflow, deployWorkflow } from '@/app/actions/workflows';
-import { WorkflowCanvas } from '@/components/workflow/WorkflowCanvas';
-import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
-import { NodeDataInspector } from '@/components/execution/NodeDataInspector';
-import { getTimeUntilNextRun, cronToHuman } from '@/lib/schedule-utils';
-import { useWebSocket } from '@/hooks/useWebSocket';
-import { WorkflowModals } from '@/components/platform/WorkflowModals';
-import { DeploySuccessModal } from '@/components/platform/DeploySuccessModal';
+import {
+  getWorkflows,
+  getWorkflowExecutions,
+  executeWorkflow,
+  deployWorkflow,
+  checkWorkflowCredentials,
+} from "@/app/actions/workflows";
+import { InlineCredentialModal } from "@/components/InlineCredentialModal";
+import { WorkflowCanvas } from "@/components/workflow/WorkflowCanvas";
+import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
+import { NodeDataInspector } from "@/components/execution/NodeDataInspector";
+import { getTimeUntilNextRun, cronToHuman } from "@/lib/schedule-utils";
+import { useWebSocket } from "@/hooks/useWebSocket";
+import { WorkflowModals } from "@/components/platform/WorkflowModals";
+import { DeploySuccessModal } from "@/components/platform/DeploySuccessModal";
 
 export default function PlatformPage() {
   const router = useRouter();
@@ -31,21 +59,34 @@ export default function PlatformPage() {
 
   // Deployed workflows state (from workflows page)
   const [deployedWorkflows, setDeployedWorkflows] = useState<any[]>([]);
-  const [selectedDeployedWorkflow, setSelectedDeployedWorkflow] = useState<any>(null);
+  const [selectedDeployedWorkflow, setSelectedDeployedWorkflow] =
+    useState<any>(null);
   const [previewWorkflow, setPreviewWorkflow] = useState<any>(null);
   const [executions, setExecutions] = useState<any[]>([]);
   const [previewExecutions, setPreviewExecutions] = useState<any[]>([]);
   const [isLoadingWorkflows, setIsLoadingWorkflows] = useState(true);
-  const [isLoadingPreviewExecutions, setIsLoadingPreviewExecutions] = useState(false);
-  const [activeTab, setActiveTab] = useState<'workflows' | 'analytics'>('workflows');
-  const [executionFilter, setExecutionFilter] = useState<'all' | 'success' | 'error'>('all');
+  const [isLoadingPreviewExecutions, setIsLoadingPreviewExecutions] =
+    useState(false);
+  const [activeTab, setActiveTab] = useState<"workflows" | "analytics">(
+    "workflows"
+  );
+  const [executionFilter, setExecutionFilter] = useState<
+    "all" | "success" | "error"
+  >("all");
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [showExecutionsModal, setShowExecutionsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
   const [editingWorkflow, setEditingWorkflow] = useState<any>(null);
   const [testingWorkflow, setTestingWorkflow] = useState<any>(null);
-  
+
+  // Credential checking states
+  const [showCredentialModal, setShowCredentialModal] = useState(false);
+  const [missingCredentials, setMissingCredentials] = useState<any[]>([]);
+  const [pendingDeployWorkflowId, setPendingDeployWorkflowId] = useState<
+    string | null
+  >(null);
+
   // Legacy platform context (for sidebar)
   const {
     workflows,
@@ -68,14 +109,21 @@ export default function PlatformPage() {
     string | null
   >(null);
   const [showNewWorkflowDialog, setShowNewWorkflowDialog] = useState(false);
-  const [deployingWorkflowId, setDeployingWorkflowId] = useState<string | null>(null);
+  const [deployingWorkflowId, setDeployingWorkflowId] = useState<string | null>(
+    null
+  );
   const [showDeploySuccessModal, setShowDeploySuccessModal] = useState(false);
-  const [deployedWorkflowName, setDeployedWorkflowName] = useState('');
+  const [deployedWorkflowName, setDeployedWorkflowName] = useState("");
   const [deploymentResult, setDeploymentResult] = useState<any>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
-  
+
   // WebSocket for real-time updates
-  const { isConnected, addEventListener, subscribeToWorkflow, unsubscribeFromWorkflow } = useWebSocket();
+  const {
+    isConnected,
+    addEventListener,
+    subscribeToWorkflow,
+    unsubscribeFromWorkflow,
+  } = useWebSocket();
 
   // Load deployed workflows
   useEffect(() => {
@@ -89,25 +137,35 @@ export default function PlatformPage() {
       setShowAuthModal(true);
     }
   }, [authLoading, isAuthenticated]);
-  
+
   // Listen to WebSocket events for real-time execution updates
   useEffect(() => {
-    const unsubscribeCompleted = addEventListener('execution:completed', async (event: any) => {
-      console.log('[Platform] Execution completed event:', event);
-      
-      // Refresh executions if this workflow is being viewed
-      if (selectedDeployedWorkflow?.workflowId === event.workflowId) {
-        const token = getClientToken();
-        const result = await getWorkflowExecutions(event.workflowId, 10, token || undefined);
-        if (result.success) {
-          setExecutions(result.data || []);
+    const unsubscribeCompleted = addEventListener(
+      "execution:completed",
+      async (event: any) => {
+        console.log("[Platform] Execution completed event:", event);
+
+        // Refresh executions if this workflow is being viewed
+        if (selectedDeployedWorkflow?.workflowId === event.workflowId) {
+          const token = getClientToken();
+          const result = await getWorkflowExecutions(
+            event.workflowId,
+            10,
+            token || undefined
+          );
+          if (result.success) {
+            setExecutions(result.data || []);
+          }
         }
       }
-    });
+    );
 
-    const unsubscribeStarted = addEventListener('execution:started', (event: any) => {
-      console.log('[Platform] Execution started event:', event);
-    });
+    const unsubscribeStarted = addEventListener(
+      "execution:started",
+      (event: any) => {
+        console.log("[Platform] Execution started event:", event);
+      }
+    );
 
     return () => {
       unsubscribeCompleted();
@@ -121,7 +179,8 @@ export default function PlatformPage() {
 
     const interval = setInterval(async () => {
       const token = getClientToken();
-      const wfId = selectedDeployedWorkflow.workflowId || selectedDeployedWorkflow.id;
+      const wfId =
+        selectedDeployedWorkflow.workflowId || selectedDeployedWorkflow.id;
       if (!wfId) return;
       const result = await getWorkflowExecutions(wfId, 10, token || undefined);
       if (result.success) {
@@ -138,7 +197,11 @@ export default function PlatformPage() {
       const loadPreviewExecutions = async () => {
         setIsLoadingPreviewExecutions(true);
         const token = getClientToken();
-        const result = await getWorkflowExecutions(previewWorkflow.workflowId, 5, token || undefined);
+        const result = await getWorkflowExecutions(
+          previewWorkflow.workflowId,
+          5,
+          token || undefined
+        );
         if (result.success) {
           setPreviewExecutions(result.data || []);
         }
@@ -159,8 +222,12 @@ export default function PlatformPage() {
           <Navbar />
           <div className="flex items-center justify-center min-h-[80vh]">
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-foreground mb-4">Authentication Required</h1>
-              <p className="text-muted-foreground mb-6">Please log in to access the platform</p>
+              <h1 className="text-3xl font-bold text-foreground mb-4">
+                Authentication Required
+              </h1>
+              <p className="text-muted-foreground mb-6">
+                Please log in to access the platform
+              </p>
               <button
                 onClick={() => setShowAuthModal(true)}
                 className="bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-all"
@@ -174,7 +241,7 @@ export default function PlatformPage() {
           isOpen={showAuthModal}
           onClose={() => {
             setShowAuthModal(false);
-            router.push('/');
+            router.push("/");
           }}
         />
       </div>
@@ -182,7 +249,7 @@ export default function PlatformPage() {
   }
 
   const startEditingTitle = () => {
-    const workflow = workflows.find((w) => w.id === selectedWorkflowId);
+    const workflow = deployedWorkflows.find((w) => w.id === selectedWorkflowId);
     if (workflow) {
       setEditingName(workflow.name);
       setIsEditingTitle(true);
@@ -199,20 +266,22 @@ export default function PlatformPage() {
     setIsSavingName(true);
     try {
       const token = getClientToken();
-      const workflow = workflows.find((w) => w.id === selectedWorkflowId);
-      const workflowId = (workflow as any)?.workflowId || workflow?.id;
+      const workflow = deployedWorkflows.find(
+        (w) => w.id === selectedWorkflowId
+      );
+      const workflowId = workflow?.id;
 
       if (!workflowId) {
-        throw new Error('Workflow ID not found');
+        throw new Error("Workflow ID not found");
       }
 
       // Update via API
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/workflows/${workflowId}`,
         {
-          method: 'PUT',
+          method: "PUT",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
@@ -223,15 +292,13 @@ export default function PlatformPage() {
 
       const result = await response.json();
       if (result.success) {
-        // Update local state
-        updateWorkflow(selectedWorkflowId, { name: editingName.trim() });
         // Reload deployed workflows to sync
         await loadDeployedWorkflows();
       } else {
-        alert('Failed to save workflow name: ' + result.error);
+        alert("Failed to save workflow name: " + result.error);
       }
     } catch (error: any) {
-      alert('Error saving workflow name: ' + error.message);
+      alert("Error saving workflow name: " + error.message);
     } finally {
       setIsSavingName(false);
       setIsEditingTitle(false);
@@ -244,14 +311,15 @@ export default function PlatformPage() {
     setHasNameChanged(false);
   };
 
-  // Deploy workflow handler
+  // Check credentials before deployment
   const handleDeployWorkflow = async (workflowId: string) => {
     try {
       setDeployingWorkflowId(workflowId);
       const token = getClientToken();
-      
+
       if (!token) {
         setShowAuthModal(true);
+        setDeployingWorkflowId(null);
         return;
       }
 
@@ -267,35 +335,123 @@ export default function PlatformPage() {
 
       const workflowResult = await response.json();
       if (!workflowResult.success) {
-        alert('Failed to load workflow: ' + workflowResult.error);
+        alert("Failed to load workflow: " + workflowResult.error);
+        setDeployingWorkflowId(null);
         return;
       }
 
       const workflow = workflowResult.data;
-      console.log('[Platform] Deploying workflow:', workflow.name);
-      
+      console.log(
+        "[Platform] Checking credentials for workflow:",
+        workflow.name
+      );
+
+      // Check for missing credentials first
+      const credCheck = await checkWorkflowCredentials(workflow, token);
+
+      if (credCheck.success && credCheck.data) {
+        if (
+          !credCheck.data.hasAllCredentials &&
+          credCheck.data.missingCredentials.length > 0
+        ) {
+          // Show credential modal
+          console.log(
+            "[Platform] Missing credentials:",
+            credCheck.data.missingCredentials
+          );
+          setMissingCredentials(credCheck.data.missingCredentials);
+          setPendingDeployWorkflowId(workflowId);
+          setShowCredentialModal(true);
+          setDeployingWorkflowId(null);
+          return;
+        }
+      }
+
+      // All credentials present, proceed with deployment
+      await performDeployment(workflowId, workflow, token);
+    } catch (error: any) {
+      console.error("[Platform] Deployment error:", error);
+      alert("❌ Error deploying workflow: " + error.message);
+      setDeployingWorkflowId(null);
+    }
+  };
+
+  // Actual deployment function (called after credentials are checked/added)
+  const performDeployment = async (
+    workflowId: string,
+    workflow: any,
+    token: string
+  ) => {
+    try {
+      setDeployingWorkflowId(workflowId);
+      console.log("[Platform] Deploying workflow:", workflow.name);
+
       // Deploy to n8n
       const result = await deployWorkflow(workflow, token);
-      
+
       if (result.success) {
-        console.log('[Platform] Deployment successful:', result.data);
-        
+        console.log("[Platform] Deployment successful:", result.data);
+
+        // Reload deployed workflows FIRST to update deployment status
+        await loadDeployedWorkflows();
+
         // Show success modal
         setDeployedWorkflowName(workflow.name);
         setDeploymentResult(result.data);
         setShowDeploySuccessModal(true);
-        
-        // Reload deployed workflows
-        await loadDeployedWorkflows();
       } else {
-        alert('❌ Deployment failed: ' + result.error);
+        alert("❌ Deployment failed: " + result.error);
       }
     } catch (error: any) {
-      console.error('[Platform] Deployment error:', error);
-      alert('❌ Error deploying workflow: ' + error.message);
+      console.error("[Platform] Deployment error:", error);
+      alert("❌ Error deploying workflow: " + error.message);
     } finally {
       setDeployingWorkflowId(null);
     }
+  };
+
+  // Handle credential modal completion
+  const handleCredentialComplete = async () => {
+    setShowCredentialModal(false);
+    setMissingCredentials([]);
+
+    if (pendingDeployWorkflowId) {
+      const token = getClientToken();
+      if (!token) {
+        setShowAuthModal(true);
+        setPendingDeployWorkflowId(null);
+        return;
+      }
+
+      // Reload workflow data and deploy
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/workflows/${pendingDeployWorkflowId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const workflowResult = await response.json();
+      if (workflowResult.success) {
+        await performDeployment(
+          pendingDeployWorkflowId,
+          workflowResult.data,
+          token
+        );
+      }
+
+      setPendingDeployWorkflowId(null);
+    }
+  };
+
+  // Handle credential modal cancel
+  const handleCredentialCancel = () => {
+    setShowCredentialModal(false);
+    setMissingCredentials([]);
+    setPendingDeployWorkflowId(null);
+    setDeployingWorkflowId(null);
   };
 
   // Focus input when editing starts
@@ -338,56 +494,73 @@ export default function PlatformPage() {
       const token = getClientToken();
       const wfId = workflow.workflowId || workflow.id;
       if (!wfId) {
-        alert('❌ Cannot execute: workflow ID is missing');
+        alert("❌ Cannot execute: workflow ID is missing");
         return;
       }
       const result = await executeWorkflow(wfId, {}, token || undefined);
       if (result.success) {
-        alert('✅ Workflow executed successfully!');
-        const selectedId = selectedDeployedWorkflow?.workflowId || selectedDeployedWorkflow?.id;
+        alert("✅ Workflow executed successfully!");
+        const selectedId =
+          selectedDeployedWorkflow?.workflowId || selectedDeployedWorkflow?.id;
         if (selectedId && selectedId === wfId) {
           handleViewExecutions(workflow);
         }
         const previewId = previewWorkflow?.workflowId || previewWorkflow?.id;
         if (previewId && previewId === wfId) {
-          const execResult = await getWorkflowExecutions(wfId, 5, token || undefined);
+          const execResult = await getWorkflowExecutions(
+            wfId,
+            5,
+            token || undefined
+          );
           if (execResult.success) {
             setPreviewExecutions(execResult.data || []);
           }
         }
       } else {
-        alert('❌ Execution failed: ' + result.error);
+        alert("❌ Execution failed: " + result.error);
       }
     } catch (error) {
-      alert('❌ Execution error');
+      alert("❌ Execution error");
     }
   };
 
   const handleExportExecutions = () => {
     if (executions.length === 0) return;
 
-    const headers = ['Execution ID', 'Status', 'Started At', 'Finished At', 'Duration (ms)', 'Error Message'];
-    const rows = executions.map(exec => [
-      exec.id || 'N/A',
-      exec.status || 'N/A',
-      exec.startedAt ? new Date(exec.startedAt).toLocaleString() : 'N/A',
-      exec.finishedAt ? new Date(exec.finishedAt).toLocaleString() : 'N/A',
-      exec.finishedAt && exec.startedAt 
-        ? (new Date(exec.finishedAt).getTime() - new Date(exec.startedAt).getTime()).toString()
-        : 'N/A',
-      exec.error || ''
+    const headers = [
+      "Execution ID",
+      "Status",
+      "Started At",
+      "Finished At",
+      "Duration (ms)",
+      "Error Message",
+    ];
+    const rows = executions.map((exec) => [
+      exec.id || "N/A",
+      exec.status || "N/A",
+      exec.startedAt ? new Date(exec.startedAt).toLocaleString() : "N/A",
+      exec.finishedAt ? new Date(exec.finishedAt).toLocaleString() : "N/A",
+      exec.finishedAt && exec.startedAt
+        ? (
+            new Date(exec.finishedAt).getTime() -
+            new Date(exec.startedAt).getTime()
+          ).toString()
+        : "N/A",
+      exec.error || "",
     ]);
 
     const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
+      headers.join(","),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+    ].join("\n");
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `${selectedDeployedWorkflow?.name || 'workflow'}-executions-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `${selectedDeployedWorkflow?.name || "workflow"}-executions-${
+      new Date().toISOString().split("T")[0]
+    }.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -412,8 +585,10 @@ export default function PlatformPage() {
     router.push("/editor");
   };
 
-  const selectedWorkflow = workflows.find((w) => w.id === selectedWorkflowId);
-  const schedulingWorkflow = workflows.find(
+  const selectedWorkflow = deployedWorkflows.find(
+    (w) => w.id === selectedWorkflowId
+  );
+  const schedulingWorkflow = deployedWorkflows.find(
     (w) => w.id === schedulingWorkflowId
   );
 
@@ -439,11 +614,11 @@ export default function PlatformPage() {
                 <div className="p-4 border-b border-border">
                   <h2 className="text-lg font-semibold">My Workflows</h2>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {workflows.length} workflows
+                    {deployedWorkflows.length} workflows
                   </p>
                 </div>
                 <div className="flex-1 overflow-y-auto p-2">
-                  {isLoading ? (
+                  {isLoadingWorkflows ? (
                     <div className="flex items-center justify-center h-full">
                       <div className="text-center space-y-2">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -452,16 +627,7 @@ export default function PlatformPage() {
                         </p>
                       </div>
                     </div>
-                  ) : error ? (
-                    <div className="flex items-center justify-center h-full p-4">
-                      <div className="text-center space-y-2">
-                        <p className="text-sm text-destructive">{error}</p>
-                        <p className="text-xs text-muted-foreground">
-                          Please try refreshing the page
-                        </p>
-                      </div>
-                    </div>
-                  ) : workflows.length === 0 ? (
+                  ) : deployedWorkflows.length === 0 ? (
                     <div className="flex items-center justify-center h-full p-4">
                       <div className="text-center space-y-2">
                         <Sparkles className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
@@ -474,7 +640,7 @@ export default function PlatformPage() {
                       </div>
                     </div>
                   ) : (
-                    workflows.map((workflow) => (
+                    deployedWorkflows.map((workflow) => (
                       <motion.div
                         key={workflow.id}
                         className={cn(
@@ -500,27 +666,55 @@ export default function PlatformPage() {
                                 : "text-muted-foreground"
                             )}
                           >
-                            {workflow.createdAt.toLocaleDateString()}
+                            {(() => {
+                              // Show the most recent activity timestamp
+                              // Considers: modified, deployed, or tested/executed
+                              const timestamps = [
+                                workflow.updated_at,
+                                workflow.deployedAt,
+                                workflow.lastExecutionAt,
+                              ].filter(Boolean);
+
+                              if (timestamps.length === 0) {
+                                return "No activity";
+                              }
+
+                              const mostRecent = new Date(
+                                Math.max(
+                                  ...timestamps.map((t) =>
+                                    new Date(t!).getTime()
+                                  )
+                                )
+                              );
+
+                              return `Active ${mostRecent.toLocaleDateString()} at ${mostRecent.toLocaleTimeString(
+                                [],
+                                { hour: "2-digit", minute: "2-digit" }
+                              )}`;
+                            })()}
                           </div>
                         </button>
                         <div className="flex items-center gap-1 pr-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeployWorkflow(workflow.id);
-                            }}
-                            disabled={deployingWorkflowId === workflow.id}
-                            className="h-7 w-7 p-0 hover:bg-green-500/20 hover:text-green-500"
-                            title="Deploy to n8n"
-                          >
-                            {deployingWorkflowId === workflow.id ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <Zap className="w-3 h-3" />
-                            )}
-                          </Button>
+                          {/* Only show deploy button if workflow is not yet deployed */}
+                          {!workflow.isDeployed && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeployWorkflow(workflow.id);
+                              }}
+                              disabled={deployingWorkflowId === workflow.id}
+                              className="h-7 w-7 p-0 hover:bg-green-500/20 hover:text-green-500"
+                              title="Deploy workflow"
+                            >
+                              {deployingWorkflowId === workflow.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Zap className="w-3 h-3" />
+                              )}
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="ghost"
@@ -562,7 +756,7 @@ export default function PlatformPage() {
 
               {/* Right Panel - Selected Workflow Canvas */}
               <div className="flex flex-col h-full backdrop-blur-xl bg-background/40 rounded-2xl border border-border shadow-2xl overflow-hidden">
-                {isLoading ? (
+                {isLoadingWorkflows ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center space-y-2">
                       <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
@@ -580,12 +774,12 @@ export default function PlatformPage() {
                           No Workflow Selected
                         </h3>
                         <p className="text-sm text-muted-foreground max-w-md">
-                          {workflows.length === 0
+                          {deployedWorkflows.length === 0
                             ? "Create your first workflow to get started with automation"
                             : "Select a workflow from the list to view its canvas"}
                         </p>
                       </div>
-                      {workflows.length === 0 && (
+                      {deployedWorkflows.length === 0 && (
                         <Button
                           size="sm"
                           className="rounded-lg bg-black text-white hover:bg-gray-800"
@@ -612,11 +806,16 @@ export default function PlatformPage() {
                                   value={editingName}
                                   onChange={(e) => {
                                     setEditingName(e.target.value);
-                                    const workflow = workflows.find((w) => w.id === selectedWorkflowId);
-                                    setHasNameChanged(e.target.value !== workflow?.name);
+                                    const workflow = deployedWorkflows.find(
+                                      (w) => w.id === selectedWorkflowId
+                                    );
+                                    setHasNameChanged(
+                                      e.target.value !== workflow?.name
+                                    );
                                   }}
                                   onKeyDown={(e) => {
-                                    if (e.key === "Enter" && hasNameChanged) saveTitle();
+                                    if (e.key === "Enter" && hasNameChanged)
+                                      saveTitle();
                                     if (e.key === "Escape") cancelEditTitle();
                                   }}
                                   disabled={isSavingName}
@@ -650,22 +849,27 @@ export default function PlatformPage() {
                             )}
                           </div>
                           <p className="text-sm text-muted-foreground mt-1">
-                            {selectedWorkflow?.description || 'Visual workflow editor'}
+                            {selectedWorkflow?.description ||
+                              "Visual workflow editor"}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
                           {isConnected && (
                             <div className="flex items-center gap-2 px-3 py-1 bg-green-500/20 border border-green-500/30 rounded-full">
                               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                              <span className="text-xs font-medium text-green-500">Live</span>
+                              <span className="text-xs font-medium text-green-500">
+                                Live
+                              </span>
                             </div>
                           )}
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => {
-                              const wf = deployedWorkflows.find(w => 
-                                w.id === selectedWorkflowId || w.workflowId === selectedWorkflowId
+                              const wf = deployedWorkflows.find(
+                                (w) =>
+                                  w.id === selectedWorkflowId ||
+                                  w.workflowId === selectedWorkflowId
                               );
                               if (wf) {
                                 setEditingWorkflow(wf);
@@ -676,43 +880,61 @@ export default function PlatformPage() {
                             <Edit2 className="w-4 h-4 mr-2" />
                             Edit
                           </Button>
+                          {/* Test button - Only enabled if workflow is deployed */}
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => {
-                              const wf = deployedWorkflows.find(w => 
-                                w.id === selectedWorkflowId || w.workflowId === selectedWorkflowId
+                              const wf = deployedWorkflows.find(
+                                (w) =>
+                                  w.id === selectedWorkflowId ||
+                                  w.workflowId === selectedWorkflowId
                               );
-                              if (wf) {
+                              if (wf && wf.isDeployed) {
                                 setTestingWorkflow(wf);
                                 setShowTestModal(true);
                               }
                             }}
-                            className="bg-gradient-to-r from-purple-600/10 to-pink-600/10 hover:from-purple-600/20 hover:to-pink-600/20 border-purple-500/30"
+                            disabled={!selectedWorkflow?.isDeployed}
+                            className="bg-gradient-to-r from-purple-600/10 to-pink-600/10 hover:from-purple-600/20 hover:to-pink-600/20 border-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={
+                              selectedWorkflow?.isDeployed
+                                ? "Test workflow"
+                                : "Deploy workflow first to enable testing"
+                            }
                           >
                             <Zap className="w-4 h-4 mr-2" />
                             Test
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDeployWorkflow(selectedWorkflowId)}
-                            disabled={deployingWorkflowId === selectedWorkflowId}
-                            className="bg-gradient-to-r from-green-600/10 to-emerald-600/10 hover:from-green-600/20 hover:to-emerald-600/20 border-green-500/30"
-                          >
-                            {deployingWorkflowId === selectedWorkflowId ? (
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            ) : (
-                              <Zap className="w-4 h-4 mr-2" />
-                            )}
-                            Deploy
-                          </Button>
+                          {/* Deploy button - Only show if workflow is not yet deployed */}
+                          {!selectedWorkflow?.isDeployed && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                handleDeployWorkflow(selectedWorkflowId)
+                              }
+                              disabled={
+                                deployingWorkflowId === selectedWorkflowId
+                              }
+                              className="bg-gradient-to-r from-green-600/10 to-emerald-600/10 hover:from-green-600/20 hover:to-emerald-600/20 border-green-500/30"
+                            >
+                              {deployingWorkflowId === selectedWorkflowId ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              ) : (
+                                <Zap className="w-4 h-4 mr-2" />
+                              )}
+                              Deploy
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => {
-                              const wf = deployedWorkflows.find(w => 
-                                w.id === selectedWorkflowId || w.workflowId === selectedWorkflowId
+                              const wf = deployedWorkflows.find(
+                                (w) =>
+                                  w.id === selectedWorkflowId ||
+                                  w.workflowId === selectedWorkflowId
                               );
                               if (wf) handleViewExecutions(wf);
                             }}
@@ -724,8 +946,10 @@ export default function PlatformPage() {
                             size="sm"
                             className="bg-green-600 hover:bg-green-700 text-white"
                             onClick={() => {
-                              const wf = deployedWorkflows.find(w => 
-                                w.id === selectedWorkflowId || w.workflowId === selectedWorkflowId
+                              const wf = deployedWorkflows.find(
+                                (w) =>
+                                  w.id === selectedWorkflowId ||
+                                  w.workflowId === selectedWorkflowId
                               );
                               if (wf) handleExecuteWorkflow(wf);
                             }}
@@ -755,10 +979,14 @@ export default function PlatformPage() {
                         <div className="grid grid-cols-3 gap-4">
                           <div className="bg-accent/50 rounded-lg p-3">
                             <div className="text-xs text-muted-foreground mb-1">
-                              Total Runs
+                              Status
                             </div>
-                            <div className="text-2xl font-bold">
-                              {selectedWorkflow.stats.runs}
+                            <div className="text-sm font-semibold">
+                              {selectedWorkflow.isDeployed ? (
+                                <span className="text-green-500">Deployed</span>
+                              ) : (
+                                <span className="text-yellow-500">Draft</span>
+                              )}
                             </div>
                           </div>
                           <div className="bg-accent/50 rounded-lg p-3">
@@ -766,15 +994,19 @@ export default function PlatformPage() {
                               Nodes
                             </div>
                             <div className="text-2xl font-bold">
-                              {selectedWorkflow.stats.nodes}
+                              {selectedWorkflow.nodes?.length || 0}
                             </div>
                           </div>
                           <div className="bg-accent/50 rounded-lg p-3">
                             <div className="text-xs text-muted-foreground mb-1">
-                              Avg Runtime
+                              Created
                             </div>
-                            <div className="text-2xl font-bold">
-                              {selectedWorkflow.stats.avgRunTime}s
+                            <div className="text-sm font-semibold">
+                              {selectedWorkflow.created_at
+                                ? new Date(
+                                    selectedWorkflow.created_at
+                                  ).toLocaleDateString()
+                                : "N/A"}
                             </div>
                           </div>
                         </div>
@@ -783,11 +1015,20 @@ export default function PlatformPage() {
 
                     {/* Canvas Area */}
                     <div className="flex-1 overflow-hidden relative">
-                      {selectedWorkflow.workflow_data?.nodes && selectedWorkflow.workflow_data.nodes.length > 0 ? (
-                        <WorkflowCanvas 
-                          workflow={selectedWorkflow.workflow_data} 
+                      {selectedWorkflow.nodes &&
+                      selectedWorkflow.nodes.length > 0 ? (
+                        <WorkflowCanvas
+                          key={selectedWorkflowId} // Force re-render when workflow changes
+                          workflow={{
+                            nodes: selectedWorkflow.nodes,
+                            connections: selectedWorkflow.connections,
+                          }}
                           isGenerating={false}
-                          latestExecution={previewExecutions.length > 0 ? previewExecutions[0] : undefined}
+                          latestExecution={
+                            previewExecutions.length > 0
+                              ? previewExecutions[0]
+                              : undefined
+                          }
                           enableRealTimeUpdates={true}
                         />
                       ) : (
@@ -801,7 +1042,8 @@ export default function PlatformPage() {
                                 No Workflow Canvas
                               </h3>
                               <p className="text-sm text-muted-foreground max-w-md">
-                                This workflow hasn't been designed yet. Edit it in the editor to add nodes.
+                                This workflow hasn't been designed yet. Edit it
+                                in the editor to add nodes.
                               </p>
                             </div>
                             <Link href="/editor">
@@ -845,7 +1087,7 @@ export default function PlatformPage() {
         isOpen={showAuthModal}
         onClose={() => {
           setShowAuthModal(false);
-          router.push('/');
+          router.push("/");
         }}
       />
 
@@ -861,8 +1103,15 @@ export default function PlatformPage() {
           setIsLoadingPreviewExecutions(true);
           const token = getClientToken();
           const wfId = previewWorkflow.workflowId || previewWorkflow.id;
-          if (!wfId) { setIsLoadingPreviewExecutions(false); return; }
-          const result = await getWorkflowExecutions(wfId, 10, token || undefined);
+          if (!wfId) {
+            setIsLoadingPreviewExecutions(false);
+            return;
+          }
+          const result = await getWorkflowExecutions(
+            wfId,
+            10,
+            token || undefined
+          );
           if (result.success) {
             setPreviewExecutions(result.data || []);
           }
@@ -896,6 +1145,15 @@ export default function PlatformPage() {
         workflowName={deployedWorkflowName}
         deploymentData={deploymentResult}
       />
+
+      {/* Credential Modal - Show if credentials are missing before deployment */}
+      {showCredentialModal && missingCredentials.length > 0 && (
+        <InlineCredentialModal
+          missingCredentials={missingCredentials}
+          onComplete={handleCredentialComplete}
+          onCancel={handleCredentialCancel}
+        />
+      )}
     </div>
   );
 }

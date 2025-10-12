@@ -59,7 +59,7 @@ class WebSocketManager {
   addSubscriber() {
     this.subscriberCount++;
     console.log(`[WebSocket] Subscriber added. Total: ${this.subscriberCount}`);
-    
+
     // Initialize connection if this is the first subscriber
     if (this.subscriberCount === 1 && !this.socket) {
       this.connect();
@@ -68,8 +68,10 @@ class WebSocketManager {
 
   removeSubscriber() {
     this.subscriberCount--;
-    console.log(`[WebSocket] Subscriber removed. Total: ${this.subscriberCount}`);
-    
+    console.log(
+      `[WebSocket] Subscriber removed. Total: ${this.subscriberCount}`
+    );
+
     // Keep connection alive even when count reaches 0
     // The connection will be reused if a new subscriber comes
   }
@@ -81,7 +83,10 @@ class WebSocketManager {
       return;
     }
 
-    console.log("[WebSocket] 🔌 Establishing single shared connection to", WS_URL);
+    console.log(
+      "[WebSocket] 🔌 Establishing single shared connection to",
+      WS_URL
+    );
 
     this.socket = io(WS_URL, {
       auth: { token },
@@ -146,7 +151,12 @@ class WebSocketManager {
     });
 
     this.socket.on("node:completed", (event: NodeEvent) => {
-      console.log(`[WebSocket] ${event.status === 'success' ? '✅' : '❌'} Node completed:`, event.nodeName);
+      console.log(
+        `[WebSocket] ${
+          event.status === "success" ? "✅" : "❌"
+        } Node completed:`,
+        event.nodeName
+      );
       this.notifyListeners("node:completed", event);
     });
 
@@ -158,6 +168,24 @@ class WebSocketManager {
     this.socket.on("node:data", (event: NodeEvent) => {
       console.log("[WebSocket] 📊 Node data:", event.nodeName);
       this.notifyListeners("node:data", event);
+    });
+
+    // Listen to voice transcript events
+    this.socket.on("voice:transcript", (event: any) => {
+      console.log(
+        `[WebSocket] 💬 Voice transcript [${event.role}]:`,
+        event.content.substring(0, 50)
+      );
+      this.notifyListeners("voice:transcript", event);
+    });
+
+    // Listen to workflow generated events from voice
+    this.socket.on("workflow:generated", (event: any) => {
+      console.log(
+        `[WebSocket] 🎨 Workflow generated:`,
+        event.workflow?.name || "Unnamed"
+      );
+      this.notifyListeners("workflow:generated", event);
     });
   }
 
