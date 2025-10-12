@@ -19,7 +19,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Mozart | Lovable for automations",
-  description: "Build powerful automation workflows with AI. Just describe what you want and Mozart creates it for you.",
+  description:
+    "Build powerful automation workflows with AI. Just describe what you want and Mozart creates it for you.",
 };
 
 export default function RootLayout({
@@ -36,9 +37,7 @@ export default function RootLayout({
           <ToastProvider>
             <AuthProvider>
               <ThemeProvider>
-                <WorkflowProvider>
-                  {children}
-                </WorkflowProvider>
+                <WorkflowProvider>{children}</WorkflowProvider>
               </ThemeProvider>
             </AuthProvider>
           </ToastProvider>

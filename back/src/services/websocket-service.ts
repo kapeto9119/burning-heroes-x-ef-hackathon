@@ -1,6 +1,6 @@
-import { Server as HttpServer } from 'http';
-import { Server as SocketIOServer, Socket } from 'socket.io';
-import { AuthService } from './auth-service';
+import { Server as HttpServer } from "http";
+import { Server as SocketIOServer, Socket } from "socket.io";
+import { AuthService } from "./auth-service";
 
 export class WebSocketService {
   private io: SocketIOServer;
@@ -9,9 +9,9 @@ export class WebSocketService {
   constructor(httpServer: HttpServer, private authService: AuthService) {
     this.io = new SocketIOServer(httpServer, {
       cors: {
-        origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-        credentials: true
-      }
+        origin: process.env.FRONTEND_URL || "http://localhost:3000",
+        credentials: true,
+      },
     });
 
     this.setupAuthentication();
@@ -25,21 +25,21 @@ export class WebSocketService {
     this.io.use(async (socket, next) => {
       try {
         const token = socket.handshake.auth.token;
-        
+
         if (!token) {
-          return next(new Error('Authentication token required'));
+          return next(new Error("Authentication token required"));
         }
 
         // Verify token
         const payload = await this.authService.verifyToken(token);
-        
+
         // Attach user info to socket
         (socket as any).userId = payload.userId;
         (socket as any).userEmail = payload.email;
-        
+
         next();
       } catch (error) {
-        next(new Error('Authentication failed'));
+        next(new Error("Authentication failed"));
       }
     });
   }
@@ -48,7 +48,7 @@ export class WebSocketService {
    * Setup event handlers
    */
   private setupEventHandlers() {
-    this.io.on('connection', (socket: Socket) => {
+    this.io.on("connection", (socket: Socket) => {
       const userId = (socket as any).userId;
       const userEmail = (socket as any).userEmail;
 
@@ -64,9 +64,11 @@ export class WebSocketService {
       socket.join(`user:${userId}`);
 
       // Handle disconnection
-      socket.on('disconnect', () => {
-        console.log(`[WebSocket] User disconnected: ${userEmail} (${socket.id})`);
-        
+      socket.on("disconnect", () => {
+        console.log(
+          `[WebSocket] User disconnected: ${userEmail} (${socket.id})`
+        );
+
         const sockets = this.userSockets.get(userId);
         if (sockets) {
           sockets.delete(socket.id);
@@ -77,21 +79,25 @@ export class WebSocketService {
       });
 
       // Handle workflow subscription
-      socket.on('subscribe:workflow', (workflowId: string) => {
+      socket.on("subscribe:workflow", (workflowId: string) => {
         socket.join(`workflow:${workflowId}`);
-        console.log(`[WebSocket] User ${userEmail} subscribed to workflow ${workflowId}`);
+        console.log(
+          `[WebSocket] User ${userEmail} subscribed to workflow ${workflowId}`
+        );
       });
 
-      socket.on('unsubscribe:workflow', (workflowId: string) => {
+      socket.on("unsubscribe:workflow", (workflowId: string) => {
         socket.leave(`workflow:${workflowId}`);
-        console.log(`[WebSocket] User ${userEmail} unsubscribed from workflow ${workflowId}`);
+        console.log(
+          `[WebSocket] User ${userEmail} unsubscribed from workflow ${workflowId}`
+        );
       });
 
       // Send welcome message
-      socket.emit('connected', {
-        message: 'Connected to real-time updates',
+      socket.emit("connected", {
+        message: "Connected to real-time updates",
         userId,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
     });
   }
@@ -99,44 +105,50 @@ export class WebSocketService {
   /**
    * Emit execution started event
    */
-  emitExecutionStarted(userId: string, workflowId: string, executionId: string) {
+  emitExecutionStarted(
+    userId: string,
+    workflowId: string,
+    executionId: string
+  ) {
     const event = {
-      type: 'execution:started',
+      type: "execution:started",
       workflowId,
       executionId,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     // Send to user's room
-    this.io.to(`user:${userId}`).emit('execution:started', event);
-    
-    // Send to workflow room
-    this.io.to(`workflow:${workflowId}`).emit('execution:started', event);
+    this.io.to(`user:${userId}`).emit("execution:started", event);
 
-    console.log(`[WebSocket] Execution started: ${executionId} for workflow ${workflowId}`);
+    // Send to workflow room
+    this.io.to(`workflow:${workflowId}`).emit("execution:started", event);
+
+    console.log(
+      `[WebSocket] Execution started: ${executionId} for workflow ${workflowId}`
+    );
   }
 
   /**
    * Emit execution completed event
    */
   emitExecutionCompleted(
-    userId: string, 
-    workflowId: string, 
-    executionId: string, 
-    status: 'success' | 'error',
+    userId: string,
+    workflowId: string,
+    executionId: string,
+    status: "success" | "error",
     data?: any
   ) {
     const event = {
-      type: 'execution:completed',
+      type: "execution:completed",
       workflowId,
       executionId,
       status,
       data,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    this.io.to(`user:${userId}`).emit('execution:completed', event);
-    this.io.to(`workflow:${workflowId}`).emit('execution:completed', event);
+    this.io.to(`user:${userId}`).emit("execution:completed", event);
+    this.io.to(`workflow:${workflowId}`).emit("execution:completed", event);
 
     console.log(`[WebSocket] Execution completed: ${executionId} - ${status}`);
   }
@@ -152,16 +164,16 @@ export class WebSocketService {
     status: string
   ) {
     const event = {
-      type: 'execution:progress',
+      type: "execution:progress",
       workflowId,
       executionId,
       nodeName,
       status,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    this.io.to(`user:${userId}`).emit('execution:progress', event);
-    this.io.to(`workflow:${workflowId}`).emit('execution:progress', event);
+    this.io.to(`user:${userId}`).emit("execution:progress", event);
+    this.io.to(`workflow:${workflowId}`).emit("execution:progress", event);
   }
 
   /**
@@ -169,13 +181,13 @@ export class WebSocketService {
    */
   emitWorkflowDeployed(userId: string, workflowId: string, data: any) {
     const event = {
-      type: 'workflow:deployed',
+      type: "workflow:deployed",
       workflowId,
       data,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    this.io.to(`user:${userId}`).emit('workflow:deployed', event);
+    this.io.to(`user:${userId}`).emit("workflow:deployed", event);
   }
 
   /**
@@ -184,16 +196,16 @@ export class WebSocketService {
   emitWorkflowStatusChanged(
     userId: string,
     workflowId: string,
-    status: 'active' | 'inactive'
+    status: "active" | "inactive"
   ) {
     const event = {
-      type: 'workflow:status_changed',
+      type: "workflow:status_changed",
       workflowId,
       status,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    this.io.to(`user:${userId}`).emit('workflow:status_changed', event);
+    this.io.to(`user:${userId}`).emit("workflow:status_changed", event);
   }
 
   /**
@@ -206,17 +218,19 @@ export class WebSocketService {
     nodeName: string
   ) {
     const event = {
-      type: 'node:started',
+      type: "node:started",
       workflowId,
       executionId,
       nodeName,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    this.io.to(`user:${userId}`).emit('node:started', event);
-    this.io.to(`workflow:${workflowId}`).emit('node:started', event);
+    this.io.to(`user:${userId}`).emit("node:started", event);
+    this.io.to(`workflow:${workflowId}`).emit("node:started", event);
 
-    console.log(`[WebSocket] Node started: ${nodeName} in execution ${executionId}`);
+    console.log(
+      `[WebSocket] Node started: ${nodeName} in execution ${executionId}`
+    );
   }
 
   /**
@@ -227,23 +241,23 @@ export class WebSocketService {
     workflowId: string,
     executionId: string,
     nodeName: string,
-    status: 'success' | 'error',
+    status: "success" | "error",
     data?: any,
     error?: string
   ) {
     const event = {
-      type: 'node:completed',
+      type: "node:completed",
       workflowId,
       executionId,
       nodeName,
       status,
       data,
       error,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    this.io.to(`user:${userId}`).emit('node:completed', event);
-    this.io.to(`workflow:${workflowId}`).emit('node:completed', event);
+    this.io.to(`user:${userId}`).emit("node:completed", event);
+    this.io.to(`workflow:${workflowId}`).emit("node:completed", event);
 
     console.log(`[WebSocket] Node completed: ${nodeName} - ${status}`);
   }
@@ -259,16 +273,16 @@ export class WebSocketService {
     progress?: number
   ) {
     const event = {
-      type: 'node:running',
+      type: "node:running",
       workflowId,
       executionId,
       nodeName,
       progress,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    this.io.to(`user:${userId}`).emit('node:running', event);
-    this.io.to(`workflow:${workflowId}`).emit('node:running', event);
+    this.io.to(`user:${userId}`).emit("node:running", event);
+    this.io.to(`workflow:${workflowId}`).emit("node:running", event);
   }
 
   /**
@@ -283,17 +297,63 @@ export class WebSocketService {
     outputData?: any
   ) {
     const event = {
-      type: 'node:data',
+      type: "node:data",
       workflowId,
       executionId,
       nodeName,
       inputData,
       outputData,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    this.io.to(`user:${userId}`).emit('node:data', event);
-    this.io.to(`workflow:${workflowId}`).emit('node:data', event);
+    this.io.to(`user:${userId}`).emit("node:data", event);
+    this.io.to(`workflow:${workflowId}`).emit("node:data", event);
+  }
+
+  /**
+   * Emit voice transcript message
+   */
+  emitVoiceTranscript(
+    userId: string,
+    role: "user" | "assistant",
+    content: string,
+    timestamp: string,
+    sessionId?: string
+  ) {
+    const event = {
+      type: "voice:transcript",
+      role,
+      content,
+      timestamp,
+      sessionId,
+    };
+
+    this.io.to(`user:${userId}`).emit("voice:transcript", event);
+
+    console.log(
+      `[WebSocket] Voice transcript [${role}]: ${content.substring(0, 50)}...`
+    );
+  }
+
+  /**
+   * Emit workflow generated event
+   */
+  emitWorkflowGenerated(
+    userId: string,
+    workflow: any,
+    credentialRequirements: any[]
+  ) {
+    const event = {
+      type: "workflow:generated",
+      workflow,
+      credentialRequirements,
+    };
+
+    this.io.to(`user:${userId}`).emit("workflow:generated", event);
+
+    console.log(
+      `[WebSocket] 🎨 Workflow generated: ${workflow.name || "Unnamed"}`
+    );
   }
 
   /**

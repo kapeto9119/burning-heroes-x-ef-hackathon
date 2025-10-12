@@ -40,6 +40,7 @@ import { VoiceTranscript } from "@/components/voice/VoiceTranscript";
 import { VoiceProviderToggle } from "@/components/voice/VoiceProviderToggle";
 import { useVapi } from "@/hooks/useVapi";
 import { usePipecat } from "@/hooks/usePipecat";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { getClientToken } from "@/lib/auth";
 import * as React from "react";
 
@@ -149,12 +150,11 @@ export default function EditorPage() {
   const [deploymentData, setDeploymentData] = useState<any>(null);
   const [showCelebration, setShowCelebration] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  
+
   // Custom close handler
   const handleAuthModalClose = () => {
-    console.log('[Editor] Auth modal closing');
     setShowAuthModal(false);
-    
+
     // Show success message if token is now available
     setTimeout(() => {
       const token = getClientToken();
@@ -208,24 +208,37 @@ export default function EditorPage() {
   const isPreviewMode = !isAuthenticated;
 
   // Voice provider selection
-  const [voiceProvider, setVoiceProvider] = useState<'vapi' | 'pipecat'>('pipecat');
+  const [voiceProvider, setVoiceProvider] = useState<"vapi" | "pipecat">(
+    "pipecat"
+  );
 
   // Workflow generation callback (shared by both providers)
-  const handleWorkflowGenerated = useCallback((workflow: any) => {
-    setWorkflow(workflow);
-    setDeploymentStatus("idle");
+  const handleWorkflowGenerated = useCallback(
+    (workflow: any, credentialRequirements?: any[]) => {
+      setWorkflow(workflow);
+      setDeploymentStatus("idle");
 
-    // Add a message to show workflow was created
-    const workflowMessage = {
-      id: `workflow_${Date.now()}`,
-      text: `✅ Workflow created! It has ${
-        workflow?.nodes?.length || 0
-      } nodes. Ready to save or deploy?`,
-      isUser: false,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, workflowMessage]);
-  }, []);
+      // Add a message to show workflow was created
+      let credentialMsg = "";
+      if (credentialRequirements && credentialRequirements.length > 0) {
+        const services = credentialRequirements
+          .map((c) => c.service)
+          .join(", ");
+        credentialMsg = ` Credentials needed: ${services}.`;
+      }
+
+      const workflowMessage = {
+        id: `workflow_${Date.now()}`,
+        text: `✅ Workflow created! It has ${
+          workflow?.nodes?.length || 0
+        } nodes.${credentialMsg} Ready to save or deploy?`,
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, workflowMessage]);
+    },
+    []
+  );
 
   // Vapi voice AI integration
   const vapiHook = useVapi({
@@ -241,8 +254,13 @@ export default function EditorPage() {
   const pipecatHook = usePipecat({
     userId: user?.id,
     onWorkflowGenerated: handleWorkflowGenerated,
-    onAgentSwitch: (agent) => console.log('[Editor] Agent switched to:', agent),
+    onAgentSwitch: (agent) => {
+      // Agent switched
+    },
   });
+
+  // WebSocket for real-time updates
+  const { addEventListener } = useWebSocket();
 
   // Use the selected provider's hook
   const {
@@ -254,18 +272,24 @@ export default function EditorPage() {
     stopCall,
     clearTranscripts,
     isConnected,
-  } = voiceProvider === 'vapi' ? vapiHook : pipecatHook;
+  } = voiceProvider === "vapi" ? vapiHook : pipecatHook;
 
   // Sync voice transcripts to messages (unified conversation)
   useEffect(() => {
     if (transcripts.length > 0) {
       const lastTranscript = transcripts[transcripts.length - 1];
 
+      // Convert timestamp to Date if it's a string
+      const transcriptTime =
+        typeof lastTranscript.timestamp === "string"
+          ? new Date(lastTranscript.timestamp)
+          : lastTranscript.timestamp;
+
       // Check if this transcript is already in messages
       const alreadyExists = messages.some(
         (msg) =>
           msg.text === lastTranscript.text &&
-          msg.timestamp.getTime() === lastTranscript.timestamp.getTime()
+          msg.timestamp.getTime() === transcriptTime.getTime()
       );
 
       if (!alreadyExists) {
@@ -273,12 +297,24 @@ export default function EditorPage() {
           id: `voice_${Date.now()}`,
           text: lastTranscript.text,
           isUser: lastTranscript.role === "user",
-          timestamp: lastTranscript.timestamp,
+          timestamp: transcriptTime,
         };
         setMessages((prev) => [...prev, newMessage]);
       }
     }
-  }, [transcripts]);
+  }, [transcripts, messages]);
+
+  // Listen for workflow generated via WebSocket
+  useEffect(() => {
+    const unsubscribe = addEventListener("workflow:generated", (event: any) => {
+      console.log("[Editor] Workflow received via WebSocket:", event.workflow);
+      handleWorkflowGenerated(event.workflow, event.credentialRequirements);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [addEventListener, handleWorkflowGenerated]);
 
   // Auto-send first message to chat API
   useEffect(() => {
@@ -377,12 +413,19 @@ export default function EditorPage() {
 
     // Get fresh token
     const token = getAuthToken();
-    
-    console.log('[Editor] Save attempt - isAuthenticated:', isAuthenticated, 'token from localStorage:', token ? 'present' : 'missing');
-    
+
+    console.log(
+      "[Editor] Save attempt - isAuthenticated:",
+      isAuthenticated,
+      "token from localStorage:",
+      token ? "present" : "missing"
+    );
+
     // Check if user is authenticated
     if (!token) {
-      console.error('[Editor] No authentication token available - showing login');
+      console.error(
+        "[Editor] No authentication token available - showing login"
+      );
       const errorMessage = {
         id: Date.now().toString(),
         text: `🔐 Please log in to save your workflow. Your work is safe and will be saved once you authenticate.`,
@@ -394,7 +437,11 @@ export default function EditorPage() {
       return;
     }
 
-    console.log('[Editor] Saving workflow with token (length:', token.length, ')');
+    console.log(
+      "[Editor] Saving workflow with token (length:",
+      token.length,
+      ")"
+    );
     setIsSaving(true);
     try {
       const result = await saveWorkflow(workflow, token);
@@ -415,17 +462,22 @@ export default function EditorPage() {
         throw new Error(result.error || "Failed to save workflow");
       }
     } catch (error: any) {
-      console.error('[Editor] Save error:', error);
+      console.error("[Editor] Save error:", error);
       const errorMessage = {
         id: Date.now().toString(),
-        text: `❌ Failed to save workflow: ${error.message}. ${!token ? 'Please log in again.' : ''}`,
+        text: `❌ Failed to save workflow: ${error.message}. ${
+          !token ? "Please log in again." : ""
+        }`,
         isUser: false,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
-      
+
       // If authentication error, show login modal
-      if (error.message?.includes('Authentication') || error.message?.includes('token')) {
+      if (
+        error.message?.includes("Authentication") ||
+        error.message?.includes("token")
+      ) {
         setShowAuthModal(true);
       }
     } finally {
@@ -611,10 +663,6 @@ export default function EditorPage() {
         // Use the real chat API with conversation history
         const result = await sendChatMessage(messageText, token, history);
 
-        console.log("[Editor] 🔍 API Response:", result);
-        console.log("[Editor] 🔍 Success?", result.success);
-        console.log("[Editor] 🔍 Data:", result.data);
-
         if (result.success && result.data) {
           // The response format is { message, workflow, suggestions }
           const aiResponse = result.data.message || result.data.response;
@@ -630,19 +678,8 @@ export default function EditorPage() {
 
           // If the AI generated a workflow, show it
           if (result.data.workflow) {
-            console.log("[Editor] 📊 Workflow received:", result.data.workflow);
-            console.log(
-              "[Editor] 📊 Workflow nodes:",
-              result.data.workflow.nodes
-            );
-            console.log(
-              "[Editor] 📊 Nodes count:",
-              result.data.workflow.nodes?.length
-            );
             setWorkflow(result.data.workflow);
             setDeploymentStatus("idle");
-          } else {
-            console.log("[Editor] ⚠️ No workflow in response!");
           }
         } else {
           console.log("[Editor] ❌ API call failed:", result.error);
@@ -677,8 +714,34 @@ export default function EditorPage() {
       stopCall();
       setVoiceMode(false);
     } else {
+      // Check if user is logged in before starting voice (check token, not user object)
+      const token = getAuthToken();
+      if (!token || !user?.id) {
+        const errorMessage = {
+          id: Date.now().toString(),
+          text: "🔐 Please log in to use voice chat. Click the login button in the top right.",
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+        setShowAuthModal(true);
+        return;
+      }
+
       setVoiceMode(true);
-      await startCall();
+      try {
+        await startCall();
+      } catch (error: any) {
+        console.error("[Editor] Voice call error:", error);
+        const errorMessage = {
+          id: Date.now().toString(),
+          text: `❌ Failed to start voice call: ${error.message}`,
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+        setVoiceMode(false);
+      }
     }
   };
 
@@ -842,7 +905,9 @@ export default function EditorPage() {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
-                        {voiceProvider === 'vapi' ? 'Vapi' : 'Pipecat Multi-Agent'}
+                        {voiceProvider === "vapi"
+                          ? "Vapi"
+                          : "Pipecat Multi-Agent"}
                       </p>
                     </div>
                   ) : (
@@ -978,20 +1043,7 @@ export default function EditorPage() {
                   )}
                 </div>
                 <div className="flex-1 relative overflow-hidden">
-                  {(() => {
-                    console.log(
-                      "[Editor] 🎨 Render check - workflow:",
-                      workflow
-                    );
-                    console.log("[Editor] 🎨 Has nodes?", workflow?.nodes);
-                    console.log(
-                      "[Editor] 🎨 Nodes length:",
-                      workflow?.nodes?.length
-                    );
-                    return (
-                      workflow && workflow.nodes && workflow.nodes.length > 0
-                    );
-                  })() ? (
+                  {workflow && workflow.nodes && workflow.nodes.length > 0 ? (
                     <WorkflowCanvas
                       key={workflow.id || workflow.name}
                       workflow={workflow}

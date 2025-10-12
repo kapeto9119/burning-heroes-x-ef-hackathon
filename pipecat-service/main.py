@@ -31,7 +31,7 @@ import uvicorn
 from typing import Optional
 
 from pipecat.transports.daily.transport import DailyTransport, DailyParams
-from pipecat.services.google.gemini_live import GeminiLiveLLMService
+from pipecat.services.google.gemini_live.llm import GeminiLiveLLMService
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineTask, PipelineParams
@@ -41,13 +41,13 @@ from pipecat.audio.vad.vad_analyzer import VADParams
 from pipecat.adapters.schemas.function_schema import FunctionSchema
 from pipecat.adapters.schemas.tools_schema import ToolsSchema
 from pipecat.services.llm_service import FunctionCallParams
-from pipecat.frames.frames import FunctionCallResultProperties
+# TranscriptProcessor not needed - Gemini Live handles transcription internally
 
 import config
 from agents.prompts import UNIFIED_AGENT_PROMPT, SALES_AGENT_PROMPT, SUPPORT_AGENT_PROMPT, OPERATIONS_AGENT_PROMPT, TECHNICAL_AGENT_PROMPT
 from services import WorkflowClient
 
-# Initialize FastAPI
+# Initialize FastAPI    c
 app = FastAPI(title="Pipecat Multi-Agent Voice Service")
 
 # CORS
@@ -91,11 +91,18 @@ async def end_session(room_name: str):
     """
     try:
         if room_name in active_sessions:
-            task = active_sessions[room_name]
+            session_data = active_sessions[room_name]
+            
+            # Get task from session data
+            task = session_data.get("task") if isinstance(session_data, dict) else session_data
+            
+            # Cancel task
             await task.cancel()
-            del active_sessions[room_name]
+            
+            print(f"[Session] Ended session: {room_name}")
             return {"success": True, "message": "Session ended"}
-        return {"success": False, "message": "Session not found"}
+        
+        return {"success": True, "message": "Session not found (already ended)"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -135,7 +142,11 @@ async def start_session(request: SessionRequest):
                         # Disable screenshare
                         "enable_screenshare": False,
                         # Disable recording
-                        "enable_recording": False
+                        "enable_recording": False,
+                        # CRITICAL: Start with audio enabled by default
+                        "start_audio_off": False,
+                        # Auto-subscribe to tracks
+                        "autojoin": True
                     }
                 }
             ) as response:
@@ -155,8 +166,8 @@ async def start_session(request: SessionRequest):
                     "properties": {
                         # Set room name
                         "room_name": room_name,
-                        # Set is_owner to False
-                        "is_owner": False
+                        # CRITICAL: Set is_owner to True so user can control audio
+                        "is_owner": True
                     }
                 }
             ) as response:
@@ -296,7 +307,7 @@ async def run_bot(room_url: str, room_name: str, user_id: Optional[str]):
         
         tools = ToolsSchema(standard_tools=[route_to_agent_function, generate_workflow_function, search_nodes_function])
         
-        # Daily transport with balanced VAD settings
+        # Daily transport with responsive VAD settings - lets user interrupt easily
         transport = DailyTransport(
             room_url,
             None,  # Token not needed for bot
@@ -304,16 +315,16 @@ async def run_bot(room_url: str, room_name: str, user_id: Optional[str]):
             DailyParams(
                 audio_in_enabled=True,
                 audio_out_enabled=True,
-                vad_enabled=True,
-                vad_analyzer=SileroVADAnalyzer(
-                    params=VADParams(
-                        stop_secs=1.5,      # 1.5s silence before stopping (give bot time to finish)
-                        start_secs=0.4,     # 400ms of speech to start (avoid false triggers)
-                        min_volume=0.65,    # Higher threshold - filters background noise
-                        confidence=0.75     # Higher confidence - less sensitive
-                    )
-                ),
-                vad_audio_passthrough=True
+                # Use vad_analyzer instead of vad_enabled (deprecated)
+            vad_analyzer=SileroVADAnalyzer(
+                params=VADParams(
+                    stop_secs=1.2,      # Give bot 1.2s to finish speaking
+                    start_secs=0.3,     # 300ms before detecting user (give bot space)
+                    min_volume=0.6,     # Higher threshold - bot less easily interrupted
+                    confidence=0.7      # Higher confidence - less sensitive during bot speech
+                )
+            )
+                # vad_audio_passthrough is deprecated - audio passthrough is now always enabled
             )
         )
         
@@ -331,13 +342,13 @@ async def run_bot(room_url: str, room_name: str, user_id: Optional[str]):
             switched = await switch_to_agent(agent, params.llm, transport)
             
             if switched:
-                # Tell the bot to continue as the specialist
+                # Tell the bot to continue as the specialist - SHORT responses
                 specialist_message = {
-                    "sales": "Now I'm your sales automation specialist! Let's build a CRM workflow. What CRM do you use?",
-                    "support": "Now I'm your support automation specialist! Let's build a helpdesk workflow. What ticketing system do you use?",
-                    "operations": "Now I'm your operations specialist! Let's build a data workflow. What data sources do you work with?",
-                    "technical": "Now I'm your technical integration specialist! Let's build an API workflow. What services need to be connected?"
-                }.get(agent, f"Now I'm your {agent} specialist! How can I help you build workflows?")
+                    "sales": "Got it! What CRM?",
+                    "support": "Perfect! What ticketing system?",
+                    "operations": "Nice! What data sources?",
+                    "technical": "Cool! What services?"
+                }.get(agent, f"Great! Let's go!")
                 
                 response = {
                     "routed": True,
@@ -380,23 +391,35 @@ async def run_bot(room_url: str, room_name: str, user_id: Optional[str]):
                 
                 print(f"[Workflow Gen] ✅ Generated workflow with {node_count} nodes: {', '.join(node_names)}")
                 
-                # Send workflow to frontend via server message (Pipecat custom messaging)
+                # Send workflow to frontend via backend WebSocket
+                # Since Daily app messages are complex in Python Pipecat,
+                # we'll send via the backend API which will broadcast via WebSocket
                 try:
-                    from pipecat.frames.frames import OutputTransportMessageFrame
+                    import aiohttp
+                    import asyncio
                     
-                    workflow_message = OutputTransportMessageFrame(
-                        message={
-                            "type": "workflow_generated",
-                            "workflow": workflow,
-                            "credentialRequirements": credential_reqs
-                        }
-                    )
+                    async def send_workflow_to_backend():
+                        try:
+                            async with aiohttp.ClientSession() as session:
+                                await session.post(
+                                    f"{backend_url}/api/pipecat/workflow-generated",
+                                    json={
+                                        "userId": user_id,
+                                        "workflow": workflow,
+                                        "credentialRequirements": credential_reqs
+                                    },
+                                    timeout=aiohttp.ClientTimeout(total=5)
+                                )
+                            print(f"[Workflow Gen] ✅ Sent workflow to backend for broadcast")
+                        except Exception as e:
+                            print(f"[Workflow Gen] ⚠️ Failed to send via backend: {e}")
                     
-                    # Push frame to transport to send to frontend
-                    await transport.send_message(workflow_message)
-                    print(f"[Workflow Gen] ✅ Sent workflow to frontend via server message")
+                    # Fire and forget
+                    asyncio.create_task(send_workflow_to_backend())
                 except Exception as e:
+                    import traceback
                     print(f"[Workflow Gen] ⚠️ Failed to send to frontend: {e}")
+                    print(f"[Workflow Gen] Traceback: {traceback.format_exc()}")
                 
                 # Format voice-friendly response for LLM
                 credential_msg = ""
@@ -409,7 +432,7 @@ async def run_bot(room_url: str, room_name: str, user_id: Optional[str]):
                     "workflow_id": workflow.get("id"),
                     "node_count": node_count,
                     "nodes": ", ".join(node_names),
-                    "message": f"I've created your workflow with {node_count} nodes: {', '.join(node_names)}.{credential_msg} The workflow is now displayed on your screen. Would you like me to deploy it?"
+                    "message": f"Done! Created {node_count} nodes.{credential_msg} Deploy it?"
                 }
             else:
                 error_msg = result.get("error", "Unknown error")
@@ -417,7 +440,7 @@ async def run_bot(room_url: str, room_name: str, user_id: Optional[str]):
                 response = {
                     "workflow_generated": False,
                     "error": error_msg,
-                    "message": f"I encountered an error generating the workflow: {error_msg}. Could you provide more details about what you want to automate?"
+                    "message": f"Oops, error! Can you give me more details?"
                 }
             
             # Return result to LLM so it can respond to user
@@ -454,13 +477,13 @@ async def run_bot(room_url: str, room_name: str, user_id: Optional[str]):
                         "found": True,
                         "count": count,
                         "nodes": node_list,
-                        "message": f"Yes! I found {count} integrations for {query}. Here are the top ones: {'. '.join(node_list[:3])}."
+                        "message": f"Yes! Found {count}. Top one: {node_list[0].split(':')[0]}."
                     }
                 else:
                     response = {
                         "found": False,
                         "count": 0,
-                        "message": f"I couldn't find any integrations matching '{query}'. Could you try a different search term or describe what you're trying to do?"
+                        "message": f"None found for {query}. Try another term?"
                     }
             else:
                 error_msg = result.get("error", "Unknown error")
@@ -468,19 +491,30 @@ async def run_bot(room_url: str, room_name: str, user_id: Optional[str]):
                 response = {
                     "found": False,
                     "error": error_msg,
-                    "message": f"I had trouble searching for that. Could you rephrase your question?"
+                    "message": f"Search error. Try again?"
                 }
             
             # Return result to LLM
             await params.result_callback(response)
         
-        # Gemini Live LLM service (speech-to-speech) - now uses unified prompt
+        # Conversation context - set initial system message
+        # The first message establishes the bot's personality and behavior
+        messages = [{
+            "role": "user",
+            "content": UNIFIED_AGENT_PROMPT
+        }]
+        context = OpenAILLMContext(messages)
+        
+        # Gemini Live LLM service (speech-to-speech) - follows official Pipecat pattern
         llm = GeminiLiveLLMService(
             api_key=config.GOOGLE_API_KEY,
-            system_instruction=UNIFIED_AGENT_PROMPT,  # Unified prompt handles everything
-            tools=tools,
-            voice_id="Charon"  # Natural voice
+            voice_id="Puck",  # Puck is energetic and friendly (Kore, Fenrir are alternatives)
+            tools=tools
         )
+        
+        # Create context aggregator AFTER initializing the LLM
+        # This manages conversation history automatically
+        context_aggregator = llm.create_context_aggregator(context)
         
         print(f"[Bot] Gemini Live service initialized with UNIFIED prompt (routing + all specialists)")
         
@@ -492,18 +526,77 @@ async def run_bot(room_url: str, room_name: str, user_id: Optional[str]):
         print(f"[Bot] ✅ Registered functions: route_to_agent, generate_workflow, search_nodes")
         print(f"[Bot] 🔍 Agent can now search 2,500+ n8n integrations via MCP!")
         
-        # Conversation context - empty to start
-        messages = []
-        context = OpenAILLMContext(messages)
-        context_aggregator = llm.create_context_aggregator(context)
+        # Import what we need for real-time transcripts
+        import datetime
+        import aiohttp as aiohttp_client  # Rename to avoid conflicts
+        backend_url = config.BACKEND_API_URL or "http://localhost:3001"
+        
+        # Helper to send transcripts in real-time
+        async def send_transcript_live(role: str, content: str):
+            """Send transcript to backend immediately as it happens"""
+            try:
+                timestamp = datetime.datetime.now().isoformat()
+                
+                async with aiohttp_client.ClientSession() as session:
+                    await session.post(
+                        f"{backend_url}/api/pipecat/transcript",
+                        json={
+                            "userId": user_id,
+                            "role": role,
+                            "content": content,
+                            "timestamp": timestamp,
+                            "sessionId": room_name
+                        },
+                        timeout=aiohttp_client.ClientTimeout(total=2)
+                    )
+                print(f"[Transcript LIVE] ✅ {role}: {content[:50]}")
+            except Exception as e:
+                print(f"[Transcript LIVE] ⚠️ Failed: {e}")
+        
+        # Intercept context aggregator to send transcripts live
+        # Monkey-patch the context.add_message method to send transcripts immediately
+        original_add_message = context.add_message
+        
+        def add_message_with_live_transcript(message):
+            """Custom add_message that sends transcripts live"""
+            # Call original method first
+            result = original_add_message(message)
+            
+            # Extract and send transcript
+            try:
+                role = message.get("role", "unknown")
+                
+                if role != "system":  # Skip system messages
+                    content = ""
+                    if isinstance(message.get("content"), str):
+                        content = message.get("content")
+                    elif isinstance(message.get("content"), list):
+                        for part in message.get("content", []):
+                            if hasattr(part, 'text'):
+                                content += part.text
+                            elif isinstance(part, dict) and "text" in part:
+                                content += part["text"]
+                    
+                    # Skip system prompt
+                    if content and "You are a fast, energetic workflow automation specialist" not in content:
+                        # Send to backend immediately!
+                        asyncio.create_task(send_transcript_live(role, content))
+            except Exception as e:
+                print(f"[Transcript LIVE] Error: {e}")
+            
+            return result
+        
+        # Apply the monkey-patch
+        context.add_message = add_message_with_live_transcript
         
         # Pipeline: Audio in -> Context -> LLM -> Context -> Audio out
+        # Note: Gemini Live handles its own transcription internally
         pipeline = Pipeline([
-            transport.input(),      # Receive audio from user
-            context_aggregator.user(),  # Add user message to context
-            llm,                    # Generate response with Gemini
-            context_aggregator.assistant(),  # Add assistant response to context
-            transport.output()      # Send audio back to user
+            transport.input(),              # Receive audio from user
+            context_aggregator.user(),      # Add user message to context
+            llm,                            # Generate response with Gemini (with transcription events)
+            context_aggregator.assistant(), # Add assistant response to context
+            transport.output()              # Send audio back to user
         ])
         
         # Create task
@@ -517,7 +610,10 @@ async def run_bot(room_url: str, room_name: str, user_id: Optional[str]):
         )
         
         # Store task for cleanup
-        active_sessions[room_name] = task
+        active_sessions[room_name] = {
+            "task": task,
+            "user_id": user_id
+        }
         
         # Run pipeline
         runner = PipelineRunner()
@@ -526,8 +622,9 @@ async def run_bot(room_url: str, room_name: str, user_id: Optional[str]):
     except Exception as e:
         print(f"Error running bot: {e}")
     finally:
-        # Cleanup
+        # Cleanup session
         if room_name in active_sessions:
+            print(f"[Session] Cleaning up session: {room_name}")
             del active_sessions[room_name]
 
 

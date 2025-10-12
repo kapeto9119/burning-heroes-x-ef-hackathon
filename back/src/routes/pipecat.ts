@@ -2,12 +2,14 @@ import { Router, Request, Response } from "express";
 import { WorkflowGenerator } from "../services/workflow-generator";
 import { ApiResponse } from "../types";
 import axios from "axios";
+import { WebSocketService } from "../services/websocket-service";
 
 const PIPECAT_SERVICE_URL =
   process.env.PIPECAT_SERVICE_URL || "http://localhost:8765";
 
 export function createPipecatRouter(
-  workflowGenerator: WorkflowGenerator
+  workflowGenerator: WorkflowGenerator,
+  websocketService: WebSocketService
 ): Router {
   const router = Router();
 
@@ -141,11 +143,14 @@ export function createPipecatRouter(
       console.log("[Pipecat] Searching nodes:", query);
 
       // Use MCP client to search nodes
-      const nodes = await workflowGenerator["mcpClient"].searchNodes(query, true);
-      
+      const nodes = await workflowGenerator["mcpClient"].searchNodes(
+        query,
+        true
+      );
+
       // Format results for voice-friendly response
       const results = Array.isArray(nodes) ? nodes.slice(0, limit) : [];
-      
+
       console.log(`[Pipecat] Found ${results.length} nodes for: ${query}`);
 
       res.json({
@@ -157,8 +162,8 @@ export function createPipecatRouter(
             name: node.displayName || node.name,
             description: node.description,
             category: node.category,
-            type: node.nodeType
-          }))
+            type: node.nodeType,
+          })),
         },
       } as ApiResponse);
     } catch (error: any) {
@@ -166,6 +171,87 @@ export function createPipecatRouter(
       res.status(500).json({
         success: false,
         error: "Failed to search nodes",
+        details: error.message,
+      } as ApiResponse);
+    }
+  });
+
+  /**
+   * POST /api/pipecat/transcript
+   * Receive transcript from Pipecat and broadcast via WebSocket
+   */
+  router.post("/transcript", async (req: Request, res: Response) => {
+    try {
+      const { userId, role, content, timestamp, sessionId } = req.body;
+
+      if (!userId || !role || !content) {
+        return res.status(400).json({
+          success: false,
+          error: "Missing required fields: userId, role, content",
+        } as ApiResponse);
+      }
+
+      console.log(`[Pipecat] Transcript [${role}]:`, content.substring(0, 100));
+
+      // Emit via WebSocket to user
+      websocketService.emitVoiceTranscript(
+        userId,
+        role,
+        content,
+        timestamp,
+        sessionId
+      );
+
+      res.json({
+        success: true,
+        message: "Transcript broadcasted",
+      } as ApiResponse);
+    } catch (error: any) {
+      console.error("[Pipecat] Transcript error:", error.message);
+      res.status(500).json({
+        success: false,
+        error: "Failed to broadcast transcript",
+        details: error.message,
+      } as ApiResponse);
+    }
+  });
+
+  /**
+   * POST /api/pipecat/workflow-generated
+   * Receive workflow from Pipecat and broadcast via WebSocket
+   */
+  router.post("/workflow-generated", async (req: Request, res: Response) => {
+    try {
+      const { userId, workflow, credentialRequirements } = req.body;
+
+      if (!userId || !workflow) {
+        return res.status(400).json({
+          success: false,
+          error: "Missing required fields: userId, workflow",
+        } as ApiResponse);
+      }
+
+      console.log(
+        `[Pipecat] Workflow generated for user ${userId}:`,
+        workflow.name || "Unnamed"
+      );
+
+      // Emit workflow via WebSocket to user
+      websocketService.emitWorkflowGenerated(
+        userId,
+        workflow,
+        credentialRequirements || []
+      );
+
+      res.json({
+        success: true,
+        message: "Workflow broadcasted",
+      } as ApiResponse);
+    } catch (error: any) {
+      console.error("[Pipecat] Workflow broadcast error:", error.message);
+      res.status(500).json({
+        success: false,
+        error: "Failed to broadcast workflow",
         details: error.message,
       } as ApiResponse);
     }
