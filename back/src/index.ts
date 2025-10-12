@@ -52,7 +52,6 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://front-production-0516.up.railway.app",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
